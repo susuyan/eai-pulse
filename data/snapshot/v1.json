@@ -64,7 +64,7 @@
       "healthScore": 100,
       "consecutiveFailures": 0,
       "state": {
-        "etag": "W/\"items-c84a6b5828ea5946\""
+        "etag": "W/\"items-caa62ad835f0712e\""
       }
     },
     {
@@ -404,7 +404,7 @@
       "healthScore": 100,
       "consecutiveFailures": 0,
       "state": {
-        "etag": "\"qemqag\""
+        "etag": "\"O8rOeA\""
       }
     },
     {
@@ -598,7 +598,7 @@
       "healthScore": 100,
       "consecutiveFailures": 0,
       "state": {
-        "lastModified": "Sat, 11 Jul 2026 15:59:31 GMT"
+        "lastModified": "Sat, 11 Jul 2026 18:21:43 GMT"
       }
     },
     {
@@ -1721,7 +1721,7 @@
       "createdAt": "2026-07-11T16:15:43.548Z"
     },
     {
-      "id": "f726dc6f-8a6c-4be2-81e7-a5f3d50877cd",
+      "id": "aa9391b9-70ad-4b59-aef4-ae19573d8629",
       "sourceSlug": "openai",
       "externalId": "gpt-5-unified-routing",
       "canonicalUrl": "https://openai.com/index/introducing-gpt-5",
@@ -1856,7 +1856,7 @@
       "createdAt": "2026-07-11T16:15:43.232Z"
     },
     {
-      "id": "8e81bbd3-6749-489a-ba2b-d6d8792f8609",
+      "id": "b647525f-c1d5-43fa-9f87-b8124a3b2a5e",
       "sourceSlug": "openai",
       "externalId": "codex-general-availability",
       "canonicalUrl": "https://openai.com/index/codex-now-generally-available",
@@ -2117,7 +2117,7 @@
       "createdAt": "2026-07-11T16:15:43.556Z"
     },
     {
-      "id": "f0277fff-c4a2-4c08-9684-979a0af79df7",
+      "id": "d8136a89-99d7-4ff1-87cd-e94ca45ba1c1",
       "sourceSlug": "nvidia-blog-ai",
       "externalId": "nvidia-blackwell-ultra-reasoning-factory",
       "canonicalUrl": "https://nvidianews.nvidia.com/online-press-kit/gtc-2025-news",
@@ -2462,7 +2462,7 @@
       "createdAt": "2026-07-11T16:15:43.338Z"
     },
     {
-      "id": "0f4229b7-65c3-478d-8d50-0bfb54e89a07",
+      "id": "f63087c4-6513-4882-87c6-bf7d8fb3f0a9",
       "sourceSlug": "minimax",
       "externalId": "minimax-m1-long-context-reasoning",
       "canonicalUrl": "https://www.minimax.io/news/minimaxm1",
@@ -2828,7 +2828,7 @@
       "createdAt": "2026-07-11T16:15:43.330Z"
     },
     {
-      "id": "7e13a914-d1c2-4984-ae7f-2a758d5e22b1",
+      "id": "8b99504f-a97c-4670-8fa0-7231d459d61a",
       "sourceSlug": "qwen",
       "externalId": "qwen-3-hybrid-thinking",
       "canonicalUrl": "https://qwenlm.github.io/blog/qwen3",
@@ -3026,7 +3026,7 @@
       "createdAt": "2026-07-11T16:15:44.806Z"
     },
     {
-      "id": "1210be16-965d-4bf8-a6d7-43a57bdbb54b",
+      "id": "0cc40a6b-7775-491e-9e3f-7c60480fce12",
       "sourceSlug": "openai",
       "externalId": "gpt-live-voice-interface",
       "canonicalUrl": "https://openai.com/index/introducing-gpt-live",
@@ -3056,7 +3056,7 @@
       "createdAt": "2026-07-11T16:04:10.594Z"
     },
     {
-      "id": "1ea848e0-ebff-45d8-914a-202e8fca8927",
+      "id": "c6c53340-2abf-4823-8084-3af6df11a141",
       "sourceSlug": "google-ai",
       "externalId": "gemini-2-5-thinking-model",
       "canonicalUrl": "https://blog.google/technology/google-deepmind/gemini-model-thinking-updates-march-2025",
@@ -3086,7 +3086,7 @@
       "createdAt": "2026-07-11T16:05:34.440Z"
     },
     {
-      "id": "c326b786-c634-4125-94a0-5512e15f7c7c",
+      "id": "2a755379-286e-4301-8462-603057fa25d9",
       "sourceSlug": "google-ai",
       "externalId": "gemini-2-agentic-era",
       "canonicalUrl": "https://blog.google/technology/google-deepmind/google-gemini-ai-update-december-2024",
@@ -3410,6 +3410,27 @@
       "createdAt": "2026-07-11T16:15:43.331Z"
     },
     {
+      "id": "8d43af57-a442-49ab-a701-7af90b625992",
+      "sourceSlug": "hackernews-ai",
+      "externalId": "https://news.ycombinator.com/item?id=48873669",
+      "canonicalUrl": "https://www.wired.com/story/security-news-this-week-ai-found-a-root-bug-in-linux-that-everyone-missed-for-15-years",
+      "urlHash": "4ad36a6191087b15a35264cb19b7963f6dbf3d21d4dd2c06f64ef283c06dfe05",
+      "title": "AI Found a Root Bug in Linux That Everyone Missed for 15 Years",
+      "summary": "Article URL: https://www.wired.com/story/security-news-this-week-ai-found-a-root-bug-in-linux-that-everyone-missed-for-15-years/ Comments URL: https://news.ycombinator.com/item?id=48873669 Points: 1 # Comments: 0",
+      "author": null,
+      "language": "en",
+      "publishedAt": "2026-07-11T17:00:52.000Z",
+      "category": "industry",
+      "tags": [],
+      "metrics": {
+        "platforms": [
+          "rss"
+        ]
+      },
+      "contentHash": "bf946f0a18b8dd41e2bdb4f457d6be1ca91c2c93b8081c4feaba5e8c161d7127",
+      "createdAt": "2026-07-11T18:34:42.948Z"
+    },
+    {
       "id": "f6b7c7e2-b530-4ae7-9e7d-3624dc32f241",
       "sourceSlug": "openai",
       "externalId": "https://openai.com/index/industrial-policy-for-the-intelligence-age",
@@ -3473,7 +3494,7 @@
       "createdAt": "2026-07-11T16:15:43.530Z"
     },
     {
-      "id": "b335bf7d-bfb3-481d-b261-4fc8479cfdf8",
+      "id": "a798ca7a-1d12-4b0f-9ad9-57cfdfe75d53",
       "sourceSlug": "anthropic",
       "externalId": "claude-4-long-running-agents",
       "canonicalUrl": "https://www.anthropic.com/news/claude-4",
@@ -3627,6 +3648,27 @@
       },
       "contentHash": "4582c444c0e215617293d07f64f719e28aefcab3283986e12cb8d5d42b065647",
       "createdAt": "2026-07-11T16:15:43.106Z"
+    },
+    {
+      "id": "b9c20fef-b045-42a8-a385-26c505e228e8",
+      "sourceSlug": "hackernews-ai",
+      "externalId": "https://news.ycombinator.com/item?id=48874344",
+      "canonicalUrl": "https://news.ycombinator.com/item?id=48874344",
+      "urlHash": "58881a82510dd32d0460d358ef132de0947718cccd9e44f2eb06b1e6f4e9a3bc",
+      "title": "Ask HN: Has single-task focus become outdated in the AI era?",
+      "summary": "I’ve always found that deep focusing on one task at a time was the only way to get things done at work with good quality and at an acceptable pace, and I have a real hard time multitasking (even with AI) because of context switching and getting distracted or overwhelmed. But with AI making parallel work easier (in theory), is single-task focus now a disadvantage? Are effective engineers always running several threads at once, or is deep focus still the best way to get things done? Comments URL: https://news.ycombinator.com/item?id=48874344 Points: 1 # Comments: 0",
+      "author": null,
+      "language": "en",
+      "publishedAt": "2026-07-11T18:20:26.000Z",
+      "category": "industry",
+      "tags": [],
+      "metrics": {
+        "platforms": [
+          "rss"
+        ]
+      },
+      "contentHash": "4d8e0b9a6822dc85299221094adb9735da238fd945f7d144d87aa3d2abb1aef9",
+      "createdAt": "2026-07-11T18:34:42.943Z"
     },
     {
       "id": "47a9413f-1390-4504-9d2f-e623b9cfb1f3",
@@ -3860,7 +3902,7 @@
       "createdAt": "2026-07-11T16:15:43.545Z"
     },
     {
-      "id": "92f18d34-e6bb-419a-86cc-9dfdccd5b7ca",
+      "id": "a0939380-d8a7-4ccf-bbc6-8b1ade474ce8",
       "sourceSlug": "openai",
       "externalId": "openai-o3-o4-mini-tools",
       "canonicalUrl": "https://openai.com/index/introducing-o3-and-o4-mini",
@@ -3974,7 +4016,7 @@
       "createdAt": "2026-07-11T16:15:43.538Z"
     },
     {
-      "id": "5fd1a415-3227-4796-b5ee-fc2c4324299a",
+      "id": "daf925b2-43a0-4281-b627-ac1b52ca0fa0",
       "sourceSlug": "eu-ai-office",
       "externalId": "eu-ai-act-enters-force",
       "canonicalUrl": "https://digital-strategy.ec.europa.eu/en/news/european-artificial-intelligence-act-comes-force",
@@ -4180,7 +4222,7 @@
       "createdAt": "2026-07-11T16:15:43.118Z"
     },
     {
-      "id": "bda6532b-79c9-49bd-a866-0a22471d494c",
+      "id": "887135f8-a1d2-4c17-9c83-565094758142",
       "sourceSlug": "meta-ai",
       "externalId": "llama-4-native-multimodal-moe",
       "canonicalUrl": "https://ai.meta.com/blog/llama-4-multimodal-intelligence",
@@ -4483,7 +4525,7 @@
       "createdAt": "2026-07-11T16:15:43.531Z"
     },
     {
-      "id": "c573e72c-65c6-4ed0-951f-644daaa19825",
+      "id": "6f844700-69b4-4b36-b215-5e32aed6087b",
       "sourceSlug": "meta-ai",
       "externalId": "llama-3-1-open-frontier-model",
       "canonicalUrl": "https://ai.meta.com/blog/meta-llama-3-1",
@@ -4732,7 +4774,7 @@
       "createdAt": "2026-07-11T16:15:43.547Z"
     },
     {
-      "id": "b56f5ca2-0918-4b33-9d34-274e2353c25d",
+      "id": "5f7fe85a-b03a-4cdf-aa00-199c1c69c495",
       "sourceSlug": "moonshot",
       "externalId": "kimi-k2-agentic-open-model",
       "canonicalUrl": "https://github.com/MoonshotAI/Kimi-K2",
@@ -4888,7 +4930,7 @@
       "createdAt": "2026-07-11T16:15:43.223Z"
     },
     {
-      "id": "761fbe1f-85ed-412a-a76b-8ebba0fc45c4",
+      "id": "96f779b3-0746-4b44-925e-2e152c68ba79",
       "sourceSlug": "qwen",
       "externalId": "qwen-2-5-open-model-matrix",
       "canonicalUrl": "https://qwenlm.github.io/blog/qwen2.5",
@@ -4939,7 +4981,7 @@
       "createdAt": "2026-07-11T16:15:43.545Z"
     },
     {
-      "id": "9b3d643d-daad-45bb-9b73-361b6a98aba1",
+      "id": "a683a544-423e-4f3e-a40b-856798e468e4",
       "sourceSlug": "anthropic",
       "externalId": "claude-computer-use",
       "canonicalUrl": "https://www.anthropic.com/news/3-5-models-and-computer-use",
@@ -5032,6 +5074,27 @@
       "createdAt": "2026-07-11T16:15:43.332Z"
     },
     {
+      "id": "11ab8940-5c99-4a3d-a3b2-961858e6717a",
+      "sourceSlug": "hackernews-ai",
+      "externalId": "https://news.ycombinator.com/item?id=48873337",
+      "canonicalUrl": "https://www.agentation.com/",
+      "urlHash": "a34e1efd2b6ddfe0fa8cd6e878a502b2eae52e1a4fe80e691b52d4d1055d15ab",
+      "title": "Agentation – Visual UI Annotation for AI Coding Agents",
+      "summary": "Article URL: https://www.agentation.com/ Comments URL: https://news.ycombinator.com/item?id=48873337 Points: 2 # Comments: 0",
+      "author": null,
+      "language": "en",
+      "publishedAt": "2026-07-11T16:16:51.000Z",
+      "category": "industry",
+      "tags": [],
+      "metrics": {
+        "platforms": [
+          "rss"
+        ]
+      },
+      "contentHash": "377d64dc55bc28d03d89b825c09744ae4dd41255ede9766eee4c8d846becff94",
+      "createdAt": "2026-07-11T18:34:42.949Z"
+    },
+    {
       "id": "d1362fe7-4d1a-4281-92ee-e5407d15766b",
       "sourceSlug": "arxiv-ai",
       "externalId": "oai:arXiv.org:2607.07760v1",
@@ -5051,6 +5114,27 @@
       },
       "contentHash": "c1e120754aa5436a794c04639c0f0a094443b592b657858fadfee92b02e99b44",
       "createdAt": "2026-07-11T16:15:43.100Z"
+    },
+    {
+      "id": "3d5d3c48-e134-41c4-a835-b68a8ab6b10a",
+      "sourceSlug": "hackernews-ai",
+      "externalId": "https://news.ycombinator.com/item?id=48873855",
+      "canonicalUrl": "https://pluralistic.net/2025/09/11/vulgar-thatcherism",
+      "urlHash": "a3dfb41b3e0da104ce94fac70dbe6ed1a5cd2cbe677473fb6e2034f72df0c613",
+      "title": "Reverse centaurs are the answer to the AI paradox",
+      "summary": "Article URL: https://pluralistic.net/2025/09/11/vulgar-thatcherism/#there-is-an-alternative Comments URL: https://news.ycombinator.com/item?id=48873855 Points: 15 # Comments: 3",
+      "author": null,
+      "language": "en",
+      "publishedAt": "2026-07-11T17:23:52.000Z",
+      "category": "industry",
+      "tags": [],
+      "metrics": {
+        "platforms": [
+          "rss"
+        ]
+      },
+      "contentHash": "756988ee16ec58bda0b43874a1bdaf8aa339f1d3602daa5a4f70896e5635704c",
+      "createdAt": "2026-07-11T18:34:42.947Z"
     },
     {
       "id": "6b457d94-0b94-4861-b20e-79de81f0e261",
@@ -5095,7 +5179,7 @@
       "createdAt": "2026-07-11T16:15:43.121Z"
     },
     {
-      "id": "db5da945-0cf6-4e44-8a1c-03d37abc6bcd",
+      "id": "e5e09525-c924-4bb4-a5c9-973fcf1f0aab",
       "sourceSlug": "anthropic",
       "externalId": "claude-3-7-code-preview",
       "canonicalUrl": "https://www.anthropic.com/news/claude-3-7-sonnet",
@@ -5146,7 +5230,7 @@
       "createdAt": "2026-07-11T16:15:43.322Z"
     },
     {
-      "id": "c9ff6cba-faaf-4b4c-826f-56bd257b10eb",
+      "id": "9ee8d4c7-67bf-46ef-a35e-9c284fdde535",
       "sourceSlug": "openai",
       "externalId": "openai-codex-cloud-agent",
       "canonicalUrl": "https://openai.com/index/introducing-codex",
@@ -5174,6 +5258,48 @@
       },
       "contentHash": "35bbd4ae22e100267bdf3c190beb576b58eb476ccf8bef4e8fa4336ff9c94840",
       "createdAt": "2026-07-11T16:05:34.452Z"
+    },
+    {
+      "id": "7222f831-8c6f-4e04-9498-cbe63ecc6771",
+      "sourceSlug": "hackernews-ai",
+      "externalId": "https://news.ycombinator.com/item?id=48874077",
+      "canonicalUrl": "https://wellfound.com/jobs/4377171-ai-product-manager-vision-ai",
+      "urlHash": "ac0819a9a6b27e37d1dbd59ee1452a09f9d00900dd7ee53fa54ab34586013a1f",
+      "title": "Thalmaar AI (Defense and Space Tech) Is Hiring Founding PM",
+      "summary": "Article URL: https://wellfound.com/jobs/4377171-ai-product-manager-vision-ai Comments URL: https://news.ycombinator.com/item?id=48874077 Points: 1 # Comments: 0",
+      "author": null,
+      "language": "en",
+      "publishedAt": "2026-07-11T17:48:38.000Z",
+      "category": "industry",
+      "tags": [],
+      "metrics": {
+        "platforms": [
+          "rss"
+        ]
+      },
+      "contentHash": "2a9cff3f1376df21e046f688362574c69cd9abf343faf3be0c13e952ec2f37cb",
+      "createdAt": "2026-07-11T18:34:42.945Z"
+    },
+    {
+      "id": "ae80460c-db3c-4e4c-9697-8f3e712d2ae4",
+      "sourceSlug": "hackernews-ai",
+      "externalId": "https://news.ycombinator.com/item?id=48873326",
+      "canonicalUrl": "https://medium.com/@devarshidev/i-wanted-ai-code-review-i-could-actually-own-so-i-built-codra-beea2e3f18fd",
+      "urlHash": "acbeb36cfed11e9fada04201202cd16e3b93052c1724264efb2024f96144cc94",
+      "title": "Show HN: I Wanted AI Code Review I Could Own. So I Built Codra",
+      "summary": "Article URL: https://medium.com/@devarshidev/i-wanted-ai-code-review-i-could-actually-own-so-i-built-codra-beea2e3f18fd Comments URL: https://news.ycombinator.com/item?id=48873326 Points: 1 # Comments: 1",
+      "author": null,
+      "language": "en",
+      "publishedAt": "2026-07-11T16:15:44.000Z",
+      "category": "industry",
+      "tags": [],
+      "metrics": {
+        "platforms": [
+          "rss"
+        ]
+      },
+      "contentHash": "1988888a9ef967d0e72c7e9425701d769cf78252dc171cf751be5ed05a7fa5ba",
+      "createdAt": "2026-07-11T18:34:42.950Z"
     },
     {
       "id": "975fbd38-d18a-4993-af3c-887ceea1e56c",
@@ -5218,7 +5344,7 @@
       "createdAt": "2026-07-11T16:15:43.326Z"
     },
     {
-      "id": "5f94ecdb-4b87-4ac6-930f-dc0564b486e9",
+      "id": "453cafd5-4ccc-4026-9963-d222b56cac49",
       "sourceSlug": "deepseek",
       "externalId": "deepseek-r1-open-reasoning",
       "canonicalUrl": "https://github.com/deepseek-ai/DeepSeek-R1",
@@ -5269,7 +5395,7 @@
       "createdAt": "2026-07-11T16:15:43.108Z"
     },
     {
-      "id": "92fc7d8d-c4e2-4a9f-a029-a7737264d4ad",
+      "id": "e4ad5b41-72be-4a0d-bbe5-20d6f3b58448",
       "sourceSlug": "openai",
       "externalId": "chatgpt-agent-research-to-action",
       "canonicalUrl": "https://openai.com/index/introducing-chatgpt-agent",
@@ -5425,7 +5551,7 @@
       "createdAt": "2026-07-11T16:15:43.224Z"
     },
     {
-      "id": "63ed97af-2837-40b1-88aa-9bb9f29f5ccb",
+      "id": "bf7736cd-8642-410c-92eb-6f69b77974b9",
       "sourceSlug": "anthropic",
       "externalId": "anthropic-series-h-scale",
       "canonicalUrl": "https://www.anthropic.com/news/series-h",
@@ -5497,7 +5623,7 @@
       "createdAt": "2026-07-11T16:15:43.321Z"
     },
     {
-      "id": "4e830e03-1697-407e-9ba0-c165d809d704",
+      "id": "3a6e47fa-8abd-4cea-a7f0-eb3ff2da3ce2",
       "sourceSlug": "anthropic",
       "externalId": "claude-opus-4-7-agent-work",
       "canonicalUrl": "https://www.anthropic.com/news/claude-opus-4-7",
@@ -5527,7 +5653,7 @@
       "createdAt": "2026-07-11T16:05:34.469Z"
     },
     {
-      "id": "20cad21d-2cba-4694-a5b5-c0d3c972a708",
+      "id": "8ed13067-f0ad-45bd-bae9-5d0a9a16437c",
       "sourceSlug": "openai",
       "externalId": "gpt-5-6-microsoft-365-distribution",
       "canonicalUrl": "https://openai.com/index/gpt-5-6-preferred-model-microsoft-365-copilot",
@@ -5555,6 +5681,27 @@
       },
       "contentHash": "4f79a70bb0cc6cd07f9a1e02d83a3b615ae80c23df994e9347c7b37accb56036",
       "createdAt": "2026-07-11T16:04:10.587Z"
+    },
+    {
+      "id": "fd8ed392-1b02-4282-8e13-29ebea6a7c44",
+      "sourceSlug": "hackernews-ai",
+      "externalId": "https://news.ycombinator.com/item?id=48874216",
+      "canonicalUrl": "https://www.theguardian.com/money/2026/jul/11/ai-work-jobs-future-medicine-teaching-hotels-law",
+      "urlHash": "bb0a7fc92d9fa2a202ff8b377c7db9619118599465ef3aa9764302155de627f6",
+      "title": "Safe from AI: which jobs will help you thrive in the future?",
+      "summary": "Article URL: https://www.theguardian.com/money/2026/jul/11/ai-work-jobs-future-medicine-teaching-hotels-law Comments URL: https://news.ycombinator.com/item?id=48874216 Points: 1 # Comments: 0",
+      "author": null,
+      "language": "en",
+      "publishedAt": "2026-07-11T18:06:27.000Z",
+      "category": "industry",
+      "tags": [],
+      "metrics": {
+        "platforms": [
+          "rss"
+        ]
+      },
+      "contentHash": "899d4a1f452e84017bc29dabeb2e2ee2a8c4873e4f32ae2de57386c4f18caacd",
+      "createdAt": "2026-07-11T18:34:42.944Z"
     },
     {
       "id": "ab226b51-7a4c-45d4-bef3-5630a1db1322",
@@ -5620,7 +5767,7 @@
       "createdAt": "2026-07-11T16:15:43.555Z"
     },
     {
-      "id": "7ae0e789-609c-4729-bf2f-e7f6b795040d",
+      "id": "eed2fe84-fb98-4f40-a7fe-edf1a1608508",
       "sourceSlug": "openai",
       "externalId": "openai-responses-agents-sdk",
       "canonicalUrl": "https://openai.com/index/new-tools-for-building-agents",
@@ -5734,6 +5881,27 @@
       "createdAt": "2026-07-11T16:15:43.104Z"
     },
     {
+      "id": "9518234e-fedb-4626-b0cf-6c0761744806",
+      "sourceSlug": "hackernews-ai",
+      "externalId": "https://news.ycombinator.com/item?id=48874352",
+      "canonicalUrl": "https://www.ft.com/content/07fa9ce9-ac21-484c-a57c-078b0bb0fd3b",
+      "urlHash": "c1186ae49363c09a660335738d323593b87058ae09a2dc65513b507d0c993148",
+      "title": "AI rebrands fail to deliver a lasting share price boost",
+      "summary": "Article URL: https://www.ft.com/content/07fa9ce9-ac21-484c-a57c-078b0bb0fd3b Comments URL: https://news.ycombinator.com/item?id=48874352 Points: 1 # Comments: 0",
+      "author": null,
+      "language": "en",
+      "publishedAt": "2026-07-11T18:21:43.000Z",
+      "category": "industry",
+      "tags": [],
+      "metrics": {
+        "platforms": [
+          "rss"
+        ]
+      },
+      "contentHash": "773e17d817ea869ab58e4c6e70e393760cada00556d0f527d0267fbd68d85c4f",
+      "createdAt": "2026-07-11T18:34:42.942Z"
+    },
+    {
       "id": "c260231e-a939-4e04-96de-3865ea0bcdce",
       "sourceSlug": "openai",
       "externalId": "https://openai.com/index/openai-on-oracle-cloud",
@@ -5774,6 +5942,27 @@
       },
       "contentHash": "6d259273ae7bef809eaa9d7159edc8bf4249b19da8156e362e749e9cf0d67931",
       "createdAt": "2026-07-11T16:15:43.199Z"
+    },
+    {
+      "id": "635d6003-adc4-4fc6-8fe2-f5eba171f4eb",
+      "sourceSlug": "hackernews-ai",
+      "externalId": "https://news.ycombinator.com/item?id=48874200",
+      "canonicalUrl": "https://geohot.github.io//blog/jekyll/update/2026/07/11/ai-2040.html",
+      "urlHash": "c3547331e720b325bbbbcd16f830f6666298d52ae495717850f07332f0ac95a2",
+      "title": "AI 2040 and the Cult of Intelligence",
+      "summary": "Article URL: https://geohot.github.io//blog/jekyll/update/2026/07/11/ai-2040.html Comments URL: https://news.ycombinator.com/item?id=48874200 Points: 5 # Comments: 1",
+      "author": null,
+      "language": "en",
+      "publishedAt": "2026-07-11T18:04:01.000Z",
+      "category": "industry",
+      "tags": [],
+      "metrics": {
+        "platforms": [
+          "rss"
+        ]
+      },
+      "contentHash": "73c147f69249e46a6cb4e0269404164904216e4c73d9c6cf6611530f7e36ecf6",
+      "createdAt": "2026-07-11T18:34:42.944Z"
     },
     {
       "id": "22d9a6ce-7942-44d7-b835-32571d98ed48",
@@ -5860,7 +6049,7 @@
       "createdAt": "2026-07-11T16:15:43.338Z"
     },
     {
-      "id": "a5294907-6851-4a86-bf05-c8ff4e5d6739",
+      "id": "51e83c42-3860-45c4-b647-28ffa79d1503",
       "sourceSlug": "google-developers",
       "externalId": "google-a2a-agent-protocol",
       "canonicalUrl": "https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability",
@@ -6163,7 +6352,7 @@
       "createdAt": "2026-07-11T16:15:43.337Z"
     },
     {
-      "id": "90668801-6d0e-430d-b5a5-9feb66ed4817",
+      "id": "0229dcae-4916-43cc-98ae-777f0a729d8b",
       "sourceSlug": "robbyant",
       "externalId": "lingbot-vla-2-cross-embodiment",
       "canonicalUrl": "https://github.com/Robbyant/lingbot-vla-v2",
@@ -6425,7 +6614,7 @@
       "createdAt": "2026-07-11T16:15:43.103Z"
     },
     {
-      "id": "24f5ef3c-11a8-45c8-8feb-b7730861a7d3",
+      "id": "e798142d-2bf9-49eb-849c-ada9f86f5896",
       "sourceSlug": "openai",
       "externalId": "gpt-5-5-real-work",
       "canonicalUrl": "https://openai.com/index/introducing-gpt-5-5",
@@ -6476,7 +6665,7 @@
       "createdAt": "2026-07-11T16:15:43.319Z"
     },
     {
-      "id": "a9b60e19-4758-47b6-9796-dec52de442ed",
+      "id": "9c8cfefb-2e6d-4e7c-9d10-f3d3fb84e808",
       "sourceSlug": "openai",
       "externalId": "openai-deep-research",
       "canonicalUrl": "https://openai.com/index/introducing-deep-research",
@@ -6548,7 +6737,7 @@
       "createdAt": "2026-07-11T16:15:43.102Z"
     },
     {
-      "id": "7781528a-a6cb-4d1c-a9d9-87d357fac990",
+      "id": "1ce3a257-a7c3-4b1b-a09c-f72f918fc2b3",
       "sourceSlug": "openai",
       "externalId": "gpt-5-6-agent-platform-shift",
       "canonicalUrl": "https://openai.com/index/gpt-5-6",
@@ -6599,7 +6788,7 @@
       "createdAt": "2026-07-11T16:15:43.330Z"
     },
     {
-      "id": "a893cc5f-600d-4388-9a67-25a9ee035b12",
+      "id": "df9fb725-1cc9-43b2-a296-d7e8e96e6db3",
       "sourceSlug": "anthropic",
       "externalId": "model-context-protocol",
       "canonicalUrl": "https://www.anthropic.com/news/model-context-protocol",
@@ -6755,6 +6944,27 @@
       "createdAt": "2026-07-11T16:15:43.225Z"
     },
     {
+      "id": "64a7434f-c57d-4fca-a8bc-20f9fa90e575",
+      "sourceSlug": "hackernews-ai",
+      "externalId": "https://news.ycombinator.com/item?id=48873978",
+      "canonicalUrl": "https://www.wsj.com/tech/ai/alex-karp-is-saying-what-every-angry-ceo-is-thinking-about-ai-7f5f7c0c",
+      "urlHash": "e66909d57283a9c975c69399f75c6ce3a93fc090fdaabc7f722242fb309e063c",
+      "title": "Alex Karp Is Saying What Every Angry CEO Is Thinking About AI",
+      "summary": "Article URL: https://www.wsj.com/tech/ai/alex-karp-is-saying-what-every-angry-ceo-is-thinking-about-ai-7f5f7c0c Comments URL: https://news.ycombinator.com/item?id=48873978 Points: 14 # Comments: 7",
+      "author": null,
+      "language": "en",
+      "publishedAt": "2026-07-11T17:37:30.000Z",
+      "category": "industry",
+      "tags": [],
+      "metrics": {
+        "platforms": [
+          "rss"
+        ]
+      },
+      "contentHash": "7ffdc48926b2323bc4aa1fb3ff225ec7e112cc476124e085723dabba16e948ab",
+      "createdAt": "2026-07-11T18:34:42.946Z"
+    },
+    {
       "id": "2d7ac8b4-3256-4284-a9a0-e1bf555bdcb0",
       "sourceSlug": "hackernews-ai",
       "externalId": "https://news.ycombinator.com/item?id=48871449",
@@ -6776,7 +6986,7 @@
       "createdAt": "2026-07-11T16:15:44.810Z"
     },
     {
-      "id": "32ba34cd-a2ed-4650-9e4a-b22ceb72fdd2",
+      "id": "69578723-a77d-46ce-9bd2-e7272c6e23b4",
       "sourceSlug": "openai",
       "externalId": "swe-bench-pro-signal-noise",
       "canonicalUrl": "https://openai.com/index/separating-signal-from-noise-coding-evaluations",
@@ -6804,6 +7014,27 @@
       },
       "contentHash": "39de349952d24908404dba793448e101af6269501d0105a740261c424fd21d22",
       "createdAt": "2026-07-11T16:04:10.597Z"
+    },
+    {
+      "id": "49250b51-6469-4aa1-8c60-bbfbcdc26bf8",
+      "sourceSlug": "hackernews-ai",
+      "externalId": "https://news.ycombinator.com/item?id=48874053",
+      "canonicalUrl": "https://open-sandbox.ai/",
+      "urlHash": "e95d42b8bb050c6a190c9e2e8ce19b8fddaab5195088f79c22232d511aeadc20",
+      "title": "OpenSandbox Universal Sandbox Infrastructure for AI Applications",
+      "summary": "Article URL: https://open-sandbox.ai/ Comments URL: https://news.ycombinator.com/item?id=48874053 Points: 1 # Comments: 0",
+      "author": null,
+      "language": "en",
+      "publishedAt": "2026-07-11T17:45:49.000Z",
+      "category": "industry",
+      "tags": [],
+      "metrics": {
+        "platforms": [
+          "rss"
+        ]
+      },
+      "contentHash": "cb3ea10c3ddc33478067485a6869f1108e7acc087c0f73e45207465edb96eb71",
+      "createdAt": "2026-07-11T18:34:42.946Z"
     },
     {
       "id": "fbc7d4f8-3285-4b27-a81a-80b586514eac",
@@ -6848,6 +7079,27 @@
       "createdAt": "2026-07-11T16:15:43.209Z"
     },
     {
+      "id": "53f90424-f73c-453e-8ae5-bfce8a9f2395",
+      "sourceSlug": "hackernews-ai",
+      "externalId": "https://news.ycombinator.com/item?id=48873414",
+      "canonicalUrl": "https://vektorgeist.com/blog",
+      "urlHash": "ec9697077f0aa943ee30b1abadfd14b0e7e5f78ab15b33fc3b3db52d9ffbcf1e",
+      "title": "Local-first agent governance: keeping an AI agent contained",
+      "summary": "Article URL: https://vektorgeist.com/blog Comments URL: https://news.ycombinator.com/item?id=48873414 Points: 2 # Comments: 0",
+      "author": null,
+      "language": "en",
+      "publishedAt": "2026-07-11T16:27:05.000Z",
+      "category": "industry",
+      "tags": [],
+      "metrics": {
+        "platforms": [
+          "rss"
+        ]
+      },
+      "contentHash": "1669ccf753b10e9b2d9d04307a00d1f0b6c3743dccfc08af63645fbc675bc4c5",
+      "createdAt": "2026-07-11T18:34:42.948Z"
+    },
+    {
       "id": "76cfb479-8627-446c-b3ea-c3d1b5f18770",
       "sourceSlug": "huggingface",
       "externalId": "https://huggingface.co/blog/ettin-reranker",
@@ -6869,7 +7121,7 @@
       "createdAt": "2026-07-11T16:15:43.236Z"
     },
     {
-      "id": "7f2e8c28-c6b4-4165-bda4-4b2bbf9b1fe5",
+      "id": "ce598677-b783-4949-8b12-f012e22de63b",
       "sourceSlug": "anthropic",
       "externalId": "claude-constitution-2026",
       "canonicalUrl": "https://www.anthropic.com/news/claude-new-constitution",
@@ -6920,7 +7172,7 @@
       "createdAt": "2026-07-11T16:15:43.332Z"
     },
     {
-      "id": "aa9a2276-aaaa-41b3-a2b5-5f8303a26b1d",
+      "id": "7a667ba8-96e5-47c2-85e5-87f5c7ec6898",
       "sourceSlug": "openai",
       "externalId": "openai-operator-browser-agent",
       "canonicalUrl": "https://openai.com/index/introducing-operator",
@@ -6971,7 +7223,7 @@
       "createdAt": "2026-07-11T16:15:43.113Z"
     },
     {
-      "id": "535c58a6-6278-4cbc-a517-b53fc4852f8d",
+      "id": "fb51cc27-fd73-4809-9fae-be436140943f",
       "sourceSlug": "deepseek",
       "externalId": "deepseek-v3-efficient-frontier",
       "canonicalUrl": "https://github.com/deepseek-ai/DeepSeek-V3",
@@ -7085,7 +7337,7 @@
       "createdAt": "2026-07-11T16:15:43.119Z"
     },
     {
-      "id": "d4f09839-1667-4ef1-927f-60a6557ffdb1",
+      "id": "6e7b3fb5-d8ff-4b6c-818c-5beac450ec21",
       "sourceSlug": "worldlabs",
       "externalId": "world-model-functional-taxonomy",
       "canonicalUrl": "https://www.worldlabs.ai/blog",
@@ -7178,7 +7430,7 @@
       "createdAt": "2026-07-11T16:15:43.107Z"
     },
     {
-      "id": "0ffbb8da-83e8-4b01-a71f-328f6fc6d523",
+      "id": "180c0de2-6a0c-4464-b783-305d084c3803",
       "sourceSlug": "openai",
       "externalId": "openai-o1-test-time-reasoning",
       "canonicalUrl": "https://openai.com/index/introducing-openai-o1-preview",
@@ -7230,6 +7482,41 @@
     }
   ],
   "discoveries": [
+    {
+      "id": "208eda61-a697-4eb1-8046-361774dab137",
+      "identityHash": "0bee52d41abd2ee8e794b5f723477229097e7a7109d2cc074ecd5e1d12549c92",
+      "aggregatorSlug": "aihot",
+      "externalId": "cmrglsyla01zoih2enmsl2eu8",
+      "discoveryUrl": "https://aihot.virxact.com/items/cmrglsyla01zoih2enmsl2eu8",
+      "discoveryUrlHash": "c6f01e6e5c156074c495ed420a30e14600cdc630c9bad4cf102d7f13042d1165",
+      "originUrl": "https://www.mixfont.com/ghost-font",
+      "originUrlHash": "d25a187a89eb6dd76f1c8394a270d815c0d207b1100c0cae63a9adfc78c94f7e",
+      "originKind": "unknown",
+      "originName": "Hacker News 热门（buzzing.cc 中文翻译）",
+      "handles": [],
+      "title": "Ghost Font：一种人类能读懂但AI无法识别的反AI字体",
+      "summary": "Ghost Font 是一种利用运动、视频、噪点和诱饵来隐藏文字的反AI字体。用户输入文字后可生成并下载视频片段，视频中的字母由与背景完全相同的点组成，单帧截图无法显示任何信息。该字体生成的视频被传递给Claude Fable和GPT Sol 5.6 Ultra等前沿模型时，这些模型即使具备编程能力也无法解码移动信息，直到被提示具体技术。视频中还包含一条诱饵信息，使模型误以为找到真实内容。项目灵感来自2013年Sang Mun设计的ZXX字体，但现代AI已能轻松读取ZXX。Ghost Font目前为本地原型，数据不发送至任何服务器。作者计划未来将视频生成代码开源，并探索将其用于CAPTCHA系统或AI视觉感知基准测试。",
+      "language": "zh-CN",
+      "publishedAt": "2026-07-11T16:31:09.615Z",
+      "category": "tip",
+      "tags": [
+        "tip"
+      ],
+      "metrics": {
+        "platforms": [
+          "aggregator"
+        ],
+        "regions": [
+          "CN"
+        ]
+      },
+      "matchedSourceSlug": null,
+      "candidateSourceSlugs": [],
+      "matchedSignalId": null,
+      "status": "pending",
+      "firstSeenAt": "2026-07-11T18:34:43.192Z",
+      "createdAt": "2026-07-11T18:34:43.192Z"
+    },
     {
       "id": "f1cc2da5-2e09-4425-8789-be1f749e286f",
       "identityHash": "10560bb50d402fce2b165025e95f9e30c389886cd6e2d3e2064c677ca9040aff",
@@ -7733,6 +8020,45 @@
       "createdAt": "2026-07-11T16:15:43.731Z"
     },
     {
+      "id": "858a0f98-2fa3-434d-bce2-40817d13b840",
+      "identityHash": "691dfccf9580617fe8a3f2bd132603bdf049eefad28361a6723e86fc73fbe8ad",
+      "aggregatorSlug": "aihot",
+      "externalId": "cmrglvcki024uih2edvsk7pef",
+      "discoveryUrl": "https://aihot.virxact.com/items/cmrglvcki024uih2edvsk7pef",
+      "discoveryUrlHash": "bdd45e12fec188fa197ba76678ac3b9b2d804aec816205b5875fa1af00be8603",
+      "originUrl": "https://x.com/sama/status/2075985056846451123",
+      "originUrlHash": "f2d1bb1573afc718983673f47f6b515b936ae9d7fe5332b730142121fcc34366",
+      "originKind": "social",
+      "originName": "X：Sam Altman (@sama)",
+      "handles": [
+        {
+          "handle": "sama"
+        }
+      ],
+      "title": "OpenAI 发布 GPT-5.6 系列医疗评估结果",
+      "summary": "OpenAI 发布 GPT-5.6 系列在医疗领域的评估结果。最小变体 GPT-5.6 Luna 在最低推理强度下即超越最高推理强度的 GPT-5.5，且成本低 25 倍；最大变体 GPT-5.6 Sol 树立新标杆。在涵盖患者端与临床端的多样化任务中，专科医生被要求以无限时间和网络访问权限撰写回答，随后由其他医生盲评。评估基于准确性、沟通、完整性、指令遵循及健康决策帮助性五个维度，共 20000 次评分。结果显示，所有 GPT-5.6 模型表现均显著优于医生，且医生发现 GPT-5.6 回答中的缺陷少于医生自己撰写的回答。",
+      "language": "zh-CN",
+      "publishedAt": "2026-07-11T16:46:22.000Z",
+      "category": "ai-models",
+      "tags": [
+        "ai-models"
+      ],
+      "metrics": {
+        "platforms": [
+          "aggregator"
+        ],
+        "regions": [
+          "CN"
+        ]
+      },
+      "matchedSourceSlug": null,
+      "candidateSourceSlugs": [],
+      "matchedSignalId": null,
+      "status": "pending",
+      "firstSeenAt": "2026-07-11T18:34:43.189Z",
+      "createdAt": "2026-07-11T18:34:43.189Z"
+    },
+    {
       "id": "49c2a02a-4bfe-42d2-9bf2-7878d1354ce9",
       "identityHash": "69844fe64c372d962b7ad5cde158f1df46085a2920f430880c70a6dacf7d9942",
       "aggregatorSlug": "aihot",
@@ -7930,7 +8256,7 @@
       "title": "DeepSeek-V4 Flash 强化学习训练登陆 AMD Instinct MI355X GPU，由 Miles 框架支持",
       "summary": "DeepSeek-V4 Flash 的强化学习训练现已在 AMD Instinct MI355X GPU 上通过 Miles 框架获得支持，基于 ROCm 软件栈运行。该 2840 亿参数 MoE 模型（每 token 激活 130 亿参数）需 SGLang 进行 rollout 生成、Megatron 进行策略更新，Miles 负责异步循环与权重同步。团队解决了 SGLang 与 Megatron 间模型对齐、量化状态在线更新及多节点并行稳定性三大挑战，最终在四个八 GPU 节点上完成端到端验证：超过 100 个优化器步骤中训练-rollout 对数概率差可控，在线奖励持续提升，离线 AIME-2024 基准分数同步上涨。",
       "language": "zh-CN",
-      "publishedAt": "2026-07-10T17:19:11.037Z",
+      "publishedAt": "2026-07-09T16:00:00.000Z",
       "category": "paper",
       "tags": [
         "paper"
@@ -8315,6 +8641,41 @@
       "status": "pending",
       "firstSeenAt": "2026-07-11T16:15:43.704Z",
       "createdAt": "2026-07-11T16:15:43.704Z"
+    },
+    {
+      "id": "56807149-ec93-409a-91af-71498298ee1a",
+      "identityHash": "e31b2b4bba65c3a268a96a96c91c1d22f6f12625e96bd258a643b669029ee2a3",
+      "aggregatorSlug": "aihot",
+      "externalId": "cmrgmylg702eaih2e1e9hhfe4",
+      "discoveryUrl": "https://aihot.virxact.com/items/cmrgmylg702eaih2e1e9hhfe4",
+      "discoveryUrlHash": "76223a96e3d65a0d3a729ece20f9e1c9b10320cb7ed3b7c1e128659cf173b618",
+      "originUrl": "https://the-decoder.com/terrorist-groups-are-using-every-major-ai-chatbot-for-attack-planning-and-weapons-development",
+      "originUrlHash": "69a0521fb44772a5342ac680db4c796b0c23646a25606785f8bb186bb8209ee6",
+      "originKind": "media",
+      "originName": "The Decoder：AI News（RSS）",
+      "handles": [],
+      "title": "研究：博科圣地已使用ChatGPT、Claude等主流AI聊天机器人用于袭击策划与武器开发",
+      "summary": "剑桥大学CASP研究员Antonia Jülich对27名前成员的57次访谈显示，博科圣地已使用ChatGPT、Claude、Gemini、Grok、Meta AI和DeepSeek等主流AI聊天机器人，用于袭击策划、制造更强爆炸装置、武器维护及行动安全。该组织两个派系均设立了专门的AI部门。ISIS自2023年起便提供提示工程和越狱培训，并训练尼日利亚的博科圣地指挥官绕过AI安全过滤器。研究指出，安全过滤器未能可靠防止滥用。Anthropic近期承认，越狱可能永远无法完全消除。",
+      "language": "zh-CN",
+      "publishedAt": "2026-07-11T17:04:28.000Z",
+      "category": "industry",
+      "tags": [
+        "industry"
+      ],
+      "metrics": {
+        "platforms": [
+          "aggregator"
+        ],
+        "regions": [
+          "CN"
+        ]
+      },
+      "matchedSourceSlug": "the-decoder",
+      "candidateSourceSlugs": [],
+      "matchedSignalId": null,
+      "status": "matched_source",
+      "firstSeenAt": "2026-07-11T18:34:43.184Z",
+      "createdAt": "2026-07-11T18:34:43.184Z"
     }
   ],
   "events": [
@@ -8453,6 +8814,51 @@
       "createdAt": "2026-07-11T16:15:44.919Z"
     },
     {
+      "id": "5a8136cf-04a3-4348-a5ea-1dfcdf0e064c",
+      "slug": "a-new-way-to-express-yourself-gemini-can-now-create-music-2026-07-11",
+      "title": "A new way to express yourself: Gemini can now create music",
+      "factSummary": "The Gemini app now features our most advanced music generation model Lyria 3, empowering anyone to make 30-second tracks using text or images.",
+      "summary": "The Gemini app now features our most advanced music generation model Lyria 3, empowering anyone to make 30-second tracks using text or images.",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "new",
+        "way",
+        "express",
+        "yourself",
+        "gemini",
+        "can",
+        "now",
+        "create"
+      ],
+      "confidenceScore": 74,
+      "heatScore": 15,
+      "impactScore": 55,
+      "valueScore": 42,
+      "scoreFactors": {
+        "authority": 92,
+        "corroboration": 20,
+        "primaryEvidence": 50,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 0,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-02-18T16:01:38.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.282Z"
+    },
+    {
       "id": "c45d92e0-c07a-4364-beb6-c90c437943f5",
       "slug": "a-safety-oriented-hypothetico-deductive-framework-for-ai-assisted-differential-diagnosis-2026-07-11",
       "title": "A safety-oriented hypothetico-deductive framework for AI-assisted differential diagnosis",
@@ -8498,6 +8904,51 @@
       "createdAt": "2026-07-11T16:15:44.844Z"
     },
     {
+      "id": "c16a13f2-6ccf-41e2-a1be-dacfd912314f",
+      "slug": "accelerating-discovery-in-india-through-ai-powered-science-and-education-2026-07-11",
+      "title": "Accelerating discovery in India through AI-powered science and education",
+      "factSummary": "Google DeepMind brings National Partnerships for AI initiative to India, scaling AI for science and education",
+      "summary": "Google DeepMind brings National Partnerships for AI initiative to India, scaling AI for science and education",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "accelerating",
+        "discovery",
+        "india",
+        "through",
+        "ai",
+        "powered",
+        "science",
+        "education"
+      ],
+      "confidenceScore": 74,
+      "heatScore": 15,
+      "impactScore": 55,
+      "valueScore": 42,
+      "scoreFactors": {
+        "authority": 92,
+        "corroboration": 20,
+        "primaryEvidence": 50,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 0,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-02-17T13:42:20.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.282Z"
+    },
+    {
       "id": "3b15eb50-f79e-4953-8acb-8ea777fb58ce",
       "slug": "accelerating-discovery-of-liver-disease-mechanisms-2026-07-11",
       "title": "Accelerating discovery of liver disease mechanisms",
@@ -8538,6 +8989,50 @@
       "happenedAt": "2026-05-16T08:00:15.000Z",
       "publishedAt": null,
       "createdAt": "2026-07-11T16:15:44.964Z"
+    },
+    {
+      "id": "c9ecd7e4-3d45-42b3-b3fe-af6137d675f5",
+      "slug": "accelerating-mathematical-and-scientific-discovery-with-gemini-deep-think-2026-07-11",
+      "title": "Accelerating Mathematical and Scientific Discovery with Gemini Deep Think",
+      "factSummary": "Research papers point to the growing impact of Deep Think across fields",
+      "summary": "Research papers point to the growing impact of Deep Think across fields",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "accelerating",
+        "mathematical",
+        "scientific",
+        "discovery",
+        "gemini",
+        "deep",
+        "think"
+      ],
+      "confidenceScore": 74,
+      "heatScore": 15,
+      "impactScore": 55,
+      "valueScore": 42,
+      "scoreFactors": {
+        "authority": 92,
+        "corroboration": 20,
+        "primaryEvidence": 50,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 0,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-02-09T16:12:06.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.284Z"
     },
     {
       "id": "b22ad04b-4f52-4b4f-a210-ea668f0972d3",
@@ -8759,6 +9254,50 @@
       "createdAt": "2026-07-11T16:15:44.832Z"
     },
     {
+      "id": "c2f6191d-92c5-46fe-a38e-5165520ea237",
+      "slug": "agentation-visual-ui-annotation-for-ai-coding-agents-2026-07-11",
+      "title": "Agentation – Visual UI Annotation for AI Coding Agents",
+      "factSummary": "Article URL: https://www.agentation.com/ Comments URL: https://news.ycombinator.com/item?id=48873337 Points: 2 # Comments: 0",
+      "summary": "Article URL: https://www.agentation.com/ Comments URL: https://news.ycombinator.com/item?id=48873337 Points: 2 # Comments: 0",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "agentation",
+        "visual",
+        "ui",
+        "annotation",
+        "ai",
+        "coding",
+        "agents"
+      ],
+      "confidenceScore": 35,
+      "heatScore": 23,
+      "impactScore": 55,
+      "valueScore": 47,
+      "scoreFactors": {
+        "authority": 45,
+        "corroboration": 20,
+        "primaryEvidence": 0,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 98,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-07-11T16:16:51.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.272Z"
+    },
+    {
       "id": "04894ea6-5d63-4555-b70e-dccad2523dea",
       "slug": "agentic-ai-and-retrieval-augmented-models-in-straight-through-underwriting-2026-07-11",
       "title": "Agentic AI and Retrieval-Augmented Models in Straight-Through Underwriting",
@@ -8931,6 +9470,47 @@
       "createdAt": "2026-07-11T16:15:44.830Z"
     },
     {
+      "id": "a29813af-e682-4dba-8b3b-cd2304cd76e8",
+      "slug": "ai-2040-and-the-cult-of-intelligence-2026-07-11",
+      "title": "AI 2040 and the Cult of Intelligence",
+      "factSummary": "Article URL: https://geohot.github.io//blog/jekyll/update/2026/07/11/ai-2040.html Comments URL: https://news.ycombinator.com/item?id=48874200 Points: 5 # Comments: 1",
+      "summary": "Article URL: https://geohot.github.io//blog/jekyll/update/2026/07/11/ai-2040.html Comments URL: https://news.ycombinator.com/item?id=48874200 Points: 5 # Comments: 1",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "ai",
+        "2040",
+        "cult",
+        "intelligence"
+      ],
+      "confidenceScore": 35,
+      "heatScore": 23,
+      "impactScore": 55,
+      "valueScore": 48,
+      "scoreFactors": {
+        "authority": 45,
+        "corroboration": 20,
+        "primaryEvidence": 0,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 99,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-07-11T18:04:01.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.263Z"
+    },
+    {
       "id": "b4a3097b-69b1-442d-80eb-360b1afc00d3",
       "slug": "ai-coding-agents-read-your-code-perfectly-and-understand-your-team-not-at-all-2026-07-11",
       "title": "AI coding agents read your code perfectly and understand your team not at all",
@@ -8974,6 +9554,51 @@
       "happenedAt": "2026-07-11T15:15:47.000Z",
       "publishedAt": null,
       "createdAt": "2026-07-11T16:15:44.821Z"
+    },
+    {
+      "id": "4e086d30-0826-402d-a18b-cd5338be9601",
+      "slug": "ai-found-a-root-bug-in-linux-that-everyone-missed-for-15-years-2026-07-11",
+      "title": "AI Found a Root Bug in Linux That Everyone Missed for 15 Years",
+      "factSummary": "Article URL: https://www.wired.com/story/security-news-this-week-ai-found-a-root-bug-in-linux-that-everyone-missed-for-15-years/ Comments URL: https://news.ycombinator.com/item?id=48873669 Points: 1 # Comments: 0",
+      "summary": "Article URL: https://www.wired.com/story/security-news-this-week-ai-found-a-root-bug-in-linux-that-everyone-missed-for-15-years/ Comments URL: https://news.ycombinator.com/item?id=48873669 Points: 1 # Comments: 0",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "ai",
+        "found",
+        "root",
+        "bug",
+        "linux",
+        "that",
+        "everyone",
+        "missed"
+      ],
+      "confidenceScore": 35,
+      "heatScore": 23,
+      "impactScore": 55,
+      "valueScore": 47,
+      "scoreFactors": {
+        "authority": 45,
+        "corroboration": 20,
+        "primaryEvidence": 0,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 98,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-07-11T17:00:52.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.269Z"
     },
     {
       "id": "b4545683-f82a-4e92-ac12-8766b633ba65",
@@ -9109,6 +9734,51 @@
       "createdAt": "2026-07-11T16:15:44.820Z"
     },
     {
+      "id": "a4fb4fe7-8497-4d24-a4b3-be077a1d9291",
+      "slug": "ai-rebrands-fail-to-deliver-a-lasting-share-price-boost-2026-07-11",
+      "title": "AI rebrands fail to deliver a lasting share price boost",
+      "factSummary": "Article URL: https://www.ft.com/content/07fa9ce9-ac21-484c-a57c-078b0bb0fd3b Comments URL: https://news.ycombinator.com/item?id=48874352 Points: 1 # Comments: 0",
+      "summary": "Article URL: https://www.ft.com/content/07fa9ce9-ac21-484c-a57c-078b0bb0fd3b Comments URL: https://news.ycombinator.com/item?id=48874352 Points: 1 # Comments: 0",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "ai",
+        "rebrands",
+        "fail",
+        "deliver",
+        "lasting",
+        "share",
+        "price",
+        "boost"
+      ],
+      "confidenceScore": 35,
+      "heatScore": 23,
+      "impactScore": 55,
+      "valueScore": 48,
+      "scoreFactors": {
+        "authority": 45,
+        "corroboration": 20,
+        "primaryEvidence": 0,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 100,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-07-11T18:21:43.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.258Z"
+    },
+    {
       "id": "fdf73651-c43d-4276-95f7-f2e3c023b221",
       "slug": "ai-surveillance-and-social-progress-2026-07-11",
       "title": "AI Surveillance and Social Progress",
@@ -9193,6 +9863,51 @@
       "happenedAt": "2026-07-11T12:26:21.000Z",
       "publishedAt": null,
       "createdAt": "2026-07-11T16:15:44.824Z"
+    },
+    {
+      "id": "7ef3d5a4-b53a-4e38-87af-e60f97c6e002",
+      "slug": "alex-karp-is-saying-what-every-angry-ceo-is-thinking-about-ai-2026-07-11",
+      "title": "Alex Karp Is Saying What Every Angry CEO Is Thinking About AI",
+      "factSummary": "Article URL: https://www.wsj.com/tech/ai/alex-karp-is-saying-what-every-angry-ceo-is-thinking-about-ai-7f5f7c0c Comments URL: https://news.ycombinator.com/item?id=48873978 Points: 14 # Comments: 7",
+      "summary": "Article URL: https://www.wsj.com/tech/ai/alex-karp-is-saying-what-every-angry-ceo-is-thinking-about-ai-7f5f7c0c Comments URL: https://news.ycombinator.com/item?id=48873978 Points: 14 # Comments: 7",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "alex",
+        "karp",
+        "is",
+        "saying",
+        "what",
+        "every",
+        "angry",
+        "ceo"
+      ],
+      "confidenceScore": 35,
+      "heatScore": 23,
+      "impactScore": 55,
+      "valueScore": 48,
+      "scoreFactors": {
+        "authority": 45,
+        "corroboration": 20,
+        "primaryEvidence": 0,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 99,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-07-11T17:37:30.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.267Z"
     },
     {
       "id": "927ba3f0-0c56-46dd-a326-834bf71d4cf3",
@@ -9587,6 +10302,51 @@
       "happenedAt": "2026-07-11T11:04:00.000Z",
       "publishedAt": null,
       "createdAt": "2026-07-11T16:15:44.827Z"
+    },
+    {
+      "id": "960b55a5-7e7e-4792-b86f-2eace005d85e",
+      "slug": "ask-hn-has-single-task-focus-become-outdated-in-the-ai-era-2026-07-11",
+      "title": "Ask HN: Has single-task focus become outdated in the AI era?",
+      "factSummary": "I’ve always found that deep focusing on one task at a time was the only way to get things done at work with good quality and at an acceptable pace, and I have a real hard time multitasking (even with AI) because of context switching and getting distracted or overwhelmed. But with AI making parallel work easier (in theory), is single-task focus now a disadvantage? Are effective engineers always running several threads at once, or is deep focus still the best way to get things done? Comments URL: https://news.ycombinator.com/item?id=48874344 Points: 1 # Comments: 0",
+      "summary": "I’ve always found that deep focusing on one task at a time was the only way to get things done at work with good quality and at an acceptable pace, and I have a real hard time multitasking (even with AI) because of context switching and getting distracted or overwhelmed. But with AI making parallel work easier (in theory), is single-task focus now a disadvantage? Are effective engineers always running several threads at once, or is deep focus still the best way to get things done? Comments URL: https://news.ycombinator.com/item?id=48874344 Points: 1 # Comments: 0",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "ask",
+        "hn",
+        "has",
+        "single",
+        "task",
+        "focus",
+        "become",
+        "outdated"
+      ],
+      "confidenceScore": 35,
+      "heatScore": 23,
+      "impactScore": 55,
+      "valueScore": 48,
+      "scoreFactors": {
+        "authority": 45,
+        "corroboration": 20,
+        "primaryEvidence": 0,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 100,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-07-11T18:20:26.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.260Z"
     },
     {
       "id": "0eb11d13-2fea-4543-9193-7e8a146a1eaf",
@@ -10712,6 +11472,50 @@
       "createdAt": "2026-07-11T16:15:44.898Z"
     },
     {
+      "id": "e861bbe8-4ada-40fd-a4db-4f8d6eea8fd4",
+      "slug": "d4rt-teaching-ai-to-see-the-world-in-four-dimensions-2026-07-11",
+      "title": "D4RT: Teaching AI to see the world in four dimensions",
+      "factSummary": "D4RT: Unified, efficient 4D reconstruction and tracking up to 300x faster than prior methods.",
+      "summary": "D4RT: Unified, efficient 4D reconstruction and tracking up to 300x faster than prior methods.",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "d4rt",
+        "teaching",
+        "ai",
+        "see",
+        "world",
+        "four",
+        "dimensions"
+      ],
+      "confidenceScore": 74,
+      "heatScore": 15,
+      "impactScore": 55,
+      "valueScore": 42,
+      "scoreFactors": {
+        "authority": 92,
+        "corroboration": 20,
+        "primaryEvidence": 50,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 0,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-01-16T10:39:00.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.285Z"
+    },
+    {
       "id": "680293df-8b6d-4e89-80e4-c9e7df648935",
       "slug": "data-for-agents-2026-07-11",
       "title": "Data for Agents",
@@ -11716,6 +12520,51 @@
       "createdAt": "2026-07-11T16:15:44.932Z"
     },
     {
+      "id": "59eb9f03-41f6-4fde-ac27-2ad23ca865b5",
+      "slug": "from-games-to-biology-and-beyond-10-years-of-alphago-s-impact-2026-07-11",
+      "title": "From games to biology and beyond: 10 years of AlphaGo’s impact",
+      "factSummary": "Ten years since AlphaGo, we explore how it is catalyzing scientific discovery and paving a path to AGI.",
+      "summary": "Ten years since AlphaGo, we explore how it is catalyzing scientific discovery and paving a path to AGI.",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "from",
+        "games",
+        "biology",
+        "beyond",
+        "10",
+        "years",
+        "alphago",
+        "impact"
+      ],
+      "confidenceScore": 74,
+      "heatScore": 15,
+      "impactScore": 55,
+      "valueScore": 42,
+      "scoreFactors": {
+        "authority": 92,
+        "corroboration": 20,
+        "primaryEvidence": 50,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 0,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-03-09T13:52:36.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.278Z"
+    },
+    {
       "id": "992d6ee3-f1f0-4c49-8ed0-950162a5b67a",
       "slug": "from-hugging-face-to-amazon-sagemaker-studio-in-one-click-2026-07-11",
       "title": "From Hugging Face to Amazon SageMaker Studio in one click",
@@ -11978,6 +12827,95 @@
       "createdAt": "2026-07-11T16:05:34.316Z"
     },
     {
+      "id": "569493c6-63af-4c97-b72d-1255076abe93",
+      "slug": "gemini-3-1-flash-lite-built-for-intelligence-at-scale-2026-07-11",
+      "title": "Gemini 3.1 Flash-Lite: Built for intelligence at scale",
+      "factSummary": "Gemini 3.1 Flash-Lite is our fastest and most cost-efficient Gemini 3 series model yet.",
+      "summary": "Gemini 3.1 Flash-Lite is our fastest and most cost-efficient Gemini 3 series model yet.",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "gemini",
+        "flash",
+        "lite",
+        "built",
+        "intelligence",
+        "at",
+        "scale"
+      ],
+      "confidenceScore": 74,
+      "heatScore": 15,
+      "impactScore": 55,
+      "valueScore": 42,
+      "scoreFactors": {
+        "authority": 92,
+        "corroboration": 20,
+        "primaryEvidence": 50,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 0,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-03-03T16:35:55.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.278Z"
+    },
+    {
+      "id": "466244ed-17ea-4916-87d2-1a1bfdef18c7",
+      "slug": "gemini-3-1-flash-live-making-audio-ai-more-natural-and-reliable-2026-07-11",
+      "title": "Gemini 3.1 Flash Live: Making audio AI more natural and reliable",
+      "factSummary": "Our latest voice model has improved precision and lower latency to make voice interactions more fluid, natural and precise.",
+      "summary": "Our latest voice model has improved precision and lower latency to make voice interactions more fluid, natural and precise.",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "gemini",
+        "flash",
+        "live",
+        "making",
+        "audio",
+        "ai",
+        "more",
+        "natural"
+      ],
+      "confidenceScore": 74,
+      "heatScore": 15,
+      "impactScore": 55,
+      "valueScore": 42,
+      "scoreFactors": {
+        "authority": 92,
+        "corroboration": 20,
+        "primaryEvidence": 50,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 0,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-03-26T15:23:35.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.275Z"
+    },
+    {
       "id": "ea51b0d7-867b-4407-9b2e-f8781d97dd9f",
       "slug": "gemini-3-1-flash-tts-the-next-generation-of-expressive-ai-speech-2026-07-11",
       "title": "Gemini 3.1 Flash TTS: the next generation of expressive AI speech",
@@ -12023,6 +12961,51 @@
       "createdAt": "2026-07-11T16:15:44.976Z"
     },
     {
+      "id": "030825b8-6764-4909-baae-ca07a1bc9c43",
+      "slug": "gemini-3-1-pro-a-smarter-model-for-your-most-complex-tasks-2026-07-11",
+      "title": "Gemini 3.1 Pro: A smarter model for your most complex tasks",
+      "factSummary": "3.1 Pro is designed for tasks where a simple answer isn’t enough.",
+      "summary": "3.1 Pro is designed for tasks where a simple answer isn’t enough.",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "gemini",
+        "pro",
+        "smarter",
+        "model",
+        "your",
+        "most",
+        "complex",
+        "tasks"
+      ],
+      "confidenceScore": 74,
+      "heatScore": 15,
+      "impactScore": 55,
+      "valueScore": 42,
+      "scoreFactors": {
+        "authority": 92,
+        "corroboration": 20,
+        "primaryEvidence": 50,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 0,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-02-19T16:06:14.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.281Z"
+    },
+    {
       "id": "3b56e81c-7f4a-456a-bb5c-36e9aa53ef0b",
       "slug": "gemini-3-5-frontier-intelligence-with-action-2026-07-11",
       "title": "Gemini 3.5: frontier intelligence with action",
@@ -12062,6 +13045,50 @@
       "happenedAt": "2026-05-15T22:50:12.000Z",
       "publishedAt": null,
       "createdAt": "2026-07-11T16:15:44.967Z"
+    },
+    {
+      "id": "ee19ad6b-4587-4344-b0d5-3ba6013cb518",
+      "slug": "gemini-3-deep-think-advancing-science-research-and-engineering-2026-07-11",
+      "title": "Gemini 3 Deep Think: Advancing science, research and engineering",
+      "factSummary": "Our most specialized reasoning mode is now updated to solve modern science, research and engineering challenges.",
+      "summary": "Our most specialized reasoning mode is now updated to solve modern science, research and engineering challenges.",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "gemini",
+        "deep",
+        "think",
+        "advancing",
+        "science",
+        "research",
+        "engineering"
+      ],
+      "confidenceScore": 74,
+      "heatScore": 15,
+      "impactScore": 55,
+      "valueScore": 42,
+      "scoreFactors": {
+        "authority": 92,
+        "corroboration": 20,
+        "primaryEvidence": 50,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 0,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-02-12T16:15:09.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.283Z"
     },
     {
       "id": "9a1d3505-051f-45e5-92cf-12b18de5eb0c",
@@ -12152,6 +13179,49 @@
       "happenedAt": "2026-04-13T15:52:13.000Z",
       "publishedAt": null,
       "createdAt": "2026-07-11T16:15:44.977Z"
+    },
+    {
+      "id": "13aed8e9-3ebf-4034-b5db-a75ccc1ed2c4",
+      "slug": "gemma-4-byte-for-byte-the-most-capable-open-models-2026-07-11",
+      "title": "Gemma 4: Byte for byte, the most capable open models",
+      "factSummary": "Gemma 4: Our most intelligent open models to date, purpose-built for advanced reasoning and agentic workflows.",
+      "summary": "Gemma 4: Our most intelligent open models to date, purpose-built for advanced reasoning and agentic workflows.",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "gemma",
+        "byte",
+        "most",
+        "capable",
+        "open",
+        "models"
+      ],
+      "confidenceScore": 74,
+      "heatScore": 15,
+      "impactScore": 55,
+      "valueScore": 42,
+      "scoreFactors": {
+        "authority": 92,
+        "corroboration": 20,
+        "primaryEvidence": 50,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 0,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-04-02T16:00:49.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.274Z"
     },
     {
       "id": "b82e01ae-a2a2-4622-8a9c-6aea06db667f",
@@ -14546,6 +15616,93 @@
       "createdAt": "2026-07-11T16:05:34.316Z"
     },
     {
+      "id": "27f2ef21-59f8-4845-9fa9-b9fd7d6b02a4",
+      "slug": "local-first-agent-governance-keeping-an-ai-agent-contained-2026-07-11",
+      "title": "Local-first agent governance: keeping an AI agent contained",
+      "factSummary": "Article URL: https://vektorgeist.com/blog Comments URL: https://news.ycombinator.com/item?id=48873414 Points: 2 # Comments: 0",
+      "summary": "Article URL: https://vektorgeist.com/blog Comments URL: https://news.ycombinator.com/item?id=48873414 Points: 2 # Comments: 0",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "local",
+        "first",
+        "agent",
+        "governance",
+        "keeping",
+        "ai",
+        "contained"
+      ],
+      "confidenceScore": 35,
+      "heatScore": 23,
+      "impactScore": 55,
+      "valueScore": 47,
+      "scoreFactors": {
+        "authority": 45,
+        "corroboration": 20,
+        "primaryEvidence": 0,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 98,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-07-11T16:27:05.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.270Z"
+    },
+    {
+      "id": "f34206e5-5ec7-45fc-a42d-8e3093686965",
+      "slug": "lyria-3-pro-create-longer-tracks-in-more-2026-07-11",
+      "title": "Lyria 3 Pro: Create longer tracks in more",
+      "factSummary": "Introducing Lyria 3 Pro, which unlocks longer tracks with structural awareness. We’re also bringing Lyria to more Google products and surfaces.",
+      "summary": "Introducing Lyria 3 Pro, which unlocks longer tracks with structural awareness. We’re also bringing Lyria to more Google products and surfaces.",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "lyria",
+        "pro",
+        "create",
+        "longer",
+        "tracks",
+        "more"
+      ],
+      "confidenceScore": 74,
+      "heatScore": 15,
+      "impactScore": 55,
+      "valueScore": 42,
+      "scoreFactors": {
+        "authority": 92,
+        "corroboration": 20,
+        "primaryEvidence": 50,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 0,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-03-25T16:01:39.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.277Z"
+    },
+    {
       "id": "e617753f-c9e4-4297-8920-218f7f803c9f",
       "slug": "making-it-easier-to-understand-how-content-was-created-and-edited-2026-07-11",
       "title": "Making it easier to understand how content was created and edited",
@@ -14631,6 +15788,49 @@
       "happenedAt": "2026-06-29T07:00:00.000Z",
       "publishedAt": null,
       "createdAt": "2026-07-11T16:15:44.900Z"
+    },
+    {
+      "id": "933ec800-ab70-4bcb-84f8-c9613bf2c0fc",
+      "slug": "measuring-progress-toward-agi-a-cognitive-framework-2026-07-11",
+      "title": "Measuring progress toward AGI: A cognitive framework",
+      "factSummary": "We’re introducing a framework to measure progress toward AGI, and launching a Kaggle hackathon to build the relevant evaluations.",
+      "summary": "We’re introducing a framework to measure progress toward AGI, and launching a Kaggle hackathon to build the relevant evaluations.",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "measuring",
+        "progress",
+        "toward",
+        "agi",
+        "cognitive",
+        "framework"
+      ],
+      "confidenceScore": 74,
+      "heatScore": 15,
+      "impactScore": 55,
+      "valueScore": 42,
+      "scoreFactors": {
+        "authority": 92,
+        "corroboration": 20,
+        "primaryEvidence": 50,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 0,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-03-17T16:03:47.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.277Z"
     },
     {
       "id": "57c48dab-3a7a-4012-9996-ce3f9971b109",
@@ -15021,6 +16221,51 @@
       "happenedAt": "2026-07-11T15:43:49.000Z",
       "publishedAt": null,
       "createdAt": "2026-07-11T16:15:44.818Z"
+    },
+    {
+      "id": "16af010d-495d-460f-807e-357ee7d31477",
+      "slug": "nano-banana-2-combining-pro-capabilities-with-lightning-fast-speed-2026-07-11",
+      "title": "Nano Banana 2: Combining Pro capabilities with lightning-fast speed",
+      "factSummary": "Our latest image generation model offers advanced world knowledge, production ready specs, subject consistency and more, all at Flash speed.",
+      "summary": "Our latest image generation model offers advanced world knowledge, production ready specs, subject consistency and more, all at Flash speed.",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "nano",
+        "banana",
+        "combining",
+        "pro",
+        "capabilities",
+        "lightning",
+        "fast",
+        "speed"
+      ],
+      "confidenceScore": 74,
+      "heatScore": 15,
+      "impactScore": 55,
+      "valueScore": 42,
+      "scoreFactors": {
+        "authority": 92,
+        "corroboration": 20,
+        "primaryEvidence": 50,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 0,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-02-26T16:01:50.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.279Z"
     },
     {
       "id": "ddbf6fca-4915-4313-b8c2-e709dfc28cd6",
@@ -15790,6 +17035,49 @@
       "happenedAt": "2026-05-16T08:08:44.000Z",
       "publishedAt": null,
       "createdAt": "2026-07-11T16:15:44.963Z"
+    },
+    {
+      "id": "e5f80fd2-25f7-4fe8-b11a-aa89d02ba6ae",
+      "slug": "opensandbox-universal-sandbox-infrastructure-for-ai-applications-2026-07-11",
+      "title": "OpenSandbox Universal Sandbox Infrastructure for AI Applications",
+      "factSummary": "Article URL: https://open-sandbox.ai/ Comments URL: https://news.ycombinator.com/item?id=48874053 Points: 1 # Comments: 0",
+      "summary": "Article URL: https://open-sandbox.ai/ Comments URL: https://news.ycombinator.com/item?id=48874053 Points: 1 # Comments: 0",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "opensandbox",
+        "universal",
+        "sandbox",
+        "infrastructure",
+        "ai",
+        "applications"
+      ],
+      "confidenceScore": 35,
+      "heatScore": 23,
+      "impactScore": 55,
+      "valueScore": 48,
+      "scoreFactors": {
+        "authority": 45,
+        "corroboration": 20,
+        "primaryEvidence": 0,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 99,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-07-11T17:45:49.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.265Z"
     },
     {
       "id": "c26e49d9-1193-40ec-9fb0-e4ca71dcd607",
@@ -16589,6 +17877,91 @@
       "createdAt": "2026-07-11T16:15:44.881Z"
     },
     {
+      "id": "9a7dbdc3-5bb6-458e-94ca-f3a14b271bb1",
+      "slug": "project-genie-experimenting-with-infinite-interactive-worlds-2026-07-11",
+      "title": "Project Genie: Experimenting with infinite, interactive worlds",
+      "factSummary": "Google AI Ultra subscribers in the U.S. can try out Project Genie, an experimental research prototype that lets you create and explore worlds.",
+      "summary": "Google AI Ultra subscribers in the U.S. can try out Project Genie, an experimental research prototype that lets you create and explore worlds.",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "project",
+        "genie",
+        "experimenting",
+        "infinite",
+        "interactive",
+        "worlds"
+      ],
+      "confidenceScore": 74,
+      "heatScore": 15,
+      "impactScore": 55,
+      "valueScore": 42,
+      "scoreFactors": {
+        "authority": 92,
+        "corroboration": 20,
+        "primaryEvidence": 50,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 0,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-01-29T17:01:05.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.284Z"
+    },
+    {
+      "id": "fe26a69b-1ed6-4f9f-a1f1-a0e55ddd1d78",
+      "slug": "protecting-people-from-harmful-manipulation-2026-07-11",
+      "title": "Protecting people from harmful manipulation",
+      "factSummary": "Google DeepMind researches AI's harmful manipulation risks across areas like finance and health, leading to new safety measures.",
+      "summary": "Google DeepMind researches AI's harmful manipulation risks across areas like finance and health, leading to new safety measures.",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "protecting",
+        "people",
+        "from",
+        "harmful",
+        "manipulation"
+      ],
+      "confidenceScore": 74,
+      "heatScore": 15,
+      "impactScore": 55,
+      "valueScore": 42,
+      "scoreFactors": {
+        "authority": 92,
+        "corroboration": 20,
+        "primaryEvidence": 50,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 0,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-03-25T16:46:20.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.276Z"
+    },
+    {
       "id": "aecae391-376e-477f-82e9-33dca659a399",
       "slug": "prx-part-4-our-data-strategy-2026-07-11",
       "title": "PRX Part 4: Our Data Strategy",
@@ -16799,6 +18172,91 @@
       "createdAt": "2026-07-11T16:15:44.945Z"
     },
     {
+      "id": "0fd367c3-1548-4a84-a525-4ee706147a8c",
+      "slug": "reimagining-the-mouse-pointer-for-the-ai-era-2026-07-11",
+      "title": "Reimagining the mouse pointer for the AI era",
+      "factSummary": "Google DeepMind is transforming the mouse pointer into a context-aware AI partner. Move beyond the friction of traditional prompting with intuitive AI collaboration in Chrome and beyond.",
+      "summary": "Google DeepMind is transforming the mouse pointer into a context-aware AI partner. Move beyond the friction of traditional prompting with intuitive AI collaboration in Chrome and beyond.",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "reimagining",
+        "mouse",
+        "pointer",
+        "ai",
+        "era"
+      ],
+      "confidenceScore": 74,
+      "heatScore": 15,
+      "impactScore": 55,
+      "valueScore": 42,
+      "scoreFactors": {
+        "authority": 92,
+        "corroboration": 20,
+        "primaryEvidence": 50,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 0,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-03-29T10:50:49.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.275Z"
+    },
+    {
+      "id": "ac89f840-cb60-460e-ad3e-8062a64a893d",
+      "slug": "reverse-centaurs-are-the-answer-to-the-ai-paradox-2026-07-11",
+      "title": "Reverse centaurs are the answer to the AI paradox",
+      "factSummary": "Article URL: https://pluralistic.net/2025/09/11/vulgar-thatcherism/#there-is-an-alternative Comments URL: https://news.ycombinator.com/item?id=48873855 Points: 15 # Comments: 3",
+      "summary": "Article URL: https://pluralistic.net/2025/09/11/vulgar-thatcherism/#there-is-an-alternative Comments URL: https://news.ycombinator.com/item?id=48873855 Points: 15 # Comments: 3",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "reverse",
+        "centaurs",
+        "are",
+        "answer",
+        "ai",
+        "paradox"
+      ],
+      "confidenceScore": 35,
+      "heatScore": 23,
+      "impactScore": 55,
+      "valueScore": 48,
+      "scoreFactors": {
+        "authority": 45,
+        "corroboration": 20,
+        "primaryEvidence": 0,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 99,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-07-11T17:23:52.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.268Z"
+    },
+    {
       "id": "40a363ca-779b-4580-88ec-6dc9bb2ef17d",
       "slug": "run-a-vllm-server-on-hf-jobs-in-one-command-2026-07-11",
       "title": "Run a vLLM Server on HF Jobs in One Command",
@@ -16886,6 +18344,51 @@
       "happenedAt": "2026-07-07T00:00:00.000Z",
       "publishedAt": null,
       "createdAt": "2026-07-11T16:15:44.890Z"
+    },
+    {
+      "id": "aebc9ec9-f263-4726-bd2a-6cf57af7de10",
+      "slug": "safe-from-ai-which-jobs-will-help-you-thrive-in-the-future-2026-07-11",
+      "title": "Safe from AI: which jobs will help you thrive in the future?",
+      "factSummary": "Article URL: https://www.theguardian.com/money/2026/jul/11/ai-work-jobs-future-medicine-teaching-hotels-law Comments URL: https://news.ycombinator.com/item?id=48874216 Points: 1 # Comments: 0",
+      "summary": "Article URL: https://www.theguardian.com/money/2026/jul/11/ai-work-jobs-future-medicine-teaching-hotels-law Comments URL: https://news.ycombinator.com/item?id=48874216 Points: 1 # Comments: 0",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "safe",
+        "from",
+        "ai",
+        "which",
+        "jobs",
+        "will",
+        "help",
+        "you"
+      ],
+      "confidenceScore": 35,
+      "heatScore": 23,
+      "impactScore": 55,
+      "valueScore": 48,
+      "scoreFactors": {
+        "authority": 45,
+        "corroboration": 20,
+        "primaryEvidence": 0,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 100,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-07-11T18:06:27.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.262Z"
     },
     {
       "id": "226a1094-3661-4583-83de-dccf3c48d93f",
@@ -17377,6 +18880,51 @@
       "createdAt": "2026-07-11T16:15:44.817Z"
     },
     {
+      "id": "7607bea7-9739-44cc-9356-706208160533",
+      "slug": "show-hn-i-wanted-ai-code-review-i-could-own-so-i-built-codra-2026-07-11",
+      "title": "Show HN: I Wanted AI Code Review I Could Own. So I Built Codra",
+      "factSummary": "Article URL: https://medium.com/@devarshidev/i-wanted-ai-code-review-i-could-actually-own-so-i-built-codra-beea2e3f18fd Comments URL: https://news.ycombinator.com/item?id=48873326 Points: 1 # Comments: 1",
+      "summary": "Article URL: https://medium.com/@devarshidev/i-wanted-ai-code-review-i-could-actually-own-so-i-built-codra-beea2e3f18fd Comments URL: https://news.ycombinator.com/item?id=48873326 Points: 1 # Comments: 1",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "show",
+        "hn",
+        "wanted",
+        "ai",
+        "code",
+        "review",
+        "could",
+        "own"
+      ],
+      "confidenceScore": 35,
+      "heatScore": 23,
+      "impactScore": 55,
+      "valueScore": 47,
+      "scoreFactors": {
+        "authority": 45,
+        "corroboration": 20,
+        "primaryEvidence": 0,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 98,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-07-11T16:15:44.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.273Z"
+    },
+    {
       "id": "9e25cedd-3f72-4480-9c95-ce790446b2ed",
       "slug": "show-hn-my-ai-agent-has-9-hours-left-to-win-a-public-bet-live-dashboard-2026-07-11",
       "title": "Show HN: My AI agent has 9 hours left to win a public bet – live dashboard",
@@ -17684,6 +19232,51 @@
       "happenedAt": "2026-07-08T12:00:00.000Z",
       "publishedAt": "2026-07-08T12:00:00.000Z",
       "createdAt": "2026-07-11T16:04:10.502Z"
+    },
+    {
+      "id": "f27c0d40-182c-4138-b693-25d1f2dc8ed4",
+      "slug": "thalmaar-ai-defense-and-space-tech-is-hiring-founding-pm-2026-07-11",
+      "title": "Thalmaar AI (Defense and Space Tech) Is Hiring Founding PM",
+      "factSummary": "Article URL: https://wellfound.com/jobs/4377171-ai-product-manager-vision-ai Comments URL: https://news.ycombinator.com/item?id=48874077 Points: 1 # Comments: 0",
+      "summary": "Article URL: https://wellfound.com/jobs/4377171-ai-product-manager-vision-ai Comments URL: https://news.ycombinator.com/item?id=48874077 Points: 1 # Comments: 0",
+      "technicalInsight": "待编辑：这项变化对能力、成本或工程路线意味着什么？",
+      "industryInsight": "待编辑：这项变化会如何影响竞争结构与产业分工？",
+      "futureOutlook": "待编辑：接下来要观察哪些可验证信号？",
+      "businessValue": "待编辑：CEO、投资负责人或业务负责人应采取什么动作？",
+      "category": "industry",
+      "company": "industry",
+      "keywords": [
+        "thalmaar",
+        "ai",
+        "defense",
+        "space",
+        "tech",
+        "is",
+        "hiring",
+        "founding"
+      ],
+      "confidenceScore": 35,
+      "heatScore": 23,
+      "impactScore": 55,
+      "valueScore": 48,
+      "scoreFactors": {
+        "authority": 45,
+        "corroboration": 20,
+        "primaryEvidence": 0,
+        "uniqueAuthors": 0,
+        "independentSources": 1,
+        "platformBreadth": 1,
+        "regionBreadth": 0,
+        "velocity": 0,
+        "freshness": 99,
+        "crossRegion": false
+      },
+      "status": "review",
+      "featured": 0,
+      "manualOverride": 0,
+      "happenedAt": "2026-07-11T17:48:38.000Z",
+      "publishedAt": null,
+      "createdAt": "2026-07-11T18:34:43.264Z"
     },
     {
       "id": "4df10883-9d66-4b64-b539-e9f2ed970488",
@@ -18473,7 +20066,7 @@
   "eventSignals": [
     {
       "eventId": "006d1189-8941-42fd-a98b-3720645cc0a7",
-      "signalId": "7e13a914-d1c2-4984-ae7f-2a758d5e22b1",
+      "signalId": "8b99504f-a97c-4670-8fa0-7231d459d61a",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.450Z"
@@ -18493,6 +20086,13 @@
       "createdAt": "2026-07-11T16:15:44.870Z"
     },
     {
+      "eventId": "030825b8-6764-4909-baae-ca07a1bc9c43",
+      "signalId": "2e35b1f3-10e5-4943-89eb-d0918c55f3cf",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.281Z"
+    },
+    {
       "eventId": "031483d1-f533-4866-a137-82567f58086e",
       "signalId": "3301b6a3-7c18-43e5-b414-98725a86c40e",
       "evidenceRole": "supporting",
@@ -18508,7 +20108,7 @@
     },
     {
       "eventId": "034a79ea-710b-4427-a223-4d73be2d5c59",
-      "signalId": "92f18d34-e6bb-419a-86cc-9dfdccd5b7ca",
+      "signalId": "a0939380-d8a7-4ccf-bbc6-8b1ade474ce8",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.448Z"
@@ -18536,7 +20136,7 @@
     },
     {
       "eventId": "05a8570a-2466-4c7f-a456-83317d120a6f",
-      "signalId": "32ba34cd-a2ed-4650-9e4a-b22ceb72fdd2",
+      "signalId": "69578723-a77d-46ce-9bd2-e7272c6e23b4",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:04:10.598Z"
@@ -18585,7 +20185,7 @@
     },
     {
       "eventId": "0c97366f-ff0a-464b-af04-f799fe030c9d",
-      "signalId": "1210be16-965d-4bf8-a6d7-43a57bdbb54b",
+      "signalId": "0cc40a6b-7775-491e-9e3f-7c60480fce12",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:04:10.595Z"
@@ -18599,7 +20199,7 @@
     },
     {
       "eventId": "0d1ba57b-62c0-49a3-a198-04c7cf9266a7",
-      "signalId": "8e81bbd3-6749-489a-ba2b-d6d8792f8609",
+      "signalId": "b647525f-c1d5-43fa-9f87-b8124a3b2a5e",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.466Z"
@@ -18613,7 +20213,7 @@
     },
     {
       "eventId": "0e3e1d81-95d0-4e68-a46b-59e80f7f79df",
-      "signalId": "a5294907-6851-4a86-bf05-c8ff4e5d6739",
+      "signalId": "51e83c42-3860-45c4-b647-28ffa79d1503",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.445Z"
@@ -18633,8 +20233,15 @@
       "createdAt": "2026-07-11T16:15:44.851Z"
     },
     {
+      "eventId": "0fd367c3-1548-4a84-a525-4ee706147a8c",
+      "signalId": "c6d2cc56-f88f-43c8-af40-84279b4abc0a",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.275Z"
+    },
+    {
       "eventId": "104d8a19-a1ab-450f-ad20-a6f79104903b",
-      "signalId": "7781528a-a6cb-4d1c-a9d9-87d357fac990",
+      "signalId": "1ce3a257-a7c3-4b1b-a09c-f72f918fc2b3",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:04:10.584Z"
@@ -18655,7 +20262,7 @@
     },
     {
       "eventId": "11e8097c-d4f1-4dad-a02d-80170b858d13",
-      "signalId": "7f2e8c28-c6b4-4165-bda4-4b2bbf9b1fe5",
+      "signalId": "ce598677-b783-4949-8b12-f012e22de63b",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:15:42.144Z"
@@ -18673,6 +20280,13 @@
       "evidenceRole": "supporting",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:15:44.898Z"
+    },
+    {
+      "eventId": "13aed8e9-3ebf-4034-b5db-a75ccc1ed2c4",
+      "signalId": "755cea7c-06dc-4c03-b884-76910dff957d",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.274Z"
     },
     {
       "eventId": "15cea5fb-6b95-4b66-873c-eeb8f2cf38dd",
@@ -18694,6 +20308,13 @@
       "evidenceRole": "supporting",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:15:44.917Z"
+    },
+    {
+      "eventId": "16af010d-495d-460f-807e-357ee7d31477",
+      "signalId": "4314f506-3c1a-4f09-8db2-516028bd3896",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.279Z"
     },
     {
       "eventId": "17994619-771b-4870-a7ea-6088985d6a87",
@@ -18739,7 +20360,7 @@
     },
     {
       "eventId": "21f4c505-332c-4c6e-ad8c-953e35619366",
-      "signalId": "535c58a6-6278-4cbc-a517-b53fc4852f8d",
+      "signalId": "fb51cc27-fd73-4809-9fae-be436140943f",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.423Z"
@@ -18780,8 +20401,15 @@
       "createdAt": "2026-07-11T16:15:44.953Z"
     },
     {
+      "eventId": "27f2ef21-59f8-4845-9fa9-b9fd7d6b02a4",
+      "signalId": "53f90424-f73c-453e-8ae5-bfce8a9f2395",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.271Z"
+    },
+    {
       "eventId": "29fdd2f6-d612-4058-a2bf-8f53802ce927",
-      "signalId": "24f5ef3c-11a8-45c8-8feb-b7730861a7d3",
+      "signalId": "e798142d-2bf9-49eb-849c-ada9f86f5896",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.472Z"
@@ -18837,7 +20465,7 @@
     },
     {
       "eventId": "33008925-5cfd-4f02-a961-0df27bec0e8f",
-      "signalId": "90668801-6d0e-430d-b5a5-9feb66ed4817",
+      "signalId": "0229dcae-4916-43cc-98ae-777f0a729d8b",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:04:10.600Z"
@@ -18976,8 +20604,15 @@
       "createdAt": "2026-07-11T16:15:44.957Z"
     },
     {
+      "eventId": "466244ed-17ea-4916-87d2-1a1bfdef18c7",
+      "signalId": "2ad5f9be-d20c-4247-a3ef-44cbc3cc5361",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.275Z"
+    },
+    {
       "eventId": "4a6cb77e-f99d-4853-acd4-58fe79bb1a50",
-      "signalId": "aa9a2276-aaaa-41b3-a2b5-5f8303a26b1d",
+      "signalId": "7a667ba8-96e5-47c2-85e5-87f5c7ec6898",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.429Z"
@@ -19009,6 +20644,13 @@
       "evidenceRole": "supporting",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:15:44.877Z"
+    },
+    {
+      "eventId": "4e086d30-0826-402d-a18b-cd5338be9601",
+      "signalId": "8d43af57-a442-49ab-a701-7af90b625992",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.269Z"
     },
     {
       "eventId": "4f2f0b19-605b-4c38-87ea-767b582ca9ef",
@@ -19068,7 +20710,7 @@
     },
     {
       "eventId": "540729f4-2603-44cd-affe-2544683b0a0d",
-      "signalId": "0ffbb8da-83e8-4b01-a71f-328f6fc6d523",
+      "signalId": "180c0de2-6a0c-4464-b783-305d084c3803",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.409Z"
@@ -19079,6 +20721,13 @@
       "evidenceRole": "supporting",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:15:44.858Z"
+    },
+    {
+      "eventId": "569493c6-63af-4c97-b72d-1255076abe93",
+      "signalId": "7293a902-fb65-4ef7-9275-0e9a2a64c9cc",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.279Z"
     },
     {
       "eventId": "57466d30-53d1-4500-b590-7dd5b6ea60a1",
@@ -19107,6 +20756,20 @@
       "evidenceRole": "supporting",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:15:44.937Z"
+    },
+    {
+      "eventId": "59eb9f03-41f6-4fde-ac27-2ad23ca865b5",
+      "signalId": "9987626b-f503-49b7-a3dc-886db8dd8b1e",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.278Z"
+    },
+    {
+      "eventId": "5a8136cf-04a3-4348-a5ea-1dfcdf0e064c",
+      "signalId": "d3436f1b-fc6d-48ea-8ebb-df3999fe69c0",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.282Z"
     },
     {
       "eventId": "5b259e8d-1f7f-4d6a-9f0c-b4f66d5579ed",
@@ -19180,7 +20843,7 @@
     },
     {
       "eventId": "6babbba4-c95a-4718-abcf-3d0b0f064cbb",
-      "signalId": "9b3d643d-daad-45bb-9b73-361b6a98aba1",
+      "signalId": "a683a544-423e-4f3e-a40b-856798e468e4",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.414Z"
@@ -19222,7 +20885,7 @@
     },
     {
       "eventId": "6ea5b565-034c-412c-aca1-d1444584132b",
-      "signalId": "d4f09839-1667-4ef1-927f-60a6557ffdb1",
+      "signalId": "6e7b3fb5-d8ff-4b6c-818c-5beac450ec21",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:04:10.603Z"
@@ -19291,6 +20954,13 @@
       "createdAt": "2026-07-11T16:15:44.886Z"
     },
     {
+      "eventId": "7607bea7-9739-44cc-9356-706208160533",
+      "signalId": "ae80460c-db3c-4e4c-9697-8f3e712d2ae4",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.273Z"
+    },
+    {
       "eventId": "764b727c-ab14-49ca-9129-beb6ca411664",
       "signalId": "9ed624e7-855d-4914-a108-ea5726b619b7",
       "evidenceRole": "supporting",
@@ -19306,7 +20976,7 @@
     },
     {
       "eventId": "79126618-11b2-4298-aa1f-5217f4907cd2",
-      "signalId": "f726dc6f-8a6c-4be2-81e7-a5f3d50877cd",
+      "signalId": "aa9391b9-70ad-4b59-aef4-ae19573d8629",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.464Z"
@@ -19331,6 +21001,13 @@
       "evidenceRole": "supporting",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:15:44.854Z"
+    },
+    {
+      "eventId": "7ef3d5a4-b53a-4e38-87af-e60f97c6e002",
+      "signalId": "64a7434f-c57d-4fca-a8bc-20f9fa90e575",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.267Z"
     },
     {
       "eventId": "8104c58e-9700-4c58-aa55-7b9cd1fa07fb",
@@ -19362,14 +21039,14 @@
     },
     {
       "eventId": "885ebdbc-84dd-49b9-ae62-3615970d7ba7",
-      "signalId": "a9b60e19-4758-47b6-9796-dec52de442ed",
+      "signalId": "9c8cfefb-2e6d-4e7c-9d10-f3d3fb84e808",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.432Z"
     },
     {
       "eventId": "8956c17b-b714-42b5-a78d-cabc195db6b5",
-      "signalId": "63ed97af-2837-40b1-88aa-9bb9f29f5ccb",
+      "signalId": "bf7736cd-8642-410c-92eb-6f69b77974b9",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.475Z"
@@ -19424,6 +21101,13 @@
       "createdAt": "2026-07-11T16:15:44.833Z"
     },
     {
+      "eventId": "933ec800-ab70-4bcb-84f8-c9613bf2c0fc",
+      "signalId": "87765bf7-6f48-42aa-bc12-fe38a8055534",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.277Z"
+    },
+    {
       "eventId": "95435d09-fda0-43c7-b69b-d6bca0107608",
       "signalId": "7746b252-432c-4d87-9122-1d5c52f1d682",
       "evidenceRole": "supporting",
@@ -19445,15 +21129,22 @@
       "createdAt": "2026-07-11T16:15:44.968Z"
     },
     {
+      "eventId": "960b55a5-7e7e-4792-b86f-2eace005d85e",
+      "signalId": "b9c20fef-b045-42a8-a385-26c505e228e8",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.261Z"
+    },
+    {
       "eventId": "973579c7-8e53-41c6-abe5-3072f168be28",
-      "signalId": "a893cc5f-600d-4388-9a67-25a9ee035b12",
+      "signalId": "df9fb725-1cc9-43b2-a296-d7e8e96e6db3",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.418Z"
     },
     {
       "eventId": "97de3ebd-b095-4916-a8c2-c27e94ebe521",
-      "signalId": "bda6532b-79c9-49bd-a866-0a22471d494c",
+      "signalId": "887135f8-a1d2-4c17-9c83-565094758142",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.443Z"
@@ -19494,6 +21185,13 @@
       "createdAt": "2026-07-11T16:15:44.955Z"
     },
     {
+      "eventId": "9a7dbdc3-5bb6-458e-94ca-f3a14b271bb1",
+      "signalId": "29ea5ec7-4aad-49f1-b29f-01ebde9b2587",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.285Z"
+    },
+    {
       "eventId": "9ad3adac-1d0b-4318-88d6-fba14b0410f6",
       "signalId": "ea438aff-4bc4-4df2-9c96-48b892055e20",
       "evidenceRole": "supporting",
@@ -19523,7 +21221,7 @@
     },
     {
       "eventId": "9e0f0679-fad3-45f7-a504-972c805f9ac8",
-      "signalId": "5f94ecdb-4b87-4ac6-930f-dc0564b486e9",
+      "signalId": "453cafd5-4ccc-4026-9963-d222b56cac49",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.426Z"
@@ -19550,11 +21248,25 @@
       "createdAt": "2026-07-11T16:15:44.932Z"
     },
     {
+      "eventId": "a29813af-e682-4dba-8b3b-cd2304cd76e8",
+      "signalId": "635d6003-adc4-4fc6-8fe2-f5eba171f4eb",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.263Z"
+    },
+    {
       "eventId": "a44e74e8-83e6-4eae-8930-cfc0c6388dba",
       "signalId": "19bbcac6-2483-4d4d-aee3-e4ab4483655c",
       "evidenceRole": "supporting",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:15:44.824Z"
+    },
+    {
+      "eventId": "a4fb4fe7-8497-4d24-a4b3-be077a1d9291",
+      "signalId": "9518234e-fedb-4626-b0cf-6c0761744806",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.259Z"
     },
     {
       "eventId": "a502ce1c-8083-4ea8-bfd6-1ca4c55866a8",
@@ -19572,7 +21284,7 @@
     },
     {
       "eventId": "a711482c-4368-4381-a080-1dd05e1ec212",
-      "signalId": "4e830e03-1697-407e-9ba0-c165d809d704",
+      "signalId": "3a6e47fa-8abd-4cea-a7f0-eb3ff2da3ce2",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.470Z"
@@ -19592,6 +21304,13 @@
       "createdAt": "2026-07-11T16:15:44.963Z"
     },
     {
+      "eventId": "ac89f840-cb60-460e-ad3e-8062a64a893d",
+      "signalId": "3d5d3c48-e134-41c4-a835-b68a8ab6b10a",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.268Z"
+    },
+    {
       "eventId": "ad2584b1-32b7-4d11-9164-b234f7d42816",
       "signalId": "b74ea806-685b-4041-9e1a-898b22b7b9a3",
       "evidenceRole": "supporting",
@@ -19599,8 +21318,15 @@
       "createdAt": "2026-07-11T16:15:44.906Z"
     },
     {
+      "eventId": "aebc9ec9-f263-4726-bd2a-6cf57af7de10",
+      "signalId": "fd8ed392-1b02-4282-8e13-29ebea6a7c44",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.262Z"
+    },
+    {
       "eventId": "aec8bb5e-ca14-4af5-a09f-c43671eeced6",
-      "signalId": "5fd1a415-3227-4796-b5ee-fc2c4324299a",
+      "signalId": "daf925b2-43a0-4281-b627-ac1b52ca0fa0",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.402Z"
@@ -19621,7 +21347,7 @@
     },
     {
       "eventId": "b203cdb6-617c-44ae-ab46-9d7bbeae3d06",
-      "signalId": "0f4229b7-65c3-478d-8d50-0bfb54e89a07",
+      "signalId": "f63087c4-6513-4882-87c6-bf7d8fb3f0a9",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.457Z"
@@ -19705,10 +21431,17 @@
     },
     {
       "eventId": "c14a2dbb-d158-470a-aaed-e925dc33bbe1",
-      "signalId": "1ea848e0-ebff-45d8-914a-202e8fca8927",
+      "signalId": "c6c53340-2abf-4823-8084-3af6df11a141",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.441Z"
+    },
+    {
+      "eventId": "c16a13f2-6ccf-41e2-a1be-dacfd912314f",
+      "signalId": "fd4101e5-5cdb-47ac-9c0b-f5fd3ca84933",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.283Z"
     },
     {
       "eventId": "c1a425f6-d185-4d4d-bc44-c977920fea55",
@@ -19739,6 +21472,13 @@
       "createdAt": "2026-07-11T16:15:44.885Z"
     },
     {
+      "eventId": "c2f6191d-92c5-46fe-a38e-5165520ea237",
+      "signalId": "11ab8940-5c99-4a3d-a3b2-961858e6717a",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.272Z"
+    },
+    {
       "eventId": "c33825ab-23bb-4e9f-803d-fa41805f669d",
       "signalId": "071eeee9-e751-455a-8a52-4ecea3df9205",
       "evidenceRole": "supporting",
@@ -19747,7 +21487,7 @@
     },
     {
       "eventId": "c38063ad-13b8-47b3-a64d-56b1b909511e",
-      "signalId": "db5da945-0cf6-4e44-8a1c-03d37abc6bcd",
+      "signalId": "e5e09525-c924-4bb4-a5c9-973fcf1f0aab",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.434Z"
@@ -19789,7 +21529,7 @@
     },
     {
       "eventId": "c931d270-4d51-4f48-a941-e230150387f2",
-      "signalId": "f0277fff-c4a2-4c08-9684-979a0af79df7",
+      "signalId": "d8136a89-99d7-4ff1-87cd-e94ca45ba1c1",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.439Z"
@@ -19800,6 +21540,13 @@
       "evidenceRole": "supporting",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:15:44.929Z"
+    },
+    {
+      "eventId": "c9ecd7e4-3d45-42b3-b3fe-af6137d675f5",
+      "signalId": "24cd5eea-3dfc-4179-a6df-3b97448ccad2",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.284Z"
     },
     {
       "eventId": "cbd454e7-9b63-42ee-9e68-ed0370ba98f6",
@@ -19838,7 +21585,7 @@
     },
     {
       "eventId": "d1c48811-386a-411e-a37b-32df885227d5",
-      "signalId": "c573e72c-65c6-4ed0-951f-644daaa19825",
+      "signalId": "6f844700-69b4-4b36-b215-5e32aed6087b",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.399Z"
@@ -19894,7 +21641,7 @@
     },
     {
       "eventId": "dd96da4a-eda4-41b0-a8d0-c46f6f07a5e5",
-      "signalId": "b335bf7d-bfb3-481d-b261-4fc8479cfdf8",
+      "signalId": "a798ca7a-1d12-4b0f-9ad9-57cfdfe75d53",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.454Z"
@@ -19949,6 +21696,13 @@
       "createdAt": "2026-07-11T16:15:44.915Z"
     },
     {
+      "eventId": "e5f80fd2-25f7-4fe8-b11a-aa89d02ba6ae",
+      "signalId": "49250b51-6469-4aa1-8c60-bbfbcdc26bf8",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.266Z"
+    },
+    {
       "eventId": "e617753f-c9e4-4297-8920-218f7f803c9f",
       "signalId": "37952b4d-0668-4bbc-95e1-da0636445c04",
       "evidenceRole": "supporting",
@@ -19961,6 +21715,13 @@
       "evidenceRole": "supporting",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:15:44.931Z"
+    },
+    {
+      "eventId": "e861bbe8-4ada-40fd-a4db-4f8d6eea8fd4",
+      "signalId": "55eb14b8-1dc4-4397-aeef-ce86bc1fece7",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.285Z"
     },
     {
       "eventId": "e92abbb3-ca7e-4a2d-9db9-4053070ea3d4",
@@ -19992,7 +21753,7 @@
     },
     {
       "eventId": "eaf47812-f3ce-4812-a868-3a4063871e87",
-      "signalId": "b56f5ca2-0918-4b33-9d34-274e2353c25d",
+      "signalId": "5f7fe85a-b03a-4cdf-aa00-199c1c69c495",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.459Z"
@@ -20012,8 +21773,15 @@
       "createdAt": "2026-07-11T16:15:44.973Z"
     },
     {
+      "eventId": "ee19ad6b-4587-4344-b0d5-3ba6013cb518",
+      "signalId": "c29dc15f-8725-4566-a913-911f3c755127",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.283Z"
+    },
+    {
       "eventId": "ef180b9d-fe7f-40f7-a8c8-817c467582fa",
-      "signalId": "761fbe1f-85ed-412a-a76b-8ebba0fc45c4",
+      "signalId": "96f779b3-0746-4b44-925e-2e152c68ba79",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.412Z"
@@ -20027,14 +21795,14 @@
     },
     {
       "eventId": "efde5ec2-6528-4a1a-ae90-cd4c7611f28f",
-      "signalId": "c326b786-c634-4125-94a0-5512e15f7c7c",
+      "signalId": "2a755379-286e-4301-8462-603057fa25d9",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.420Z"
     },
     {
       "eventId": "f044cdec-7524-43e4-ac8d-610dafc3b5cc",
-      "signalId": "7ae0e789-609c-4729-bf2f-e7f6b795040d",
+      "signalId": "eed2fe84-fb98-4f40-a7fe-edf1a1608508",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.437Z"
@@ -20054,6 +21822,13 @@
       "createdAt": "2026-07-11T16:15:44.855Z"
     },
     {
+      "eventId": "f27c0d40-182c-4138-b693-25d1f2dc8ed4",
+      "signalId": "7222f831-8c6f-4e04-9498-cbe63ecc6771",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.264Z"
+    },
+    {
       "eventId": "f2c06f23-2c9e-462d-b0b6-9eb29c22bb46",
       "signalId": "4b6f330c-fea4-4137-b91b-c5db7fec8bcb",
       "evidenceRole": "supporting",
@@ -20061,8 +21836,15 @@
       "createdAt": "2026-07-11T16:15:44.831Z"
     },
     {
+      "eventId": "f34206e5-5ec7-45fc-a42d-8e3093686965",
+      "signalId": "a0626092-b766-4ccd-a452-0aeeafb8ee08",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.277Z"
+    },
+    {
       "eventId": "f62ebec5-0029-4b62-a990-618988932294",
-      "signalId": "92fc7d8d-c4e2-4a9f-a029-a7737264d4ad",
+      "signalId": "e4ad5b41-72be-4a0d-bbe5-20d6f3b58448",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.462Z"
@@ -20097,14 +21879,14 @@
     },
     {
       "eventId": "fa765723-4c84-471a-a23b-e5272b86cce3",
-      "signalId": "c9ff6cba-faaf-4b4c-826f-56bd257b10eb",
+      "signalId": "9ee8d4c7-67bf-46ef-a35e-9c284fdde535",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:05:34.452Z"
     },
     {
       "eventId": "fa87aed3-c07c-4f95-aff3-332417a74348",
-      "signalId": "20cad21d-2cba-4694-a5b5-c0d3c972a708",
+      "signalId": "8ed13067-f0ad-45bd-bae9-5d0a9a16437c",
       "evidenceRole": "primary",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:04:10.587Z"
@@ -20129,6 +21911,13 @@
       "evidenceRole": "supporting",
       "relevanceScore": 100,
       "createdAt": "2026-07-11T16:15:44.826Z"
+    },
+    {
+      "eventId": "fe26a69b-1ed6-4f9f-a1f1-a0e55ddd1d78",
+      "signalId": "011172ad-ae83-455c-ae66-00371ff8fc0d",
+      "evidenceRole": "supporting",
+      "relevanceScore": 100,
+      "createdAt": "2026-07-11T18:34:43.276Z"
     }
   ]
 }

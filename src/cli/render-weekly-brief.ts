@@ -75,75 +75,75 @@ export function renderWeeklyBrief(
     events.flatMap((event) => event.evidence?.map((item) => item.source).filter(Boolean) ?? []),
   ).size;
   const siteUrl = input.siteUrl ?? "https://barretlee.github.io/agent-pulse/";
-  const judgmentStatus = events.length
-    ? `本周有 ${events.length} 个通过公开门禁的新证据节点，需要逐项核对当前判断。`
-    : "本周没有足以改变当前判断的新证据；当前判断保持不变。";
+  const leadingEvents = events.slice(0, 3);
+  const actions = selectActionableScouts(scout, 3);
+  const affectedTracks = new Set(events.flatMap(eventTrackNames));
+  const unchangedTracks = strategicTracks.length - affectedTracks.size;
+  const judgment = events.length
+    ? `需要更新。${safe(events[0]?.industryInsight ?? events[0]?.factSummary ?? "", 180)}`
+    : "保持不变。本周没有足以改变当前判断的新证据。";
   const lines = [
     weeklyBriefMarker(window.week),
     `# Agent Pulse AI 周报 · ${window.week}`,
     "",
-    `> ${window.start}—${window.end}：${judgmentStatus} 周报不为固定频率制造趋势。`,
+    `> **一句话判断：${judgment}**`,
     "",
-    `本周收录 ${events.length} 个公开行业变化、${research.length} 篇研究、${scout.length} 条行动参考，来自 ${sourceCount} 个本周事实信源。`,
+    `**周期** ${window.start}—${window.end} · **新增变化** ${events.length} · **事实信源** ${sourceCount} · **研究** ${research.length}`,
     "",
-    `[打开 Agent Pulse 完整版](${siteUrl}) · [查看全部趋势](${siteUrl.replace(/\/?$/, "/")}lines/)`,
+    `[查看完整站点](${siteUrl}) · [打开趋势判断](${siteUrl.replace(/\/?$/, "/")}lines/)`,
     "",
-    "## 本周是否需要更新判断",
+    "## 本周关键变化",
     "",
   ];
 
-  for (const [slug, name] of strategicTracks) {
-    const trackEvents = events.filter((event) =>
-      event.tracks?.some((track) => track.slug === slug),
-    );
-    lines.push(`### ${name} · ${trackEvents.length} 个节点`, "");
-    if (!trackEvents.length) {
-      lines.push("没有足以改变这条主线判断的新证据；保持原判断，等待下一验证信号。", "");
-      continue;
-    }
-    for (const event of trackEvents.slice(0, 5)) {
-      lines.push(
-        `- [${safe(event.title, 150)}](${eventUrl(siteUrl, event.slug)})：${safe(event.industryInsight, 280)}`,
-      );
-    }
-    const next = trackEvents.find((event) => event.futureOutlook)?.futureOutlook;
-    if (next) lines.push("", `**下一观察**：${safe(next, 320)}`);
-    lines.push("");
-  }
-
-  lines.push("## 本周最值得深读", "");
-  if (!events.length) lines.push("本周没有足以改变当前判断的新事件。", "");
-  for (const [index, event] of events.slice(0, 10).entries()) {
+  if (!leadingEvents.length) lines.push("没有新增关键变化。继续沿用上周判断。", "");
+  for (const event of leadingEvents) {
+    const tracks = eventTrackNames(event);
     lines.push(
-      `${index + 1}. [${safe(event.title, 150)}](${eventUrl(siteUrl, event.slug)}) — ${safe(event.factSummary, 260)}`,
-    );
-  }
-
-  lines.push("", "## 研究与反向信号", "");
-  if (!research.length) lines.push("本周尚无通过方法、证据与影响门禁的新研究。", "");
-  for (const event of research.slice(0, 8)) {
-    lines.push(
-      `- [${safe(event.title, 150)}](${eventUrl(siteUrl, event.slug)}) — ${safe(event.futureOutlook, 280)}`,
-    );
-  }
-
-  lines.push("", "## 下周可验证动作", "");
-  if (!scout.length) lines.push("本周尚无达到公开门槛的新行动参考。", "");
-  for (const item of scout.slice(0, 8)) {
-    lines.push(
-      `### ${safe(item.title, 140)}`,
+      `### [${safe(event.title, 120)}](${eventUrl(siteUrl, event.slug)})`,
       "",
-      `${safe(item.hypothesis, 300)}`,
+      safe(event.factSummary, 220),
       "",
-      `- **最小动作**：${safe(item.suggestedAction, 300)}`,
-      `- **失效条件**：${safe(item.counterSignals ?? "回到原始证据继续验证。", 280)}`,
-      `- **置信度**：${boundedScore(item.confidenceScore)}/100`,
+      `- **影响主线**：${tracks.length ? tracks.join(" / ") : "待归类"}`,
+      `- **判断变化**：${safe(event.industryInsight, 240)}`,
+      `- **下一观察**：${safe(event.futureOutlook, 240)}`,
       "",
     );
   }
+  if (events.length > leadingEvents.length) {
+    lines.push(
+      `另有 ${events.length - leadingEvents.length} 个变化已进入完整站点，本期只保留最值得判断的 3 个。`,
+      "",
+    );
+  }
+  if (unchangedTracks > 0)
+    lines.push(`其余 ${unchangedTracks} 条主线本周暂无足以改变判断的新证据。`, "");
+
+  lines.push("## 下周三件事", "");
+  if (!actions.length) lines.push("暂无达到公开门槛的新行动建议。", "");
+  for (const [index, item] of actions.entries()) {
+    const trigger = scoutTrigger(item.title);
+    lines.push(
+      `${index + 1}. **${scoutLabel(item.title)}**${trigger ? `（${safe(trigger, 52)}）` : ""}`,
+      `   ${safe(item.suggestedAction, 220)}`,
+    );
+  }
+  const stopCondition = actions.find((item) => item.counterSignals)?.counterSignals;
+  if (stopCondition) lines.push("", `**统一停止条件**：${safe(stopCondition, 220)}`);
 
   lines.push(
-    "## 公开覆盖状态",
+    "",
+    "## 仍需验证",
+    "",
+    research.length
+      ? `本周有 ${research.length} 篇研究通过公开门禁；优先核对方法、复现和真实影响。`
+      : "本周没有新增研究通过方法、证据与影响门禁。",
+    ...uniqueStrings(leadingEvents.map((event) => event.futureOutlook))
+      .slice(0, 3)
+      .map((item) => `- ${safe(item, 220)}`),
+    "",
+    "<details>",
+    "<summary>数据与覆盖</summary>",
     "",
     `- 站点版本：${safe(input.product.version ?? "unknown", 30)}`,
     `- 系统评测：${boundedScore(input.product.evaluation?.overallScore)}/100`,
@@ -151,8 +151,9 @@ export function renderWeeklyBrief(
     `- 来源目录：${Math.max(0, Math.round(input.product.sourceCoverage?.total ?? 0))} 个；active ${Math.max(0, Math.round(input.product.sourceCoverage?.active ?? 0))}；observing ${Math.max(0, Math.round(input.product.sourceCoverage?.observing ?? 0))}`,
     `- 快照生成：${safe(input.timeline.generatedAt ?? "unknown", 40)}`,
     "",
-    "---",
-    "此周报由 GitHub Actions 使用公开、隐私安全的静态 DTO 生成；来源目录不等于事实证据，具体判断以事件页的原始资料为准。",
+    "> 来源目录不等于事实证据；具体判断以事件页的原始资料为准。",
+    "",
+    "</details>",
   );
   return `${lines.join("\n")}\n`;
 }
@@ -218,6 +219,58 @@ function zonedDate(value: string, timeZone: string): string {
 
 function eventUrl(siteUrl: string, slug: string): string {
   return `${siteUrl.replace(/\/?$/, "/")}events/${encodeURIComponent(slug)}/`;
+}
+
+function eventTrackNames(event: WeeklyEvent): string[] {
+  const names = new Map<string, string>(strategicTracks);
+  return uniqueStrings(
+    (event.tracks ?? [])
+      .map((track) => names.get(track.slug))
+      .filter((name): name is string => Boolean(name)),
+  );
+}
+
+function selectActionableScouts(items: WeeklyScout[], limit: number): WeeklyScout[] {
+  const selected: WeeklyScout[] = [];
+  const seenTriggers = new Set<string>();
+  const seenLabels = new Set<string>();
+  const add = (item: WeeklyScout) => {
+    if (selected.includes(item) || selected.length >= limit) return;
+    selected.push(item);
+    const trigger = scoutTrigger(item.title);
+    if (trigger) seenTriggers.add(trigger);
+    seenLabels.add(scoutLabel(item.title));
+  };
+
+  for (const item of items) {
+    const trigger = scoutTrigger(item.title);
+    if (trigger && !seenTriggers.has(trigger)) add(item);
+  }
+  for (const item of items) {
+    if (!seenLabels.has(scoutLabel(item.title))) add(item);
+  }
+  for (const item of items) add(item);
+  return selected;
+}
+
+function scoutTrigger(title: string): string {
+  return title.match(/「([^」]+)」/)?.[1]?.trim() ?? "";
+}
+
+function scoutLabel(title: string): string {
+  const labels: Array<[string, string]> = [
+    ["数据或工具资产", "沉淀一个数据或工具资产"],
+    ["内部验证", "做一次 7 天内部验证"],
+    ["创业入口", "验证一个窄而深的创业入口"],
+    ["认知缺口", "补齐一个会改变判断的认知缺口"],
+    ["公开观点", "发布一条可持续验证的公开观点"],
+    ["判断框架", "沉淀一份可复用判断框架"],
+  ];
+  return labels.find(([keyword]) => title.includes(keyword))?.[1] ?? safe(title, 48);
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
 function safe(value: string, max: number): string {

@@ -36,11 +36,32 @@ describe("weekly GitHub Issue brief", () => {
         scout: {
           insights: [
             {
-              title: "Run a workflow benchmark",
+              title: "把「A weekly event」沉淀成一个可复用的数据或工具资产",
               hypothesis: "The task can be delegated safely.",
               suggestedAction: "Measure accepted outcomes for seven days.",
               counterSignals: "Manual takeover does not decline.",
               confidenceScore: 82,
+              publishedAt: "2026-07-17T08:00:00.000Z",
+            },
+            {
+              title: "围绕「A weekly event」发起一个 7 天内部验证",
+              hypothesis: "A real workflow can expose the boundary.",
+              suggestedAction: "Run one real workflow with a stop condition.",
+              confidenceScore: 81,
+              publishedAt: "2026-07-17T08:00:00.000Z",
+            },
+            {
+              title: "从「A second event」验证一个窄而深的创业入口",
+              hypothesis: "A narrow customer segment may pay for the result.",
+              suggestedAction: "Interview five target users before building.",
+              confidenceScore: 80,
+              publishedAt: "2026-07-17T08:00:00.000Z",
+            },
+            {
+              title: "围绕「A weekly event」建立一条可持续验证的公开观点",
+              hypothesis: "Public correction can improve the claim.",
+              suggestedAction: "Publish one evidence and counter-signal card.",
+              confidenceScore: 79,
               publishedAt: "2026-07-17T08:00:00.000Z",
             },
           ],
@@ -60,6 +81,14 @@ describe("weekly GitHub Issue brief", () => {
     expect(body).not.toContain("Old fact");
     expect(body).toContain("Measure accepted outcomes for seven days.");
     expect(body).toContain("来源目录：284 个");
+    expect(body).toContain("## 本周关键变化");
+    expect(body).toContain("## 下周三件事");
+    expect(body).toContain("<summary>数据与覆盖</summary>");
+    expect(body).not.toContain("## 本周最值得深读");
+    expect(body).not.toContain("· 0 个节点");
+    expect(body.match(/^\d\. \*\*/gm)).toHaveLength(3);
+    expect(body.split("## 下周三件事")[0]?.match(/A weekly event/g)).toHaveLength(1);
+    expect(body.split("\n").length).toBeLessThan(70);
   });
 
   it("keeps the workflow idempotent and Sunday-gated", async () => {
@@ -86,7 +115,8 @@ describe("weekly GitHub Issue brief", () => {
       "2026-07-19",
     );
 
-    expect(body).toContain("当前判断保持不变");
-    expect(body).toContain("周报不为固定频率制造趋势");
+    expect(body).toContain("一句话判断：保持不变");
+    expect(body).toContain("继续沿用上周判断");
+    expect(body).not.toContain("· 0 个节点");
   });
 });

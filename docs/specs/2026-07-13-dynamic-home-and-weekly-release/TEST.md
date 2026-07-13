@@ -8,6 +8,7 @@
 - JS 随机选择、轮播控制、reduced-motion 和无 JS 回退具备 DOM 契约。
 - Data Refresh 为每日 cron；Source Audit、Monitor 和 Quality Guard 为每周 cron。
 - 周报 marker、标题、label 与 Issue upsert 保持幂等。
+- 周报不重复按主线展开同一 Event，不生成 `0 个节点` 小节；关键变化和行动各不超过 3 条，覆盖数据位于折叠区。
 - release contract 同时验证 package、CHANGELOG 与网站 Changelog 的 0.10.0。
 
 ## 命令

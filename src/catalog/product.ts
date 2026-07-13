@@ -521,11 +521,12 @@ export const releases = [
     version: "unreleased",
     date: "",
     name: "Evidence First Render",
-    summary: "阶段证据默认可见，并修复行动参考 tabs 的错误纵向滚动。",
-    capabilities: ["阶段证据默认展示", "行动参考 tabs 滚动修复"],
+    summary: "阶段证据默认可见，修复行动参考 tabs 滚动，并让 GitHub 周报更适合快速阅读。",
+    capabilities: ["阶段证据默认展示", "行动参考 tabs 滚动修复", "紧凑 GitHub 周报"],
     changes: [
       "趋势详情的阶段证据退出全局滚入动画，其他模块动效保持不变",
       "行动参考 tabs 关闭纵向溢出，只在极窄屏保留横向容错",
+      "周报按 Event 去重，只保留最多三个关键变化和三项行动；空趋势合并，覆盖指标默认折叠",
     ],
   },
   {

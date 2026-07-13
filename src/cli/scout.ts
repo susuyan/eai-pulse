@@ -8,8 +8,8 @@ import { runScout } from "../pipeline/scout.js";
 export async function runScoutCli(args = process.argv.slice(2)): Promise<void> {
   const rawLimit = args[0] ?? "3";
   const limit = Number(rawLimit);
-  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 10) {
-    throw new Error("Scout limit must be an integer between 1 and 10");
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 18) {
+    throw new Error("Scout limit must be an integer between 1 and 18");
   }
   const config = loadConfig();
   const db = createDatabase(config);

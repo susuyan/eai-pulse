@@ -74,7 +74,7 @@ jobs:
         run: npm run repair:provenance -- --confirm
 
       - name: Generate and publish qualified Scout opportunities
-        run: npm run scout:generate -- 5
+        run: npm run scout:generate -- 12
 
       - name: Publish every Event and Scout item that clears hard gates
         run: npm run auto:publish

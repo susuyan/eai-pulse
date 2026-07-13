@@ -67,3 +67,17 @@ data-refresh (6/day)
 - `reading-journey` 与 `.shell` 同宽，不在中间断到 680px。
 - Timeline 末尾保留至少 96px 内容间距，避免贴住 footer。
 - Scout 标签左对齐、换行且不以 `justify-content: space-between` 承载元数据。
+
+## 6. 星探公开池
+
+```text
+archive expired published cards
+  -> count current published cards
+  -> gap = max(0, 18 - current)
+  -> generate min(requested batch, gap)
+  -> six opportunity kinds rotate across ranked Events
+  -> existing score/evidence gates
+  -> public DTO fingerprint dedupe
+```
+
+Data Refresh 每轮请求 12 条候选，但只填补到 18 条公开池水位，不把运行频率直接变成内容膨胀速度。新生成卡 14 天过期；过期归档后由下一轮新事件补位。

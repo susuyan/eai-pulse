@@ -320,7 +320,14 @@ function home(model: StaticSiteModel, locale: Locale): string {
 function linesOverview(model: StaticSiteModel, locale: Locale): string {
   return `<section class="page-hero shell">
       <span class="section-kicker">STRATEGIC LINES</span><h1>${escapeHtml(t("lines.heroTitle", locale))}</h1><p>${escapeHtml(t("lines.heroDesc", locale))}</p>
-      ${pageStatus(t("lines.statusEvents", locale).replace("{count}", String(model.events.length)), model.narratives.horizon.label, t("lines.selectLine", locale))}
+      <nav class="line-nav line-nav-overview" aria-label="${escapeHtml(t("lines.navAria", locale))}">${strategicTracks(
+        model,
+      )
+        .map(
+          (track) =>
+            `<a href="__PREFIX__lines/${escapeHtml(track.slug)}/">${escapeHtml(track.name)}</a>`,
+        )
+        .join("")}</nav>
     </section>
     <section class="section section-tint"><div class="shell">
       ${sectionHead("2022 → TODAY", t("lines.arcTitle", locale), t("lines.arcDesc", locale))}
@@ -489,7 +496,7 @@ function eventPage(model: StaticSiteModel, event: EnrichedEvent, locale: Locale)
 
 function scoutPage(model: StaticSiteModel, locale: Locale): string {
   return `${toolHeader("sparkles", t("scout.heroTitle", locale), t("scout.heroDesc", locale), t("scout.statusHypotheses", locale).replace("{count}", String(model.scout.length)), t("scout.statusDisclaimer", locale), locale)}
-    <section class="section shell"><div class="tool-tabs">${toolTabs("scout", locale)}</div><div class="filter-toolbar"><button class="active" data-card-filter="all">${t("scout.filterAll", locale)}</button><button data-card-filter="venture">${t("scout.filterVenture", locale)}</button><button data-card-filter="media">${t("scout.filterMedia", locale)}</button><button data-card-filter="work">${t("scout.filterWork", locale)}</button></div>
+    <section class="section shell"><div class="tool-tabs">${toolTabs("scout", locale)}</div><div class="filter-toolbar"><button class="active" data-card-filter="all">${t("scout.filterAll", locale)}</button><button data-card-filter="venture">${t("scout.filterVenture", locale)}</button><button data-card-filter="media">${t("scout.filterMedia", locale)}</button><button data-card-filter="work">${t("scout.filterWork", locale)}</button><button data-card-filter="learning">${t("scout.filterLearning", locale)}</button><button data-card-filter="artifact">${t("scout.filterArtifact", locale)}</button><button data-card-filter="influence">${t("scout.filterInfluence", locale)}</button></div>
     <div class="scout-grid" data-filter-grid>${model.scout.map((insight) => scoutCard(insight, locale)).join("") || emptyState(t("scout.empty", locale), "")}</div></section>`;
 }
 
@@ -1078,6 +1085,9 @@ function scoutKind(kind: string, locale: Locale): string {
     venture: t("scoutKind.venture", locale),
     media: t("scoutKind.media", locale),
     work: t("scoutKind.work", locale),
+    learning: t("scoutKind.learning", locale),
+    artifact: t("scoutKind.artifact", locale),
+    influence: t("scoutKind.influence", locale),
   };
   return map[kind] || t("scoutKind.cognitive", locale);
 }

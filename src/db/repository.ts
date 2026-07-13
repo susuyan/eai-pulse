@@ -49,11 +49,11 @@ export interface SourceDiscoveryListItem {
 
 const now = () => new Date().toISOString();
 const json = (value: unknown) => JSON.stringify(value);
-const normalizeScoutTitle = (value: string) =>
-  value
+export const scoutFingerprint = (kind: string, title: string) =>
+  `${kind}:${title
     .normalize("NFKC")
     .toLocaleLowerCase()
-    .replace(/[\s\p{P}\p{S}]+/gu, "");
+    .replace(/[\s\p{P}\p{S}]+/gu, "")}`;
 const SHARED_IDENTITY_HOSTS = new Set([
   "bilibili.com",
   "github.com",
@@ -366,11 +366,10 @@ export class Repository {
           String(right.published_at).localeCompare(String(left.published_at)),
       )
       .filter((insight, index, rows) => {
-        const fingerprint = `${insight.kind}:${normalizeScoutTitle(insight.title)}`;
+        const fingerprint = scoutFingerprint(insight.kind, insight.title);
         return (
           rows.findIndex(
-            (candidate) =>
-              `${candidate.kind}:${normalizeScoutTitle(candidate.title)}` === fingerprint,
+            (candidate) => scoutFingerprint(candidate.kind, candidate.title) === fingerprint,
           ) === index
         );
       });

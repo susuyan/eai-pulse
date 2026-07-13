@@ -58,7 +58,7 @@ describe("GitHub source governance workflows", () => {
       "npm run ops:reconcile",
       "npm run observe:sources -- --confirm",
       "npm run activate:auto",
-      "npm run scout:generate -- 5",
+      "npm run scout:generate -- 12",
       "npm run auto:publish",
       "npm run evaluate:system",
       "npm run db:snapshot -- write",

@@ -461,8 +461,8 @@ const translations: Record<string, Record<Locale, string>> = {
   // ─── Scout ─────────────────────────────────────────────────
   "scout.heroTitle": { "zh-CN": "星探机会", en: "Scout Opportunities" },
   "scout.heroDesc": {
-    "zh-CN": "把行业变化转成可以在 7–30 天验证的创业、内容与工作实验。",
-    en: "Turn industry changes into venture, content, and work experiments you can validate in 7–30 days.",
+    "zh-CN": "把行业变化转成可以在 7–30 天验证的创业、内容、工作、学习、产物与影响力实验。",
+    en: "Turn industry changes into venture, media, work, learning, artifact, and influence experiments you can validate in 7–30 days.",
   },
   "scout.statusHypotheses": { "zh-CN": "{count} 条公开假设", en: "{count} public hypotheses" },
   "scout.statusDisclaimer": { "zh-CN": "假设，不是事实", en: "Hypotheses, not facts" },
@@ -470,6 +470,9 @@ const translations: Record<string, Record<Locale, string>> = {
   "scout.filterVenture": { "zh-CN": "创业", en: "Venture" },
   "scout.filterMedia": { "zh-CN": "内容", en: "Media" },
   "scout.filterWork": { "zh-CN": "工作", en: "Work" },
+  "scout.filterLearning": { "zh-CN": "学习", en: "Learning" },
+  "scout.filterArtifact": { "zh-CN": "产物", en: "Artifact" },
+  "scout.filterInfluence": { "zh-CN": "影响力", en: "Influence" },
   "scout.empty": {
     "zh-CN": "暂无达到公开门槛的机会假设。",
     en: "No opportunity hypotheses meet the publication threshold yet.",
@@ -749,6 +752,9 @@ const translations: Record<string, Record<Locale, string>> = {
   "scoutKind.venture": { "zh-CN": "创业假设", en: "Venture Hypothesis" },
   "scoutKind.media": { "zh-CN": "内容假设", en: "Media Hypothesis" },
   "scoutKind.work": { "zh-CN": "工作假设", en: "Work Hypothesis" },
+  "scoutKind.learning": { "zh-CN": "学习假设", en: "Learning Hypothesis" },
+  "scoutKind.artifact": { "zh-CN": "产物假设", en: "Artifact Hypothesis" },
+  "scoutKind.influence": { "zh-CN": "影响力假设", en: "Influence Hypothesis" },
   "scoutKind.cognitive": { "zh-CN": "认知假设", en: "Cognitive Hypothesis" },
 
   // ─── Category names ────────────────────────────────────────

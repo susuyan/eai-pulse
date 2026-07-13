@@ -1,14 +1,52 @@
 import { createHash } from "node:crypto";
 import type { Kysely } from "kysely";
-import { Repository } from "../db/repository.js";
+import { Repository, scoutFingerprint } from "../db/repository.js";
 import type { DatabaseSchema, EventRow } from "../db/types.js";
 
-const COOLDOWN_MS = 72 * 60 * 60 * 1_000;
-const kinds = ["venture", "media", "work"] as const;
+const SCOUT_LIFETIME_MS = 14 * 86_400_000;
+export const PUBLIC_SCOUT_POOL_TARGET = 18;
+const kinds = ["venture", "media", "work", "learning", "artifact", "influence"] as const;
 
 export async function runScout(db: Kysely<DatabaseSchema>, limit = 3) {
   const repository = new Repository(db);
-  const target = Math.max(1, Math.min(limit, 10));
+  const timestamp = new Date().toISOString();
+  const expiredResult = await db
+    .updateTable("scout_insights")
+    .set({ status: "archived", published_at: null, updated_at: timestamp })
+    .where("status", "=", "published")
+    .where("expires_at", "is not", null)
+    .where("expires_at", "<", timestamp)
+    .executeTakeFirst();
+  const publishedCandidates = await repository.listScoutInsights("published");
+  const retainedFingerprints = new Set<string>();
+  const duplicateIds: string[] = [];
+  for (const insight of publishedCandidates) {
+    const fingerprint = scoutFingerprint(insight.kind, insight.title);
+    if (retainedFingerprints.has(fingerprint)) duplicateIds.push(insight.id);
+    else retainedFingerprints.add(fingerprint);
+  }
+  if (duplicateIds.length > 0) {
+    await db
+      .updateTable("scout_insights")
+      .set({ status: "archived", published_at: null, updated_at: timestamp })
+      .where("id", "in", duplicateIds)
+      .execute();
+  }
+  const publishedPool = publishedCandidates.filter((insight) => !duplicateIds.includes(insight.id));
+  const publicFingerprints = new Set(
+    publishedPool.map((insight) => scoutFingerprint(insight.kind, insight.title)),
+  );
+  const publishedKindCounts = new Map(
+    kinds.map((kind) => [kind, publishedPool.filter((insight) => insight.kind === kind).length]),
+  );
+  const requested = Math.max(1, Math.min(limit, PUBLIC_SCOUT_POOL_TARGET));
+  const missingKindCount = kinds.filter(
+    (kind) => (publishedKindCounts.get(kind) ?? 0) === 0,
+  ).length;
+  const target = Math.min(
+    requested,
+    Math.max(PUBLIC_SCOUT_POOL_TARGET - publicFingerprints.size, missingKindCount, 0),
+  );
   const events = (await repository.listEvents("published")).sort(
     (a, b) =>
       scoutCandidateScore(b) - scoutCandidateScore(a) ||
@@ -22,14 +60,25 @@ export async function runScout(db: Kysely<DatabaseSchema>, limit = 3) {
 
   for (const [index, event] of events.entries()) {
     if (created >= target) break;
-    const kind = kinds[(existingCount + index) % kinds.length] ?? "venture";
+    const kind =
+      [...kinds].sort(
+        (left, right) =>
+          (publishedKindCounts.get(left) ?? 0) - (publishedKindCounts.get(right) ?? 0) ||
+          ((kinds.indexOf(left) + existingCount + index) % kinds.length) -
+            ((kinds.indexOf(right) + existingCount + index) % kinds.length),
+      )[0] ?? "venture";
     const cooldownKey = `${kind}:${event.slug}`;
-    const since = new Date(Date.now() - COOLDOWN_MS).toISOString();
+    const card = buildScoutCard(event, kind);
+    const fingerprint = scoutFingerprint(kind, card.title);
+    if (publicFingerprints.has(fingerprint)) {
+      skipped += 1;
+      continue;
+    }
+    const since = new Date(Date.now() - SCOUT_LIFETIME_MS).toISOString();
     if (await repository.findRecentScoutInsight(cooldownKey, since)) {
       skipped += 1;
       continue;
     }
-    const card = buildScoutCard(event, kind);
     const publishable = scoutPublicationDecision(card);
     const generatedAt = new Date().toISOString();
     await repository.insertScoutInsight(
@@ -40,21 +89,30 @@ export async function runScout(db: Kysely<DatabaseSchema>, limit = 3) {
         ...card,
         cooldown_key: cooldownKey,
         generated_at: generatedAt,
-        expires_at: new Date(Date.now() + 30 * 86_400_000).toISOString(),
+        expires_at: new Date(Date.now() + SCOUT_LIFETIME_MS).toISOString(),
       },
       event.id,
     );
     created += 1;
-    if (publishable.allowed) published += 1;
-    else archived += 1;
+    if (publishable.allowed) {
+      published += 1;
+      publicFingerprints.add(fingerprint);
+      publishedKindCounts.set(kind, (publishedKindCounts.get(kind) ?? 0) + 1);
+    } else archived += 1;
   }
   return {
     scanned: Math.min(events.length, created + skipped),
     candidates: events.length,
     created,
     published,
-    archived,
+    archived: archived + duplicateIds.length,
+    deduplicated: duplicateIds.length,
+    expired: Number(expiredResult.numUpdatedRows ?? 0),
     skipped,
+    publishedPoolBefore: new Set(
+      publishedPool.map((insight) => scoutFingerprint(insight.kind, insight.title)),
+    ).size,
+    publishedPoolTarget: PUBLIC_SCOUT_POOL_TARGET,
     mode: "deterministic-v3-autonomous-publishing",
   };
 }
@@ -119,6 +177,39 @@ export function buildScoutCard(event: EventRow, kind: (typeof kinds)[number]) {
       suggested_action:
         "选择一个真实工作流，写出成功指标和停止条件，用最小 demo 或数据分析完成一次跨职能评审。",
       artifact_idea: "内部机会 brief、可运行 demo、决策记录和复盘模板",
+    };
+  }
+  if (kind === "learning") {
+    return {
+      ...base,
+      title: `用「${event.title}」补齐一个会改变判断的认知缺口`,
+      hypothesis: `真正稀缺的不是知道事件发生，而是能解释其技术前提、适用边界和反例。把未知项拆成可验证问题，可以减少团队被发布叙事带着走。`,
+      target_audience: "需要建立 AI 技术与产业判断框架的负责人和研究者",
+      suggested_action:
+        "用 3 天完成一份问题树：核对原始资料，找 2 个反例，并请一位领域从业者指出最可能被误读的结论。",
+      artifact_idea: "概念地图、原始资料索引、反例清单和一页学习复盘",
+    };
+  }
+  if (kind === "artifact") {
+    return {
+      ...base,
+      title: `把「${event.title}」沉淀成一个可复用的数据或工具资产`,
+      hypothesis: `事件背后的比较、评测或迁移问题会重复出现。将一次分析固化为结构化数据、检查器或模板，比继续追踪零散消息更有长期价值。`,
+      target_audience: "开发者、研究工程师、技术内容与开源项目维护者",
+      suggested_action:
+        "48 小时内定义一个最小 schema，录入 10 条可核验样本，并让 2 位目标用户完成一次无指导使用。",
+      artifact_idea: "公开数据表、评测脚本、检查清单或可复用 CLI",
+    };
+  }
+  if (kind === "influence") {
+    return {
+      ...base,
+      title: `围绕「${event.title}」建立一条可持续验证的公开观点`,
+      hypothesis: `大多数传播只复述结论。把事实、非共识判断、反证和后续指标同时公开，可能形成更可信的专业影响力，而不是一次性热点表达。`,
+      target_audience: "希望建立 AI 专业表达与行业连接的创作者和负责人",
+      suggested_action:
+        "先发布一张事实/判断/反证卡片，邀请 3 位相关从业者纠错，并在 7 天后按新增证据公开更新结论。",
+      artifact_idea: "观点卡、证据链接页、公开预测记录和 7 天更新帖",
     };
   }
   return {

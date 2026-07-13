@@ -101,7 +101,7 @@ describe("SQLite application", () => {
       events: earlyHistoryEvents.length + historicalEvents.length + recentDensityEvents.length + 6,
       tracks: 10,
       sources: sourceCatalog.length,
-      version: "0.8.0",
+      version: "0.8.1",
     });
     const timeline = await readFile(join(config.distDir, "data/timeline.json"), "utf8");
     expect(timeline).not.toContain("ADMIN_TOKEN");
@@ -113,7 +113,7 @@ describe("SQLite application", () => {
     expect(scout.insights[0].evidence[0].slug).toBe("lingbot-vla-2-cross-embodiment");
     const product = JSON.parse(await readFile(join(config.distDir, "data/product.json"), "utf8"));
     expect(product.roadmap).toHaveLength(5);
-    expect(product.releases[0]).toMatchObject({ version: "0.8.0" });
+    expect(product.releases[0]).toMatchObject({ version: "0.8.1" });
     expect(product.sourceCoverage.total).toBeGreaterThanOrEqual(100);
     expect(product.sourceCoverage.observing).toBe(0);
     expect(product.evaluation).toMatchObject({
@@ -196,6 +196,7 @@ describe("SQLite application", () => {
     expect(home).toContain("30 秒");
     expect(home).toContain("3 分钟");
     expect(home).toContain("10 分钟");
+    expect(home).toMatch(/<section class="home-intro shell">[\s\S]*<ol class="reading-journey"/);
     expect(home).toContain("本周值得读的技术论文");
     expect(home).toContain("PredicateLongBench");
     expect(home).toContain('class="github-star-button"');
@@ -234,6 +235,12 @@ describe("SQLite application", () => {
       expect(timelinePage).toContain(`data-event="${slug}"`);
     }
     const linesPage = await readFile(join(config.distDir, "lines/index.html"), "utf8");
+    const overviewNav = linesPage.match(
+      /<nav class="line-nav line-nav-overview"[\s\S]*?<\/nav>/,
+    )?.[0];
+    expect(overviewNav).toBeDefined();
+    expect(overviewNav?.match(/<a /g)).toHaveLength(6);
+    expect(linesPage).not.toContain("选择一条主线开始");
     expect(linesPage).toContain("从 ChatGPT 时刻到 Agent 时代");
     expect(linesPage).toContain("查看趋势详情");
     expect(linesPage).toContain("已收购");
@@ -268,7 +275,7 @@ describe("SQLite application", () => {
     expect(github).toMatchObject({
       repositoryUrl: "https://github.com/barretlee/agent-pulse",
       stars: null,
-      latestRelease: "v0.8.0",
+      latestRelease: "v0.8.1",
     });
   });
 

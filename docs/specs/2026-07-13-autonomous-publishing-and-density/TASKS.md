@@ -30,4 +30,14 @@
 - [x] 新增 Changelog/网站版本一致性检查与 Release notes 生成
 - [x] CI 成功后自动创建缺失 GitHub Release
 - [x] 更新双 Changelog、版本号和 README
-- [ ] 完成测试、提交、Actions、Release 与 Pages 验收
+- [x] 完成测试、提交、Actions、Release 与 Pages 验收
+
+## 6. 验收证据
+
+- 本地：`npm run check`、`npm run build`、`npm run release:check`；43 个测试文件、270 个测试通过
+- CI：[run 29216620178](https://github.com/barretlee/agent-pulse/actions/runs/29216620178)
+- Quality Guard：[run 29216627807](https://github.com/barretlee/agent-pulse/actions/runs/29216627807)，真实读取 50 分并命中 60 分门槛；因最近刷新仍在两小时冷却窗内，没有重复 dispatch
+- Source Audit：[run 29216626470](https://github.com/barretlee/agent-pulse/actions/runs/29216626470)，Issue #4 保持开启并更新审计时间
+- Data Refresh：[run 29216672983](https://github.com/barretlee/agent-pulse/actions/runs/29216672983)，自动上架 3 条 Scout、归档 2 条并提交新快照
+- Release：[v0.7.0](https://github.com/barretlee/agent-pulse/releases/tag/v0.7.0)
+- Pages：[run 29216754055](https://github.com/barretlee/agent-pulse/actions/runs/29216754055)，首页、Timeline、Sources、Changelog 与 Scout 线上均返回 HTTP 200

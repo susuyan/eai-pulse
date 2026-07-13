@@ -49,6 +49,11 @@ export interface SourceDiscoveryListItem {
 
 const now = () => new Date().toISOString();
 const json = (value: unknown) => JSON.stringify(value);
+const normalizeScoutTitle = (value: string) =>
+  value
+    .normalize("NFKC")
+    .toLocaleLowerCase()
+    .replace(/[\s\p{P}\p{S}]+/gu, "");
 const SHARED_IDENTITY_HOSTS = new Set([
   "bilibili.com",
   "github.com",
@@ -352,8 +357,25 @@ export class Repository {
 
   async publicScoutInsights() {
     const insights = await this.listScoutInsights("published");
+    const uniqueInsights = [...insights]
+      .sort(
+        (left, right) =>
+          right.confidence_score - left.confidence_score ||
+          right.evidence_score - left.evidence_score ||
+          right.total_score - left.total_score ||
+          String(right.published_at).localeCompare(String(left.published_at)),
+      )
+      .filter((insight, index, rows) => {
+        const fingerprint = `${insight.kind}:${normalizeScoutTitle(insight.title)}`;
+        return (
+          rows.findIndex(
+            (candidate) =>
+              `${candidate.kind}:${normalizeScoutTitle(candidate.title)}` === fingerprint,
+          ) === index
+        );
+      });
     return Promise.all(
-      insights.map(async (insight) => {
+      uniqueInsights.map(async (insight) => {
         const evidence = await this.db
           .selectFrom("scout_evidence")
           .innerJoin("events", "events.id", "scout_evidence.event_id")

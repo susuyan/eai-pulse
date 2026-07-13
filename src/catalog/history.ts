@@ -88,19 +88,19 @@ export const historicalEvents = [
     title: "Qwen2.5 发布：中国开放模型形成全尺寸与垂直模型矩阵",
     fact: "阿里巴巴 Qwen 团队发布 Qwen2.5 系列，覆盖 0.5B 到 72B，并扩展代码、数学和视觉语言模型。",
     summary:
-      "中国模型竞争从单点旗舰转向尺寸、任务和部署形态完整覆盖，开放生态成为追赶全球前沿的重要路径。",
+      "中国模型竞争从单点旗舰转向尺寸、任务和部署形态完整覆盖，开放生态成为参与全球创新的重要路径。",
     technical: "统一模型家族降低了从端侧到云端、从通用到代码/数学任务的迁移成本。",
     industry: "阿里把模型、云 API 与开源社区连接起来，强化国内开发者分发和海外影响力。",
     future: "观察海外开发者采用、端侧部署、企业微调和与国际前沿模型的差距变化。",
     business: "国内 To D 团队获得低门槛模型底座，云厂商可通过托管、数据与工具链承接商业价值。",
     category: "model-release",
     company: "Alibaba / Qwen",
-    keywords: ["Qwen2.5", "开放模型", "中国追赶", "模型矩阵"],
+    keywords: ["Qwen2.5", "开放模型", "中国创新", "模型矩阵"],
     scores: [97, 0, 90, 90],
     date: "2024-09-19T00:00:00.000Z",
     source: "qwen",
     url: "https://qwenlm.github.io/blog/qwen2.5/",
-    tracks: ["tech-evolution", "china-catch-up", "to-d", "commercialization"],
+    tracks: ["tech-evolution", "global-innovation", "to-d", "commercialization"],
     actors: ["alibaba"],
   }),
   event({
@@ -165,10 +165,10 @@ export const historicalEvents = [
   }),
   event({
     slug: "deepseek-v3-efficient-frontier",
-    title: "DeepSeek-V3 开源：训练效率成为中国追赶的新叙事",
+    title: "DeepSeek-V3 开源：训练效率成为全球模型竞争的新变量",
     fact: "DeepSeek 发布并开放 DeepSeek-V3 权重与技术报告，采用 671B MoE、37B 激活参数和 FP8 训练。",
     summary:
-      "DeepSeek 用架构、系统和工程协同压低前沿模型训练成本，改变了中国模型只能依赖更大资源追赶的判断。",
+      "DeepSeek 用架构、系统和工程协同压低前沿模型训练成本，证明不同资源条件可以形成独立的前沿创新路径。",
     technical: "MLA、DeepSeekMoE、无辅助损失负载均衡、MTP 和 FP8 共同提升训练与推理效率。",
     industry: "模型竞争增加了单位算力产出这一核心维度，并推动国内硬件与推理栈适配。",
     future: "观察独立复现、真实 API 负载、国产算力适配和后续推理模型。",
@@ -180,7 +180,7 @@ export const historicalEvents = [
     date: "2024-12-26T00:00:00.000Z",
     source: "deepseek",
     url: "https://github.com/deepseek-ai/DeepSeek-V3",
-    tracks: ["tech-evolution", "china-catch-up", "model-economics", "to-d", "investing"],
+    tracks: ["tech-evolution", "global-innovation", "model-economics", "to-d", "investing"],
     actors: ["deepseek"],
   }),
   event({
@@ -200,7 +200,7 @@ export const historicalEvents = [
     date: "2025-01-20T00:00:00.000Z",
     source: "deepseek",
     url: "https://github.com/deepseek-ai/DeepSeek-R1",
-    tracks: ["tech-evolution", "agi-progress", "china-catch-up", "investing", "model-economics"],
+    tracks: ["tech-evolution", "agi-progress", "global-innovation", "investing", "model-economics"],
     actors: ["deepseek"],
   }),
   event({
@@ -388,12 +388,12 @@ export const historicalEvents = [
     business: "国内 To D 市场的模型供给更充分，价值继续向工具链和行业数据迁移。",
     category: "model-release",
     company: "Alibaba / Qwen",
-    keywords: ["Qwen3", "混合推理", "MoE", "中国追赶"],
+    keywords: ["Qwen3", "混合推理", "MoE", "中国创新"],
     scores: [98, 0, 94, 94],
     date: "2025-04-29T00:00:00.000Z",
     source: "qwen",
     url: "https://qwenlm.github.io/blog/qwen3/",
-    tracks: ["tech-evolution", "agi-progress", "china-catch-up", "to-d"],
+    tracks: ["tech-evolution", "agi-progress", "global-innovation", "to-d"],
     actors: ["alibaba"],
   }),
   event({
@@ -451,7 +451,7 @@ export const historicalEvents = [
     date: "2025-06-16T00:00:00.000Z",
     source: "minimax",
     url: "https://www.minimax.io/news/minimaxm1",
-    tracks: ["tech-evolution", "china-catch-up", "to-d", "model-economics"],
+    tracks: ["tech-evolution", "global-innovation", "to-d", "model-economics"],
     actors: ["minimax"],
   }),
   event({
@@ -470,7 +470,7 @@ export const historicalEvents = [
     date: "2025-07-11T00:00:00.000Z",
     source: "moonshot",
     url: "https://github.com/MoonshotAI/Kimi-K2",
-    tracks: ["tech-evolution", "china-catch-up", "commercialization", "to-c", "to-d"],
+    tracks: ["tech-evolution", "global-innovation", "commercialization", "to-c", "to-d"],
     actors: ["moonshot"],
   }),
   event({
@@ -754,76 +754,169 @@ export const historicalEvents = [
 ] as const satisfies readonly CuratedEventSeed[];
 
 export const industryNarratives = {
-  horizon: { start: "2024-07-01", end: "2026-07-11", label: "过去两年" },
+  horizon: { start: "2022-08-22", end: "2026-07-13", label: "2022—今天" },
   eras: [
     {
-      slug: "reasoning-and-open-frontier",
-      label: "推理与开放前沿",
-      period: "2024 H2",
+      slug: "public-generative-ai",
+      label: "生成式 AI 进入大众市场",
+      period: "2022 H2",
       summary:
-        "o1 打开推理时 Scaling，Llama 3.1、Qwen2.5 与 DeepSeek-V3 让开放模型和训练效率成为全球竞争变量。",
+        "Stable Diffusion 把生成模型带入开放生态，ChatGPT 把大模型从研究能力变成大众每天可以使用的产品。",
+      projects: [
+        {
+          name: "ChatGPT",
+          status: "active",
+          note: "从 research preview 演化为通用 AI 产品入口。",
+          url: "https://openai.com/index/chatgpt/",
+        },
+        {
+          name: "Stable Diffusion",
+          status: "active",
+          note: "开放权重持续支撑图像生成生态。",
+          url: "https://stability.ai/news-updates/stable-diffusion-public-release",
+        },
+      ],
     },
     {
-      slug: "cost-shock-and-agents",
-      label: "成本冲击与 Agent 起点",
-      period: "2025 Q1",
+      slug: "model-platforms-and-copilots",
+      label: "模型平台与 Copilot 成形",
+      period: "2023",
       summary:
-        "DeepSeek-R1 重估算力壁垒，Operator、Deep Research、Claude Code 与 Agents SDK 把模型推进真实任务。",
+        "GPT-4、Claude 2、Llama 2、Qwen、Mistral 与 Gemini 建立多路线竞争，API、插件和 Copilot 开始进入软件与组织工作流。",
+      projects: [
+        {
+          name: "Microsoft 365 Copilot",
+          status: "active",
+          note: "将模型、组织数据和办公工作流绑定为企业产品。",
+          url: "https://blogs.microsoft.com/blog/2023/03/16/introducing-microsoft-365-copilot-your-copilot-for-work/",
+        },
+        {
+          name: "Artifact",
+          status: "acquired",
+          note: "独立应用停止后，个性化技术由 Yahoo 收购并继续整合。",
+          url: "https://www.yahooinc.com/press/yahoo-announces-the-acquisition-of-artifact-the-news-discovery-platform-created-by-instagram-cofounders-kevin-systrom-and-mike-krieger",
+        },
+      ],
     },
     {
-      slug: "protocol-and-runtime",
-      label: "协议与运行时成形",
-      period: "2025 Q2",
-      summary: "MCP、A2A、模型原生工具和云端编码 Agent 共同建立 Agent 的连接、执行和治理层。",
+      slug: "multimodal-and-reasoning",
+      label: "多模态、推理与应用分化",
+      period: "2024",
+      summary:
+        "原生多模态与推理时计算打开新的能力曲线，开放模型继续提升；应用市场同时进入整合，单一包装型产品开始失去空间。",
+      projects: [
+        {
+          name: "Inflection AI",
+          status: "pivoted",
+          note: "联合创始人与部分团队加入 Microsoft AI 后，原有消费助手路线进入组织与战略重构。",
+          url: "https://blogs.microsoft.com/blog/2024/03/19/mustafa-suleyman-deepmind-and-inflection-co-founder-joins-microsoft-to-lead-copilot/",
+        },
+        {
+          name: "Stability AI",
+          status: "pivoted",
+          note: "在领导层和资本结构调整后继续聚焦开放生成媒体模型。",
+          url: "https://stability.ai/news/stability-ai-secures-significant-new-investment",
+        },
+      ],
     },
     {
-      slug: "product-convergence",
-      label: "模型与产品合流",
+      slug: "agents-and-runtime",
+      label: "Agent 从演示走向运行时",
+      period: "2025 H1",
+      summary:
+        "DeepSeek-R1 重估效率边界，Operator、Deep Research、Claude Code 与 Agents SDK 将模型推进浏览器、代码和长任务。",
+      projects: [
+        {
+          name: "Adept",
+          status: "pivoted",
+          note: "部分团队加入 Amazon 后，公司转向更聚焦的 Agent 产品与企业路线。",
+          url: "https://adept.ai/blog/adept-update/",
+        },
+        {
+          name: "Humane Ai Pin",
+          status: "sunset",
+          note: "消费者设备服务停止，说明新硬件入口必须同时解决产品价值与持续运营。",
+          url: "https://support.humane.com/hc/en-us/articles/34243204841997-Ai-Pin-Consumers-FAQ",
+        },
+      ],
+    },
+    {
+      slug: "product-and-protocol-convergence",
+      label: "协议、产品与工作流合流",
       period: "2025 H2",
       summary:
-        "ChatGPT Agent、GPT-5 与 Codex GA 把研究、行动、路由和团队工作流收敛进统一产品入口。",
+        "MCP、A2A、Agent 产品与模型原生工具共同形成连接和执行层，竞争从功能演示转向真实工作流所有权。",
+      projects: [
+        {
+          name: "MCP",
+          status: "active",
+          note: "从单一厂商协议扩展为跨模型、工具和平台的连接生态。",
+          url: "https://modelcontextprotocol.io/",
+        },
+        {
+          name: "Codex",
+          status: "active",
+          note: "编码能力从补全演化为云端与本地协同的 Agent 工作流。",
+          url: "https://openai.com/codex/",
+        },
+      ],
     },
     {
-      slug: "real-work-and-concentration",
-      label: "真实工作与产业集中",
-      period: "2026 H1",
+      slug: "real-work-and-industry-concentration",
+      label: "真实工作与产业再集中",
+      period: "2026 H1—今天",
       summary:
-        "旗舰模型围绕复杂工作、科学与长任务继续升级，收入、融资、算力和分发进一步向头部集中。",
+        "旗舰模型围绕复杂工作、科学与长任务继续升级，收入、融资、算力和分发向头部集中，应用层开始按留存和结果重新分化。",
+      projects: [
+        {
+          name: "Claude Code",
+          status: "active",
+          note: "编码 Agent 向团队协作、长任务、SDK 与企业治理扩张。",
+          url: "https://www.anthropic.com/claude-code",
+        },
+        {
+          name: "DeepSeek",
+          status: "active",
+          note: "开放推理与工程效率持续影响全球模型成本和部署讨论。",
+          url: "https://api-docs.deepseek.com/news/",
+        },
+      ],
     },
   ],
   tracks: [
     {
       slug: "tech-evolution",
-      thesis: "技术主轴已从预训练规模，转向推理时计算、原生多模态、工具使用和长任务可靠性。",
-      now: "旗舰模型正在变成可分配思考预算、可跨工具行动的执行系统。",
-      next: "下一阶段胜负取决于长任务成功率、记忆、验证、恢复和单位任务成本。",
+      thesis:
+        "模型能力的主轴已从单纯扩大预训练，转向推理时计算、原生多模态、数据效率和可验证研究。",
+      now: "旗舰模型正以可分配推理预算、多模态输入和科学评测扩展能力边界。",
+      next: "下一阶段应关注能力增量能否跨基准复现，以及训练数据、评测污染、可靠性与成本是否透明。",
       stages: [
         {
           period: "2024 H2",
           label: "Reasoning",
           summary: "推理时计算成为新 Scaling 轴。",
-          chinaPosition: "Qwen 与 DeepSeek 通过开放和效率快速跟进。",
+          chinaPosition: "Qwen 与 DeepSeek 以开放模型和训练效率形成不同于封闭平台的技术路径。",
         },
         {
           period: "2025 H1",
-          label: "Tool use",
-          summary: "模型原生调用浏览器、代码和文件工具。",
-          chinaPosition: "国产模型进入混合推理和长上下文竞争。",
+          label: "Multimodal & efficiency",
+          summary: "原生多模态、混合推理和训练效率同时推进。",
+          chinaPosition: "中国模型在开放推理、长上下文和成本效率上形成全球影响。",
         },
         {
           period: "2025 H2–2026 H1",
-          label: "Long-horizon work",
-          summary: "模型围绕复杂工作和持续执行优化。",
-          chinaPosition: "技术差距收窄，产品与生态仍是主要差距。",
+          label: "Verifiable capability",
+          summary: "能力评价从榜单分数转向可复现研究与真实任务。",
+          chinaPosition: "不同团队在科学、端侧、视频与开放生态中形成各自优势，仍需更多可比证据。",
         },
       ],
     },
     {
       slug: "agi-progress",
       thesis:
-        "AGI 的可观察进展不再是单项考试分数，而是跨领域推理、工具行动、长任务和自我检查的组合。",
-      now: "研究、编码、软件操作和科学任务已经出现可重复的有限自治。",
-      next: "需要关注真实完成率、反证、失效条件和能力增长带来的治理升级。",
+        "Agent 的关键变化不是更像人聊天，而是模型开始连接工具、维护任务状态，并承担跨软件的完整工作。",
+      now: "编码、研究、浏览器操作和企业流程已经出现可重复的有限自治，软件入口正在从功能菜单转向任务委派。",
+      next: "需要关注端到端完成率、记忆、权限、错误恢复、人工接管，以及 Agent 是否真正改变软件的交付和收费方式。",
       stages: [
         {
           period: "2024 H2",
@@ -835,7 +928,7 @@ export const industryNarratives = {
           period: "2025",
           label: "Action",
           summary: "模型连接工具并承担数十分钟任务。",
-          chinaPosition: "开源推理领先性增强，通用 Agent 产品仍在追赶。",
+          chinaPosition: "开源推理形成差异化优势，通用 Agent 产品仍在验证全球竞争力。",
         },
         {
           period: "2026 H1",
@@ -898,29 +991,29 @@ export const industryNarratives = {
       ],
     },
     {
-      slug: "china-catch-up",
+      slug: "global-innovation",
       thesis:
-        "中国追赶从复制产品和扩大参数，转向开放权重、训练效率、低价 API、模型矩阵和国产算力适配。",
-      now: "推理与开放模型已进入全球牌桌，但全球产品分发、企业收入和前沿算力仍有差距。",
-      next: "决定位置的是海外开发者采用、真实 Agent 产品、国产算力闭环和商业收入。",
+        "全球 AI 创新不是单向排名：中国的开放模型、工程效率、应用分发与本土算力，正在与美国平台能力、欧洲治理和全球开源生态相互塑造。",
+      now: "中国团队已在开放推理、模型效率、视频生成和应用规模上形成独立影响，差异更多来自生态、算力、市场与分发路径。",
+      next: "观察跨区域开发者采用、全球收入、开放生态贡献、国产算力闭环和产品长期留存。",
       stages: [
         {
           period: "2024 H2",
-          label: "Matrix",
+          label: "开放模型矩阵",
           summary: "Qwen 建立完整开放模型矩阵。",
-          chinaPosition: "从单点跟随进入生态覆盖。",
+          chinaPosition: "Qwen 等模型以多尺寸、开源和工具能力形成完整供给。",
         },
         {
           period: "2025 Q1",
-          label: "Efficiency shock",
+          label: "效率成为创新变量",
           summary: "DeepSeek-V3/R1 改写全球成本认知。",
-          chinaPosition: "在开放推理与效率上实现阶段性领先。",
+          chinaPosition: "DeepSeek 把开放推理和工程效率变成全球共同议题。",
         },
         {
           period: "2025 H2–2026 H1",
-          label: "Product test",
+          label: "产品与全球采用",
           summary: "竞争转向 Agent、分发和收入。",
-          chinaPosition: "模型追近，产品与商业化进入真正考验。",
+          chinaPosition: "竞争进入产品留存、企业采用、全球分发与算力协同。",
         },
       ],
     },

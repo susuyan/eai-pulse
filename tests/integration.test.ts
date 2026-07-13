@@ -2,6 +2,7 @@ import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { earlyHistoryEvents } from "../src/catalog/early-history.js";
 import { historicalEvents } from "../src/catalog/history.js";
 import { recentDensityEvents } from "../src/catalog/recent-density.js";
 import { sourceCatalog } from "../src/catalog/sources.js";
@@ -82,12 +83,25 @@ describe("SQLite application", () => {
         month,
       ).toBeGreaterThanOrEqual(6);
     }
+    await db
+      .updateTable("signals")
+      .set({ title: "DeepSeek-V3 开源：训练效率成为中国追赶的新叙事" })
+      .where("external_id", "=", "deepseek-v3-efficient-frontier")
+      .execute();
+    await seedDatabase(db);
+    expect(
+      await db
+        .selectFrom("signals")
+        .select("title")
+        .where("external_id", "=", "deepseek-v3-efficient-frontier")
+        .executeTakeFirstOrThrow(),
+    ).toEqual({ title: "DeepSeek-V3 开源：训练效率成为全球模型竞争的新变量" });
     const result = await exportStaticSite(db, config);
     expect(result).toMatchObject({
-      events: historicalEvents.length + recentDensityEvents.length + 6,
+      events: earlyHistoryEvents.length + historicalEvents.length + recentDensityEvents.length + 6,
       tracks: 10,
       sources: sourceCatalog.length,
-      version: "0.7.0",
+      version: "0.8.0",
     });
     const timeline = await readFile(join(config.distDir, "data/timeline.json"), "utf8");
     expect(timeline).not.toContain("ADMIN_TOKEN");
@@ -99,7 +113,7 @@ describe("SQLite application", () => {
     expect(scout.insights[0].evidence[0].slug).toBe("lingbot-vla-2-cross-embodiment");
     const product = JSON.parse(await readFile(join(config.distDir, "data/product.json"), "utf8"));
     expect(product.roadmap).toHaveLength(5);
-    expect(product.releases[0]).toMatchObject({ version: "0.7.0" });
+    expect(product.releases[0]).toMatchObject({ version: "0.8.0" });
     expect(product.sourceCoverage.total).toBeGreaterThanOrEqual(100);
     expect(product.sourceCoverage.observing).toBe(0);
     expect(product.evaluation).toMatchObject({
@@ -144,7 +158,7 @@ describe("SQLite application", () => {
     const staticPages = [
       ["index.html", "今日 AI 行业判断 · Agent Pulse"],
       ["lines/index.html", "趋势判断 · Agent Pulse"],
-      ["lines/tech-evolution/index.html", "技术演进 · Agent Pulse"],
+      ["lines/tech-evolution/index.html", "模型能力与研究 · Agent Pulse"],
       ["timeline/index.html", "事件脉络 · Agent Pulse"],
       ["scout/index.html", "行动参考 · Agent Pulse"],
       ["actors/index.html", "关键参与者 · Agent Pulse"],
@@ -198,13 +212,16 @@ describe("SQLite application", () => {
     expect(timelinePage).toContain('id="event-drawer"');
     expect(timelinePage).toContain('aria-haspopup="dialog"');
     expect(timelinePage).toContain('data-timeline-year="2026"');
+    expect(timelinePage).toContain('data-timeline-year="2022"');
+    expect(timelinePage).toContain('data-event="chatgpt-research-preview"');
+    expect(timelinePage).toContain('data-filter-track="official"');
     expect(timelinePage).toContain('data-filter-track="research"');
     expect(timelinePage).toContain('data-research="true"');
     expect(timelinePage).not.toMatch(/data-category="(?:research|paper)" data-research="false"/);
     expect(timelinePage).toContain('data-research-day="2026-07-09"');
     expect(timelinePage).toContain("当天收录 6 篇研究");
-    expect(timelinePage).toContain("近三月密度");
-    expect(timelinePage).toContain("官方周末无新批次");
+    expect(timelinePage).not.toContain("近三月密度");
+    expect(timelinePage).not.toContain("论文批次状态");
     expect(timelinePage).toContain('data-recent="true"');
     for (const slug of [
       "predicatelongbench-long-context-difficulty",
@@ -216,6 +233,12 @@ describe("SQLite application", () => {
     ]) {
       expect(timelinePage).toContain(`data-event="${slug}"`);
     }
+    const linesPage = await readFile(join(config.distDir, "lines/index.html"), "utf8");
+    expect(linesPage).toContain("从 ChatGPT 时刻到 Agent 时代");
+    expect(linesPage).toContain("查看趋势详情");
+    expect(linesPage).toContain("已收购");
+    expect(linesPage).toContain("已停止");
+    expect(linesPage).not.toContain("中国追赶");
     const sourcesPage = await readFile(join(config.distDir, "sources/index.html"), "utf8");
     expect(sourcesPage).toContain("值得持续跟踪的 AI 核心个人");
     expect(sourcesPage).toContain("宝玉");
@@ -245,7 +268,7 @@ describe("SQLite application", () => {
     expect(github).toMatchObject({
       repositoryUrl: "https://github.com/barretlee/agent-pulse",
       stars: null,
-      latestRelease: "v0.7.0",
+      latestRelease: "v0.8.0",
     });
   });
 

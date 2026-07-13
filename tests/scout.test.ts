@@ -1,7 +1,9 @@
+import { randomUUID } from "node:crypto";
 import { afterEach, describe, expect, it } from "vitest";
 import { loadConfig } from "../src/config/env.js";
 import { createDatabase } from "../src/db/database.js";
 import { migrateToLatest } from "../src/db/migrate.js";
+import { Repository } from "../src/db/repository.js";
 import { seedDatabase } from "../src/db/seed.js";
 import type { EventRow } from "../src/db/types.js";
 import { buildScoutCard, runScout, scoutPublicationDecision } from "../src/pipeline/scout.js";
@@ -79,5 +81,38 @@ describe("Scout deterministic cards", () => {
         novelty_score: 54,
       }),
     ).toMatchObject({ allowed: false, blockers: expect.arrayContaining(["total_score_below_72"]) });
+  });
+
+  it("deduplicates equivalent published opportunities before public export", async () => {
+    const config = loadConfig({ NODE_ENV: "test", DATABASE_URL: "sqlite::memory:" });
+    const db = createDatabase(config);
+    databases.push(db);
+    await migrateToLatest(db, config);
+    await seedDatabase(db);
+    const original = await db
+      .selectFrom("scout_insights")
+      .selectAll()
+      .where("status", "=", "published")
+      .executeTakeFirstOrThrow();
+    await db
+      .insertInto("scout_insights")
+      .values({
+        ...original,
+        id: randomUUID(),
+        slug: `${original.slug}-duplicate`,
+        title: ` ${original.title}！`,
+        total_score: Math.max(0, original.total_score - 1),
+      })
+      .execute();
+
+    const publicInsights = await new Repository(db).publicScoutInsights();
+    const normalized = publicInsights.map(
+      (insight) =>
+        `${insight.kind}:${insight.title
+          .normalize("NFKC")
+          .toLocaleLowerCase()
+          .replace(/[\s\p{P}\p{S}]+/gu, "")}`,
+    );
+    expect(new Set(normalized).size).toBe(normalized.length);
   });
 });

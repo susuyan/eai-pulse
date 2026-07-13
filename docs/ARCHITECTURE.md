@@ -65,7 +65,7 @@ SQLite is the zero-config default and enables WAL, foreign keys and a busy timeo
 
 ## Event as the single fact node
 
-Tracks, actor roles, audience types and views never duplicate event facts. They attach narratives to a shared event through junction tables. This makes it possible to compare the same event across AGI, investment, To B and China catch-up perspectives without content drift.
+Tracks, actor roles, audience types and views never duplicate event facts. They attach narratives to a shared event through junction tables. This makes it possible to compare the same event across agent software, capital, To B and global innovation perspectives without content drift.
 
 ## Failure model
 

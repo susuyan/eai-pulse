@@ -1,4 +1,4 @@
-export const productVersion = "0.7.0";
+export const productVersion = "0.8.0";
 
 export const capabilities = [
   {
@@ -30,13 +30,14 @@ export const capabilities = [
       "six daily GitHub Actions refreshes plus a two-hour quality guard, serialized snapshot writes and explicit Pages dispatch",
   },
   {
-    slug: "two-year-baseline",
-    name: "两年行业基线",
+    slug: "industry-history-baseline",
+    name: "2022—今天行业基线",
     domain: "understanding",
-    status: "experimental",
-    maturity: 62,
-    release: "0.4.0",
-    evidence: "30 source-backed milestones from 2024-07 to 2026-05 plus current 2026 events",
+    status: "operational",
+    maturity: 72,
+    release: "0.8.0",
+    evidence:
+      "source-backed milestones from Stable Diffusion and ChatGPT in 2022 through the current public snapshot",
   },
   {
     slug: "track-synthesis",
@@ -494,6 +495,30 @@ export const roadmap = [
 
 export const releases = [
   {
+    version: "0.8.0",
+    date: "2026-07-13",
+    name: "The Industry Evolution Map",
+    summary:
+      "把 2022—今天的技术、产品、公司与商业变化连接成可追溯的产业演化地图，并把每日增量判断自动发布为 GitHub 日报。",
+    capabilities: [
+      "2022—今天产业骨架",
+      "六个趋势判断维度",
+      "项目生命周期状态",
+      "完整证据抽屉",
+      "高置信星探去重",
+      "GitHub AI 日报",
+    ],
+    changes: [
+      "六个趋势重新定义为模型研究、Agent 软件、产品商业、基础设施、资本公司与全球创新，每个板块提供明确详情入口",
+      "新增 13 个 2022—2023 官方来源里程碑，并以六个产业阶段连接 ChatGPT 时刻到今天",
+      "阶段卡片展示代表项目的持续发展、转向、收购与停止状态，所有状态回链官方资料",
+      "移除论文批次和近三月密度运营模块，事件筛选改为普通用户可理解的官方发布、研究与趋势问题",
+      "证据抽屉展示完整发展节点、五类分析、置信度和全部原始资料，并统一桌面与移动端间距",
+      "公开星探自动去重，标签左对齐，补充目标用户、四项质量指标和完整实验信息",
+      "数据刷新每四小时幂等更新北京时间当天的 GitHub AI 日报，并只消费公开静态 DTO",
+    ],
+  },
+  {
     version: "0.7.0",
     date: "2026-07-13",
     name: "The Autonomous Intelligence Loop",
@@ -511,7 +536,7 @@ export const releases = [
     changes: [
       "首页围绕 30 秒了解变化、3 分钟理解影响、10 分钟形成判断重建信息消费路径",
       "事件脉络按年月倒序组织，证据在首页、趋势、研究、事件和星探等入口原地打开",
-      "最近 7 天内容统一高亮，并把最近三个完整自然月补齐到每月不少于 6 个一手证据事件",
+      "最近 7 天内容统一高亮，并把最近三个完整自然月补齐到每月不少于 6 个官方来源事件",
       "论文区域展示最近三天批次状态，区分真实更新、周末节奏与等待下一批，不用空卡或虚构数据掩盖缺口",
       "事件通过事实门禁后自动发布；星探建议通过质量门禁后直接上架，不合格项自动归档",
       "数据每日刷新 6 次，评测低于 60 分时由两小时质量守卫按冷却规则触发增量更新",
@@ -603,7 +628,7 @@ export const releases = [
       "新增每 6 小时 GitHub Actions 数据刷新；数据变化后提交隐私安全 JSON 快照并显式部署 Pages",
       "建立 2024-07 至 2026-07 行业基线，加入 30 个一手来源里程碑和 5 个发展阶段",
       "将默认公开体验收敛为 Today、六条趋势主线和两年演进摘要，其他工具按需展开",
-      "新增中国追赶的阶段性同维度对照，不再只呈现静态公司排名",
+      "新增全球创新版图的阶段性同维度对照，不再只呈现静态公司排名",
     ],
   },
   {

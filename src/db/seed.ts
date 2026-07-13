@@ -1,9 +1,10 @@
 import { createHash } from "node:crypto";
 import type { Kysely } from "kysely";
+import { earlyHistoryEvents } from "../catalog/early-history.js";
 import { type CuratedEventSeed, historicalEvents } from "../catalog/history.js";
 import { recentDensityEvents } from "../catalog/recent-density.js";
 import { sourceCatalog } from "../catalog/sources.js";
-import { canonicalizeUrl } from "../domain/url.js";
+import { canonicalizeUrl, sha256 } from "../domain/url.js";
 import { Repository } from "./repository.js";
 import type { DatabaseSchema } from "./types.js";
 
@@ -16,8 +17,8 @@ const stableId = (namespace: string, slug: string) => {
 const tracks = [
   [
     "tech-evolution",
-    "技术演进",
-    "从 Scaling、推理、多模态到 Agent 与世界模型的能力主线。",
+    "模型能力与研究",
+    "跟踪模型架构、推理、多模态、评测与科学研究的实质进展。",
     "main",
     "technology",
     "#8b5cf6",
@@ -26,8 +27,8 @@ const tracks = [
   ],
   [
     "agi-progress",
-    "AGI 进展",
-    "能力泛化、自治、可靠性、安全与治理的可验证进展。",
+    "Agent 与软件重构",
+    "跟踪模型如何连接工具、执行长任务并重写软件与工作方式。",
     "main",
     "agi",
     "#f97316",
@@ -36,8 +37,8 @@ const tracks = [
   ],
   [
     "investing",
-    "投资视角",
-    "融资、并购、CapEx、算力资产、估值与竞争结构。",
+    "资本与公司演化",
+    "跟踪融资、并购、团队迁移、项目转型与产业集中。",
     "main",
     "investment",
     "#22c55e",
@@ -46,8 +47,8 @@ const tracks = [
   ],
   [
     "commercialization",
-    "商业化",
-    "收入、成本、定价、分发、留存和商业模式。",
+    "产品与商业验证",
+    "跟踪产品采用、留存、收入、分发与工作流控制点。",
     "main",
     "business",
     "#06b6d4",
@@ -77,9 +78,9 @@ const tracks = [
   ],
   ["to-g", "To G", "政府采购、监管、公共服务与主权 AI。", "branch", "audience", "#eab308", "G", 80],
   [
-    "china-catch-up",
-    "中国追赶",
-    "国内角色相对全球基准的跟随、并跑、领先、受限与出海。",
+    "global-innovation",
+    "全球创新版图",
+    "比较中国、美国、欧洲与开放生态在同一维度上的创新路径与影响。",
     "main",
     "geography",
     "#ef4444",
@@ -88,8 +89,8 @@ const tracks = [
   ],
   [
     "model-economics",
-    "模型经济学",
-    "模型、订阅、API 与算力的单位成本和购买路径。",
+    "基础设施与成本",
+    "跟踪芯片、训练、推理、开源与单位任务成本的供给变化。",
     "branch",
     "economics",
     "#14b8a6",
@@ -642,7 +643,7 @@ const events = [
     date: "2026-07-08T10:00:00.000Z",
     source: "robbyant",
     url: "https://github.com/Robbyant/lingbot-vla-v2",
-    tracks: ["tech-evolution", "agi-progress", "china-catch-up", "investing", "to-d"],
+    tracks: ["tech-evolution", "agi-progress", "global-innovation", "investing", "to-d"],
     actors: ["robbyant"],
   },
   {
@@ -668,7 +669,12 @@ const events = [
   },
 ] as const satisfies readonly CuratedEventSeed[];
 
-const allEvents = [...historicalEvents, ...recentDensityEvents, ...events] as const;
+const allEvents = [
+  ...earlyHistoryEvents,
+  ...historicalEvents,
+  ...recentDensityEvents,
+  ...events,
+] as const;
 
 export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
   const repository = new Repository(db);
@@ -723,6 +729,24 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
       maintenance_status: "retired",
       retired_at: timestamp,
     });
+  }
+
+  const legacyGlobalTrack = await db
+    .selectFrom("tracks")
+    .select("id")
+    .where("slug", "=", "china-catch-up")
+    .executeTakeFirst();
+  const currentGlobalTrack = await db
+    .selectFrom("tracks")
+    .select("id")
+    .where("slug", "=", "global-innovation")
+    .executeTakeFirst();
+  if (legacyGlobalTrack && !currentGlobalTrack) {
+    await db
+      .updateTable("tracks")
+      .set({ slug: "global-innovation", updated_at: timestamp })
+      .where("id", "=", legacyGlobalTrack.id)
+      .execute();
   }
 
   for (const [slug, name, description, kind, perspective, color, icon, order] of tracks) {
@@ -835,7 +859,7 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
     id: viewId,
     slug: "executive-briefing",
     name: "CEO / 投资负责人总览",
-    description: "先看战略、资本与商业化，再下钻技术与证据。",
+    description: "先看模型、Agent、产品、成本、资本与全球创新，再下钻事实与证据。",
     filters_json: JSON.stringify({ statuses: ["published"], minConfidence: 60 }),
     layout_json: JSON.stringify({
       blocks: ["hero", "track-switcher", "timeline", "china-radar", "resources"],
@@ -1020,6 +1044,21 @@ async function seedEvent(
         )
         .executeTakeFirstOrThrow()
     ).id;
+  await db
+    .updateTable("signals")
+    .set({
+      external_id: event.slug,
+      title: event.title,
+      summary: event.fact,
+      language: "zh-CN",
+      published_at: event.date,
+      category: event.category,
+      tags_json: JSON.stringify(event.keywords),
+      content_hash: sha256(`${event.title}\n${event.fact}`),
+      updated_at: timestamp,
+    })
+    .where("id", "=", signalId)
+    .execute();
   await repository.attachSignal(id, signalId, "primary", 100);
 
   for (const [index, trackSlug] of event.tracks.entries()) {

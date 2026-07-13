@@ -29,7 +29,7 @@ function setupTimeline(root) {
     cards.forEach((card) => {
       const trackMatch =
         activeTrack === "all" ||
-        (activeTrack === "primary" && card.dataset.primary === "true") ||
+        (activeTrack === "official" && card.dataset.primary === "true") ||
         (activeTrack === "research" && card.dataset.research === "true") ||
         String(card.dataset.tracks || "")
           .split(" ")
@@ -90,12 +90,16 @@ function setupEventDrawer() {
         missing: "This event is not available in the current public snapshot.",
         fact: "What happened",
         evidence: "pieces of evidence",
-        why: "Why it matters",
+        sources: "independent sources",
+        story: "How the event developed",
+        context: "Background and change",
+        technical: "Technical or product shift",
+        why: "Industry impact",
+        business: "Decision implications",
         next: "What to watch next",
         full: "Open full event",
         source: "Source evidence",
-        assessment: "Current assessment",
-        analysis: "Agent Pulse · analysis",
+        confidence: "Evidence confidence",
         origin: "First report",
         official: "Official update",
         discussion: "External discussion",
@@ -108,12 +112,16 @@ function setupEventDrawer() {
         missing: "当前公开快照中没有找到这个事件。",
         fact: "发生了什么",
         evidence: "条证据",
-        why: "为什么重要",
+        sources: "个独立来源",
+        story: "事情如何发展",
+        context: "背景与变化",
+        technical: "技术或产品变化",
+        why: "行业影响",
+        business: "决策含义",
         next: "接下来观察",
         full: "打开完整事件",
         source: "原始证据",
-        assessment: "当前判断",
-        analysis: "Agent Pulse · 分析",
+        confidence: "证据置信度",
         origin: "首次出现",
         official: "官方更新",
         discussion: "外部讨论",
@@ -258,16 +266,55 @@ function renderDrawerEvent(root, event, labels, eventBase) {
   article.append(fact);
 
   const evidence = Array.isArray(event.evidence) ? event.evidence : [];
+  const sourceCount = new Set(evidence.map((item) => item.source)).size;
   const evidenceLine = createNode("div", "evidence-line");
   evidenceLine.append(
     createNode("span", "evidence-badge", drawerEvidenceLabel(evidence)),
-    createNode("span", "", `${evidence.length} ${labels.evidence}`),
+    createNode(
+      "span",
+      "",
+      `${evidence.length} ${labels.evidence} · ${sourceCount} ${labels.sources}`,
+    ),
   );
-  article.append(evidenceLine, buildDrawerJourney(event, evidence, labels));
-  article.append(
-    drawerInsight(labels.why, event.industryInsight || event.summary, "analysis"),
+  article.append(evidenceLine);
+
+  const story = createNode("section", "drawer-story");
+  story.append(createNode("h3", "", labels.story), buildDrawerJourney(evidence, labels));
+  article.append(story);
+
+  const insights = createNode("div", "drawer-insight-grid");
+  insights.append(
+    drawerInsight(labels.context, event.summary, "analysis"),
+    drawerInsight(labels.technical, event.technicalInsight, "analysis"),
+    drawerInsight(labels.why, event.industryInsight, "impact"),
+    drawerInsight(labels.business, event.businessValue, "impact"),
+    drawerInsight(
+      labels.confidence,
+      `${Number.isFinite(event.confidenceScore) ? event.confidenceScore : "—"}/100 · ${drawerEvidenceLabel(evidence)}`,
+      "assessment",
+    ),
     drawerInsight(labels.next, event.futureOutlook, "forecast"),
   );
+  article.append(insights);
+
+  if (evidence.length) {
+    const sources = createNode("section", "drawer-evidence-list");
+    sources.append(createNode("h3", "", labels.source));
+    evidence.forEach((item) => {
+      const url = safeHttpUrl(item.url);
+      if (!url) return;
+      const link = createNode("a", "");
+      link.href = url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.append(
+        createNode("strong", "", item.title),
+        createNode("span", "", `${item.source} · ${formatDrawerDate(item.publishedAt)}`),
+      );
+      sources.append(link);
+    });
+    article.append(sources);
+  }
 
   const actions = createNode("div", "preview-actions");
   const full = createNode("a", "button primary", labels.full);
@@ -285,13 +332,12 @@ function renderDrawerEvent(root, event, labels, eventBase) {
   root.append(article);
 }
 
-function buildDrawerJourney(event, evidence, labels) {
+function buildDrawerJourney(evidence, labels) {
   const journey = createNode("ol", "event-journey compact");
   const ordered = [...evidence].sort(
     (left, right) => Date.parse(left.publishedAt) - Date.parse(right.publishedAt),
   );
-  ordered.slice(-4).forEach((item, visibleIndex) => {
-    const originalIndex = Math.max(0, ordered.length - 4) + visibleIndex;
+  ordered.forEach((item, originalIndex) => {
     const kind =
       originalIndex === 0
         ? "origin"
@@ -317,16 +363,6 @@ function buildDrawerJourney(event, evidence, labels) {
     row.append(body);
     journey.append(row);
   });
-  const assessment = createNode("li", "event-step assessment");
-  const assessmentBody = createNode("div", "");
-  assessmentBody.append(
-    createNode("span", "", labels.assessment),
-    createNode("time", "", formatDrawerDate(latestEventDate(event))),
-    createNode("strong", "", event.industryInsight || event.summary),
-    createNode("small", "", labels.analysis),
-  );
-  assessment.append(assessmentBody);
-  journey.append(assessment);
   return journey;
 }
 
@@ -374,8 +410,8 @@ function drawerEvidenceLabel(evidence) {
   const sources = new Set(evidence.map((item) => item.source)).size;
   const primary = evidence.some((item) => item.role === "primary");
   const en = document.documentElement.lang === "en";
-  if (primary && sources >= 2) return en ? "Primary + corroborated" : "一手 + 多源佐证";
-  if (primary) return en ? "Single primary source" : "单一一手来源";
+  if (primary && sources >= 2) return en ? "Official + corroborated" : "官方资料 + 多源佐证";
+  if (primary) return en ? "Single official source" : "单一官方资料";
   if (sources >= 2) return en ? "Multi-source, confirmation pending" : "多源二手待确认";
   return en ? "Secondary evidence pending" : "二手证据待补强";
 }

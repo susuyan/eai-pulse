@@ -161,7 +161,18 @@ export interface TrackNarrative {
 
 export interface IndustryNarratives {
   horizon: { start: string; end: string; label: string };
-  eras: Array<{ slug: string; label: string; period: string; summary: string }>;
+  eras: Array<{
+    slug: string;
+    label: string;
+    period: string;
+    summary: string;
+    projects: Array<{
+      name: string;
+      status: "active" | "pivoted" | "acquired" | "sunset";
+      note: string;
+      url: string;
+    }>;
+  }>;
   tracks: TrackNarrative[];
 }
 

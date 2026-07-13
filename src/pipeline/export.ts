@@ -204,7 +204,10 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
     scout: scout as PublicScoutInsight[],
     narratives: {
       horizon: { ...industryNarratives.horizon },
-      eras: industryNarratives.eras.map((era) => ({ ...era })),
+      eras: industryNarratives.eras.map((era) => ({
+        ...era,
+        projects: era.projects.map((project) => ({ ...project })),
+      })),
       tracks: industryNarratives.tracks.map((track) => ({
         ...track,
         stages: track.stages.map((stage) => ({ ...stage })),

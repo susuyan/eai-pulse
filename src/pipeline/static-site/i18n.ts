@@ -177,8 +177,8 @@ const translations: Record<string, Record<Locale, string>> = {
   },
   "home.manifestoDesc": {
     "zh-CN":
-      "从一手事实出发，沿技术、AGI、商业、资本与中国追赶主线，找到真正会改变决策的行业转折。",
-    en: "Start with primary facts. Follow the technology, AGI, business, capital, and China catch-up lines to find the inflections that change decisions.",
+      "从一手事实出发，沿模型能力、Agent、产品商业、基础设施、资本与全球创新主线，找到真正会改变决策的行业转折。",
+    en: "Start with primary facts. Follow models, agents, products, infrastructure, capital, and global innovation to find the inflections that change decisions.",
   },
   "home.principle1": { "zh-CN": "一手来源优先", en: "Primary sources first" },
   "home.principle2": {
@@ -234,6 +234,14 @@ const translations: Record<string, Record<Locale, string>> = {
   },
   "lines.statusEvents": { "zh-CN": "{count} 个公开事件", en: "{count} public events" },
   "lines.selectLine": { "zh-CN": "选择一条主线开始", en: "Pick a line to start" },
+  "lines.arcTitle": {
+    "zh-CN": "从 ChatGPT 时刻到 Agent 时代",
+    en: "From the ChatGPT Moment to the Agent Era",
+  },
+  "lines.arcDesc": {
+    "zh-CN": "沿能力、产品与公司状态回看每个阶段：哪些方向延续，哪些项目转向、被收购或停止。",
+    en: "Trace capabilities, products, and company transitions across each era — what endured, pivoted, was acquired, or ended.",
+  },
   "lines.howTitle": {
     "zh-CN": "同一事实，沿不同视角理解",
     en: "Same Facts, Different Lenses",
@@ -267,7 +275,10 @@ const translations: Record<string, Record<Locale, string>> = {
     en: "These judgments come from public events on this line — not a substitute for independent decisions.",
   },
   "lines.chinaSection": { "zh-CN": "CHINA / GLOBAL", en: "CHINA / GLOBAL" },
-  "lines.chinaTitle": { "zh-CN": "中国进展与全球坐标", en: "China's Progress in Global Context" },
+  "lines.chinaTitle": {
+    "zh-CN": "全球创新中的中国实践",
+    en: "China's Contributions to Global AI Innovation",
+  },
   "lines.evidenceGap": { "zh-CN": "EVIDENCE GAP", en: "EVIDENCE GAP" },
   "lines.evidenceGapTitle": {
     "zh-CN": "系统还不知道什么",
@@ -286,8 +297,8 @@ const translations: Record<string, Record<Locale, string>> = {
     en: "Currently only {count} public nodes — still an evidence-sparse line.",
   },
   "lines.waitingNext": {
-    "zh-CN": "等待能改变当前判断的一手证据。",
-    en: "Awaiting primary evidence that could change the current thesis.",
+    "zh-CN": "等待能改变当前判断的官方原始资料。",
+    en: "Awaiting official source material that could change the current thesis.",
   },
   "lines.judgmentLabel": { "zh-CN": "当前判断 · 系统分析", en: "Current Thesis · System Analysis" },
   "lines.nextLabel": { "zh-CN": "下一观察 · 待验证", en: "Next Observation · To Verify" },
@@ -299,12 +310,12 @@ const translations: Record<string, Record<Locale, string>> = {
     "zh-CN": "当前主线尚无阶段叙事。",
     en: "No phase narrative for this line yet.",
   },
-  "lines.noEvidence": { "zh-CN": "暂无一手证据节点。", en: "No primary evidence nodes yet." },
+  "lines.noEvidence": { "zh-CN": "暂无官方原始资料节点。", en: "No official source nodes yet." },
   "lines.viewTimeline": {
     "zh-CN": "在时间轴查看全部节点",
     en: "View all nodes on the timeline",
   },
-  "lines.openLine": { "zh-CN": "打开主线", en: "Open Line" },
+  "lines.openLine": { "zh-CN": "查看趋势详情", en: "Explore This Trend" },
   "lines.nodes": { "zh-CN": "{count} 节点", en: "{count} nodes" },
   "lines.latest": { "zh-CN": "最新 · {date}", en: "Latest · {date}" },
   "lines.waitingEvidence": { "zh-CN": "证据待补", en: "Evidence pending" },
@@ -315,7 +326,7 @@ const translations: Record<string, Record<Locale, string>> = {
   },
   "lines.verifyEvidence": { "zh-CN": "沿阶段核验证据", en: "Verify evidence by phase" },
   "lines.openSourceMap": { "zh-CN": "查看来源地图", en: "View Source Map" },
-  "lines.navAria": { "zh-CN": "六条主线", en: "Strategic lines" },
+  "lines.navAria": { "zh-CN": "六个趋势方向", en: "Strategic trends" },
 
   // Lines — role lenses
   "lines.lensCEO": { "zh-CN": "CEO", en: "CEO" },
@@ -354,17 +365,22 @@ const translations: Record<string, Record<Locale, string>> = {
   },
   "timeline.statusEvents": { "zh-CN": "{count} 个公开事件", en: "{count} public events" },
   "timeline.statusPrimary": {
-    "zh-CN": "{count} 个含一手证据",
-    en: "{count} with primary evidence",
+    "zh-CN": "{count} 个有官方原始资料",
+    en: "{count} backed by official material",
   },
   "timeline.statusHint": { "zh-CN": "搜索或选择主线", en: "Search or select a line" },
   "timeline.searchPlaceholder": {
     "zh-CN": "搜索主体、技术、事件或关键词",
     en: "Search company, topic, event, or keyword",
   },
-  "timeline.filterAll": { "zh-CN": "全部", en: "All" },
-  "timeline.filterPrimary": { "zh-CN": "一手证据", en: "Primary" },
+  "timeline.filterAll": { "zh-CN": "全部变化", en: "All Changes" },
+  "timeline.filterPrimary": { "zh-CN": "官方发布", en: "Official Releases" },
   "timeline.filterResearch": { "zh-CN": "论文与研究", en: "Papers & Research" },
+  "timeline.filterHelp": {
+    "zh-CN":
+      "“官方发布”只看公司、实验室、项目方或监管机构的原始公告；趋势按钮用于从不同决策问题理解同一事件。",
+    en: "Official Releases shows original announcements from companies, labs, projects, and regulators. Trend filters apply different decision lenses to the same events.",
+  },
   "timeline.nodes": { "zh-CN": "{count} 个事件", en: "{count} events" },
   "timeline.monthEvents": { "zh-CN": "{count} 个事件", en: "{count} events" },
   "timeline.drawerLabel": { "zh-CN": "事件详情抽屉", en: "Event detail drawer" },

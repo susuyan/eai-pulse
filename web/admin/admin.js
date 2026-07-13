@@ -240,7 +240,7 @@ function renderFunnel(report) {
     missing_keywords: "缺关键词",
     missing_track: "缺主线",
     missing_evidence: "缺证据",
-    missing_primary_evidence: "缺一手证据",
+    missing_primary_evidence: "缺官方原始资料",
     low_confidence: "低置信",
     unsupported_heat: "热度证据不足",
   };

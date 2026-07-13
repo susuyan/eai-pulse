@@ -48,8 +48,8 @@ describe("knowledge source catalog", () => {
     expect(capabilities.length).toBeGreaterThanOrEqual(25);
     expect(capabilities.every((capability) => capability.evidence.length > 10)).toBe(true);
     expect(releases[0]?.capabilities.length).toBeGreaterThanOrEqual(5);
-    expect(releases[0]).toMatchObject({ version: "0.7.0" });
-    expect(releases[1]).toMatchObject({ version: "0.6.0" });
+    expect(releases[0]).toMatchObject({ version: "0.8.0" });
+    expect(releases[1]).toMatchObject({ version: "0.7.0" });
   });
 
   it("keeps a unique, public and policy-aware AI influencer matrix", () => {

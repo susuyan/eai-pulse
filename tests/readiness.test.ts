@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { earlyHistoryEvents } from "../src/catalog/early-history.js";
 import { historicalEvents } from "../src/catalog/history.js";
 import { recentDensityEvents } from "../src/catalog/recent-density.js";
 import { loadConfig } from "../src/config/env.js";
@@ -136,7 +137,9 @@ describe("event publication readiness", () => {
   it("summarizes blockers across the editorial backlog", async () => {
     const { db } = await setup();
     const summary = await eventReadinessSummary(db);
-    expect(summary.total).toBe(historicalEvents.length + recentDensityEvents.length + 6);
+    expect(summary.total).toBe(
+      earlyHistoryEvents.length + historicalEvents.length + recentDensityEvents.length + 6,
+    );
     expect(summary.ready).toBeGreaterThan(0);
     expect(summary.ready + summary.blocked).toBe(summary.total);
   });

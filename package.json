@@ -1,6 +1,6 @@
 {
   "name": "agent-pulse",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": false,
   "description": "A curated AI industry intelligence timeline — signal, not noise.",
   "author": "Barret Lee <barret.china@gmail.com>",
@@ -33,6 +33,7 @@
     "sources:proposal:validate": "tsx src/cli/validate-source-proposal.ts",
     "sources:proposal:import": "tsx src/cli/import-source-proposal.ts",
     "sources:health:issue": "tsx src/cli/render-source-health-issue.ts",
+    "daily:issue": "tsx src/cli/render-daily-brief.ts",
     "repair:provenance": "tsx src/cli/repair-provenance.ts",
     "repair:activations": "tsx src/cli/repair-activations.ts",
     "repair:review-noise": "tsx src/cli/repair-review-noise.ts",

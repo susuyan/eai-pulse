@@ -1,6 +1,7 @@
 import type {
   EnrichedEvent,
   EvaluationDimension,
+  IndustryNarratives,
   PublicActor,
   PublicInfluencer,
   PublicResource,
@@ -21,8 +22,6 @@ import {
   groupTimelineMonthItems,
   isRecentEvent,
   latestDevelopmentAt,
-  recentMonthlyDensity,
-  recentResearchBatches,
   sortEventsByLatestDevelopment,
 } from "./intelligence.js";
 import { escapeHtml, formatDate, icon, pageLayout, safeExternalLink } from "./render.js";
@@ -32,7 +31,7 @@ const STRATEGIC_TRACKS = [
   "agi-progress",
   "commercialization",
   "investing",
-  "china-catch-up",
+  "global-innovation",
   "model-economics",
 ] as const;
 
@@ -323,6 +322,10 @@ function linesOverview(model: StaticSiteModel, locale: Locale): string {
       <span class="section-kicker">STRATEGIC LINES</span><h1>${escapeHtml(t("lines.heroTitle", locale))}</h1><p>${escapeHtml(t("lines.heroDesc", locale))}</p>
       ${pageStatus(t("lines.statusEvents", locale).replace("{count}", String(model.events.length)), model.narratives.horizon.label, t("lines.selectLine", locale))}
     </section>
+    <section class="section section-tint"><div class="shell">
+      ${sectionHead("2022 → TODAY", t("lines.arcTitle", locale), t("lines.arcDesc", locale))}
+      <div class="industry-arc">${model.narratives.eras.map((era) => eraCard(era, locale)).join("")}</div>
+    </div></section>
     <section class="section shell"><div class="line-directory">${strategicTracks(model)
       .map((track) => lineDirectoryCard(model, track, locale))
       .join("")}</div></section>
@@ -330,6 +333,21 @@ function linesOverview(model: StaticSiteModel, locale: Locale): string {
       ${sectionHead("HOW TO READ", t("lines.howTitle", locale), t("lines.howDesc", locale))}
       <div class="reading-flow"><span>${escapeHtml(t("lines.flowTech", locale))}</span>${icon("arrow-right")}<span>${escapeHtml(t("lines.flowProduct", locale))}</span>${icon("arrow-right")}<span>${escapeHtml(t("lines.flowBusiness", locale))}</span>${icon("arrow-right")}<span>${escapeHtml(t("lines.flowCapital", locale))}</span></div>
     </div></section>`;
+}
+
+function eraCard(era: IndustryNarratives["eras"][number], locale: Locale): string {
+  const statusLabel = {
+    active: locale === "en" ? "Active" : "持续发展",
+    pivoted: locale === "en" ? "Pivoted" : "已转向",
+    acquired: locale === "en" ? "Acquired" : "已收购",
+    sunset: locale === "en" ? "Sunset" : "已停止",
+  } as const;
+  return `<article class="era-card"><header><span>${escapeHtml(era.period)}</span><h2>${escapeHtml(era.label)}</h2></header><p>${escapeHtml(era.summary)}</p><div class="era-projects">${era.projects
+    .map(
+      (project) =>
+        `<a href="${escapeHtml(project.url)}" target="_blank" rel="noopener noreferrer"><span class="project-status ${escapeHtml(project.status)}">${escapeHtml(statusLabel[project.status])}</span><strong>${escapeHtml(project.name)}</strong><small>${escapeHtml(project.note)}</small>${icon("external-link")}</a>`,
+    )
+    .join("")}</div></article>`;
 }
 
 function lineDetail(model: StaticSiteModel, track: PublicTrack, locale: Locale): string {
@@ -353,7 +371,7 @@ function lineDetail(model: StaticSiteModel, track: PublicTrack, locale: Locale):
         .join("")}</nav>
       <div class="line-hero-grid"><div><span class="section-kicker">${escapeHtml(track.perspective.toUpperCase())} · ${t("lines.evidenceNodes", locale).replace("{count}", String(events.length))}</span><h1>${escapeHtml(track.name)}</h1><p class="line-now">${escapeHtml(narrative?.now || track.description)}</p></div>
       <aside><span>${escapeHtml(t("lines.judgmentLabel", locale))}</span><strong>${escapeHtml(narrative?.thesis || track.description)}</strong><div><span>${escapeHtml(t("lines.nextLabel", locale))}</span><p>${escapeHtml(narrative?.next ?? t("lines.waitingNext", locale))}</p></div></aside></div>
-      ${pageStatus(`${primaryEvents.length}/${events.length} ${locale === "en" ? "with primary evidence" : "含一手证据"}`, model.narratives.horizon.label, t("lines.verifyEvidence", locale))}
+      ${pageStatus(`${primaryEvents.length}/${events.length} ${locale === "en" ? "with official source material" : "含官方原始资料"}`, model.narratives.horizon.label, t("lines.verifyEvidence", locale))}
     </section>
     <section class="section shell">
       ${sectionHead(t("lines.phases", locale), t("lines.phasesTitle", locale), t("lines.phasesDesc", locale))}
@@ -393,22 +411,17 @@ function timeline(model: StaticSiteModel, locale: Locale): string {
         `<button type="button" data-filter-track="${escapeHtml(track.slug)}">${escapeHtml(track.name)}</button>`,
     )
     .join("");
-  const density = recentMonthlyDensity(events, model.generatedAt);
-  const researchBatches = recentResearchBatches(events, model.generatedAt);
   return `<section class="page-hero compact shell">
       <span class="section-kicker">EVIDENCE TIMELINE</span><h1>${escapeHtml(t("timeline.heroTitle", locale))}</h1><p>${escapeHtml(t("timeline.heroDesc", locale))}</p>
       ${pageStatus(t("timeline.statusEvents", locale).replace("{count}", String(events.length)), t("timeline.statusPrimary", locale).replace("{count}", String(events.filter(hasPrimaryEvidence).length)), locale === "en" ? "Newest development first" : "按最近进展倒序")}
     </section>
-    <section class="timeline-intelligence shell">
-      <article><span class="section-kicker">${locale === "en" ? "RECENT DENSITY" : "近三月密度"}</span><h2>${locale === "en" ? "A consistent evidence baseline" : "持续补齐，而不是只追今天"}</h2><div class="density-strip">${density.map((item) => densityItem(item, locale)).join("")}</div></article>
-      <article><span class="section-kicker">${locale === "en" ? "RESEARCH CADENCE" : "论文批次状态"}</span><h2>${locale === "en" ? "Why a daily digest may be empty" : "为什么最近两天没有论文日报"}</h2><div class="research-cadence">${researchBatches.map((item) => researchBatchItem(item, locale)).join("")}</div><p>${locale === "en" ? "arXiv announces submissions five days a week. Empty weekend dates are shown as cadence, never fabricated as papers." : "arXiv 通常每周发布五天；周末空档会如实说明，系统不会为了凑日报伪造论文。"}</p></article>
-    </section>
     <section class="timeline-shell shell" data-timeline>
       <div class="timeline-controls">
         <label class="search-box">${icon("search")}<input type="search" data-timeline-search placeholder="${escapeHtml(t("timeline.searchPlaceholder", locale))}" autocomplete="off"></label>
-        <div class="chip-row" aria-label="${escapeHtml(t("timeline.searchLabel", locale))}"><button class="active" type="button" data-filter-track="all">${t("timeline.filterAll", locale)}</button><button type="button" data-filter-track="primary">${t("timeline.filterPrimary", locale)}</button><button type="button" data-filter-track="research">${t("timeline.filterResearch", locale)}</button>${filters}</div>
+        <div class="chip-row" aria-label="${escapeHtml(t("timeline.searchLabel", locale))}"><button class="active" type="button" data-filter-track="all">${t("timeline.filterAll", locale)}</button><button type="button" data-filter-track="official">${t("timeline.filterPrimary", locale)}</button><button type="button" data-filter-track="research">${t("timeline.filterResearch", locale)}</button>${filters}</div>
         <span data-result-count>${t("timeline.nodes", locale).replace("{count}", String(events.length))}</span>
       </div>
+      <p class="timeline-filter-help">${escapeHtml(t("timeline.filterHelp", locale))}</p>
       <div class="timeline-chronology">${chronology.map((year) => timelineYearGroup(year, locale)).join("")}</div>
     </section>`;
 }
@@ -653,7 +666,7 @@ function lineSummary(model: StaticSiteModel, track: PublicTrack, locale: Locale)
 function lineDirectoryCard(model: StaticSiteModel, track: PublicTrack, locale: Locale): string {
   const narrative = narrativeFor(model, track.slug);
   const events = eventsForTrack(model.events, track.slug);
-  return `<a class="line-directory-card" href="__PREFIX__lines/${escapeHtml(track.slug)}/" style="--track-color:${escapeHtml(track.color)}"><span>${escapeHtml(track.perspective)} · ${events.length} ${locale === "en" ? "nodes" : "节点"}</span><h2>${escapeHtml(track.name)}</h2><p>${escapeHtml(narrative?.now || track.description)}</p><div><strong>${locale === "en" ? "Next" : "下一观察"}</strong><small>${escapeHtml(narrative?.next || t("lines.nextWait", locale))}</small></div></a>`;
+  return `<a class="line-directory-card" href="__PREFIX__lines/${escapeHtml(track.slug)}/" style="--track-color:${escapeHtml(track.color)}"><span>${escapeHtml(track.perspective)} · ${events.length} ${locale === "en" ? "nodes" : "节点"}</span><h2>${escapeHtml(track.name)}</h2><p>${escapeHtml(narrative?.now || track.description)}</p><div><strong>${locale === "en" ? "Next" : "下一观察"}</strong><small>${escapeHtml(narrative?.next || t("lines.nextWait", locale))}</small></div><b class="line-card-button">${escapeHtml(t("lines.openLine", locale))} ${icon("arrow-right")}</b></a>`;
 }
 
 function gateway(
@@ -676,7 +689,7 @@ function phaseCard(
   },
   locale: Locale,
 ): string {
-  return `<article><span>${escapeHtml(stage.period)}</span><h3>${escapeHtml(stage.label)}</h3><p>${escapeHtml(stage.summary)}</p><div><strong>${locale === "en" ? "China Progress" : "本土进展"}</strong><p>${escapeHtml(stage.chinaPosition)}</p></div></article>`;
+  return `<article><span>${escapeHtml(stage.period)}</span><h3>${escapeHtml(stage.label)}</h3><p>${escapeHtml(stage.summary)}</p><div><strong>${locale === "en" ? "China in this phase" : "这一阶段的中国实践"}</strong><p>${escapeHtml(stage.chinaPosition)}</p></div></article>`;
 }
 
 function roleLens(role: string, question: string, locale: Locale, answer?: string): string {
@@ -788,52 +801,8 @@ function recentBadge(locale: Locale): string {
   return locale === "en" ? "LAST 7 DAYS" : "近 7 天";
 }
 
-function densityItem(
-  item: ReturnType<typeof recentMonthlyDensity>[number],
-  locale: Locale,
-): string {
-  const label = new Intl.DateTimeFormat(locale === "en" ? "en-US" : "zh-CN", {
-    year: "numeric",
-    month: "short",
-    timeZone: "UTC",
-  }).format(new Date(`${item.key}-01T00:00:00.000Z`));
-  const status =
-    item.status === "in-progress"
-      ? locale === "en"
-        ? "in progress"
-        : "持续更新"
-      : item.status === "balanced"
-        ? locale === "en"
-          ? "baseline met"
-          : "达到基线"
-        : locale === "en"
-          ? "backfill needed"
-          : "仍需补齐";
-  return `<div class="${escapeHtml(item.status)}"><span>${escapeHtml(label)}</span><strong>${item.count}</strong><small>${escapeHtml(status)}</small></div>`;
-}
-
-function researchBatchItem(
-  item: ReturnType<typeof recentResearchBatches>[number],
-  locale: Locale,
-): string {
-  const label = formatDate(`${item.day}T00:00:00.000Z`, locale);
-  const copy =
-    item.status === "published"
-      ? locale === "en"
-        ? `${item.count} verified papers`
-        : `${item.count} 篇已验证论文`
-      : item.status === "weekend"
-        ? locale === "en"
-          ? "official weekend cadence"
-          : "官方周末无新批次"
-        : locale === "en"
-          ? "awaiting the next verified batch"
-          : "等待下一批官方更新";
-  return `<div class="${escapeHtml(item.status)}"><span>${escapeHtml(label)}</span><strong>${escapeHtml(copy)}</strong></div>`;
-}
-
 function scoutCard(insight: PublicScoutInsight, locale: Locale): string {
-  return `<article class="scout-card" data-filter-value="${escapeHtml(insight.kind)}"><header><span>${escapeHtml(scoutKind(insight.kind, locale))} · ${escapeHtml(insight.horizon)}</span><strong>${insight.totalScore}/100</strong></header><h2>${escapeHtml(insight.title)}</h2><p class="hypothesis">${escapeHtml(insight.hypothesis)}</p><div class="scout-sections"><section><span>${locale === "en" ? "Why Now" : "为什么现在"}</span><p>${escapeHtml(insight.whyNow)}</p></section><section><span>${locale === "en" ? "Minimum Action" : "最小动作"}</span><p>${escapeHtml(insight.suggestedAction)}</p></section><section><span>${locale === "en" ? "Artifact" : "建议产物"}</span><p>${escapeHtml(insight.artifactIdea)}</p></section><section class="counter"><span>${locale === "en" ? "What Could Go Wrong" : "可能错在哪"}</span><p>${escapeHtml(insight.counterSignals)}</p></section></div><footer>${insight.evidence.map((item) => `<a data-event-link="${escapeHtml(item.slug)}" href="__PREFIX__events/${escapeHtml(item.slug)}/">${locale === "en" ? "Evidence" : "证据"} · ${escapeHtml(item.title)}</a>`).join("")}</footer></article>`;
+  return `<article class="scout-card" data-filter-value="${escapeHtml(insight.kind)}"><header><span>${escapeHtml(scoutKind(insight.kind, locale))}</span><span>${escapeHtml(insight.horizon)}</span><span>${locale === "en" ? "For" : "适合"} · ${escapeHtml(insight.targetAudience)}</span></header><h2>${escapeHtml(insight.title)}</h2><p class="scout-observation"><strong>${locale === "en" ? "Observed shift" : "触发变化"}</strong>${escapeHtml(insight.observation)}</p><p class="hypothesis">${escapeHtml(insight.hypothesis)}</p><div class="scout-metrics"><span>${locale === "en" ? "Confidence" : "置信度"} <strong>${insight.confidenceScore}</strong></span><span>${locale === "en" ? "Evidence" : "证据强度"} <strong>${insight.evidenceScore}</strong></span><span>${locale === "en" ? "Novelty" : "新颖度"} <strong>${insight.noveltyScore}</strong></span><span>${locale === "en" ? "Actionability" : "行动价值"} <strong>${insight.leverageScore}</strong></span></div><div class="scout-sections"><section><span>${locale === "en" ? "Why Now" : "为什么现在"}</span><p>${escapeHtml(insight.whyNow)}</p></section><section><span>${locale === "en" ? "Minimum Action" : "最小动作"}</span><p>${escapeHtml(insight.suggestedAction)}</p></section><section><span>${locale === "en" ? "Artifact" : "建议产物"}</span><p>${escapeHtml(insight.artifactIdea)}</p></section><section class="counter"><span>${locale === "en" ? "What Could Go Wrong" : "可能错在哪"}</span><p>${escapeHtml(insight.counterSignals)}</p></section></div><footer>${insight.evidence.map((item) => `<a data-event-link="${escapeHtml(item.slug)}" href="__PREFIX__events/${escapeHtml(item.slug)}/">${locale === "en" ? "Evidence" : "证据"} · ${escapeHtml(item.title)}</a>`).join("")}</footer></article>`;
 }
 
 function actorCard(actor: PublicActor, locale: Locale): string {

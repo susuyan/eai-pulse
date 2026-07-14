@@ -79,17 +79,17 @@ The repository is not a mockup. It contains the source catalog, collectors, evid
 
 GitHub Actions refreshes public data and redeploys the static site once per day. The source audit, monitor, and quality guard remain weekly; the `weekly-brief` Issue is created or updated only on Sunday (or by an explicit manual run) and only when at least one public Event clears the weekly gate, so daily freshness does not create empty Issues.
 
-Repository evidence checked on **2026-07-14**. Source-health numbers below come from the full audit completed at **2026-07-13 16:59 UTC**; content counts come from the versioned repository snapshot.
+Repository evidence checked on **2026-07-14**. Source-health numbers below come from the full audit completed at **2026-07-14 05:36 UTC**; content counts come from the versioned repository snapshot.
 
 | Measure | Verified state |
 | --- | ---: |
-| Sources in the current catalog | 411 |
-| Sources covered by that full audit | 411 |
-| Healthy / degraded / failed / skipped | 259 / 28 / 71 / 53 |
-| Accessible endpoints / endpoints with content | 397 / 270 |
+| Sources in the current catalog | 414 |
+| Sources covered by that full audit | 414 |
+| Healthy / degraded / failed / skipped | 266 / 27 / 70 / 51 |
+| Accessible endpoints / endpoints with content | 398 / 276 |
 | Active production sources | 5 |
-| Published evidence-backed events | 109 |
-| Normalized Signals in the repository snapshot | 4,417 |
+| Published evidence-backed events | 331 |
+| Normalized Signals in the repository snapshot | 4,940 |
 
 See the machine-generated [source health report](data/reports/source-health.json), [data-source policy](docs/SOURCES.md), and [capability map](docs/CAPABILITIES.md).
 
@@ -126,10 +126,10 @@ git clone https://github.com/barretlee/agent-pulse.git
 cd agent-pulse
 npm install
 cp .env.example .env
-npm run db:migrate
-npm run db:seed
 npm run dev
 ```
+
+Local startup automatically migrates the database, refreshes catalog seed metadata, and merges the latest versioned repository snapshot. A fresh clone and an existing local SQLite database therefore start from the same complete repository dataset without deleting newer local evidence. `npm run db:seed` and the default `npm run export` use the same bootstrap path.
 
 Open:
 

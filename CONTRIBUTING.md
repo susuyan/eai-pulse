@@ -14,8 +14,7 @@ Thanks for helping make AI industry intelligence more useful and less noisy.
 
 ```bash
 npm install
-npm run db:migrate
-npm run db:seed
+npm run db:seed # migrate, seed catalog metadata, and restore the repository snapshot
 npm run check
 ```
 
@@ -28,4 +27,3 @@ npm run check
 - Documentation is updated if behavior or operator workflow changes.
 
 Code, comments and commits should be in English. Product copy may be Chinese.
-

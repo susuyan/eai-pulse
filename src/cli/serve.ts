@@ -1,14 +1,15 @@
 import { loadConfig } from "../config/env.js";
+import { bootstrapRepositoryDatabase } from "../db/bootstrap.js";
 import { createDatabase } from "../db/database.js";
-import { migrateToLatest } from "../db/migrate.js";
-import { seedDatabase } from "../db/seed.js";
 import { exportStaticSite } from "../pipeline/export.js";
 import { buildApp } from "../server/app.js";
 
 const config = loadConfig();
 const db = createDatabase(config);
-await migrateToLatest(db, config);
-await seedDatabase(db);
+const snapshot = await bootstrapRepositoryDatabase(db, config);
+console.log(
+  `[db] restored repository snapshot: ${snapshot.counts.sources} sources, ${snapshot.counts.signals} signals`,
+);
 await exportStaticSite(db, config);
 const app = await buildApp(db, config);
 

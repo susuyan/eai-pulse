@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "policyVersion": "2026-07-14.v2",
-  "generatedAt": "2026-07-15T12:51:47.378Z",
+  "generatedAt": "2026-07-15T23:28:05.586Z",
   "source": {
     "name": "OpenAlex",
     "url": "https://developers.openalex.org/",
@@ -87,20 +87,26 @@
       "eventSlug": "a-multimodal-dataset-for-large-language-model-applications-in-the-energy-domain-2026-07-14",
       "arxivId": "2607.11459",
       "paperTitle": "A Multimodal Dataset for Large Language Model Applications in the Energy Domain",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168240869",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
-      "route": "rejected",
+      "route": "watch",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "impact_threshold_not_met"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11459"
+        "https://arxiv.org/abs/2607.11459",
+        "https://openalex.org/W7168240869"
       ]
     },
     {
@@ -211,20 +217,26 @@
       "eventSlug": "agent-hacks-agent-autoresearch-for-production-agent-red-teaming-2026-07-14",
       "arxivId": "2607.11698",
       "paperTitle": "Agent Hacks Agent: Autoresearch for Production-Agent Red-Teaming",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168293336",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
-      "route": "rejected",
+      "route": "watch",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "impact_threshold_not_met"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11698"
+        "https://arxiv.org/abs/2607.11698",
+        "https://openalex.org/W7168293336"
       ]
     },
     {
@@ -414,8 +426,8 @@
       "arxivId": "2310.13548",
       "paperTitle": "AI Supported Degradation of the Self Concept: A Theoretical Framework Grounded in Established Cognitive and Computational Mechanisms",
       "openAlexId": "https://openalex.org/W4387892136",
-      "citedByCount": 101,
-      "recentCitations": 85,
+      "citedByCount": 103,
+      "recentCitations": 87,
       "titleMatchScore": 0.167,
       "topicRelevant": true,
       "publicationDate": "2023-10-20",
@@ -424,8 +436,8 @@
       "route": "rejected",
       "reasons": [
         "title_match=0.167",
-        "citations=101",
-        "recent_citations=85",
+        "citations=103",
+        "recent_citations=87",
         "age_days=999",
         "publication_date_delta_days=0",
         "paper_title_identity_mismatch"
@@ -543,20 +555,26 @@
       "eventSlug": "an-explainable-agentic-system-for-detection-of-conversational-scams-with-summary-based-mem-2026-07-14",
       "arxivId": "2607.11707",
       "paperTitle": "An Explainable Agentic System for Detection of Conversational Scams with Summary-Based Memory",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168258857",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
-      "route": "rejected",
+      "route": "watch",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "impact_threshold_not_met"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11707"
+        "https://arxiv.org/abs/2607.11707",
+        "https://openalex.org/W7168258857"
       ]
     },
     {
@@ -1060,20 +1078,26 @@
       "eventSlug": "closing-the-loop-an-access-control-architecture-for-automated-anomaly-driven-network-revoc-2026-07-14",
       "arxivId": "2607.11649",
       "paperTitle": "Closing the Loop: An Access-Control Architecture for Automated, Anomaly-Driven Network Revocation in IoT Deployments",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168246392",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": false,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
       "route": "rejected",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "outside_core_ai_research_scope"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11649"
+        "https://arxiv.org/abs/2607.11649",
+        "https://openalex.org/W7168246392"
       ]
     },
     {
@@ -1186,7 +1210,7 @@
       "paperTitle": "Consciousness in Artificial Intelligence: Insights from the Science of Consciousness",
       "openAlexId": "https://openalex.org/W4386113651",
       "citedByCount": 191,
-      "recentCitations": 91,
+      "recentCitations": 92,
       "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2023-08-17",
@@ -1196,7 +1220,7 @@
       "reasons": [
         "title_match=1",
         "citations=191",
-        "recent_citations=91",
+        "recent_citations=92",
         "age_days=1063",
         "publication_date_delta_days=0"
       ],
@@ -1557,8 +1581,8 @@
       "arxivId": "2304.07193",
       "paperTitle": "DINOv2: Learning Robust Visual Features without Supervision",
       "openAlexId": "https://openalex.org/W4366208220",
-      "citedByCount": 1050,
-      "recentCitations": 472,
+      "citedByCount": 1051,
+      "recentCitations": 473,
       "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2023-04-14",
@@ -1567,8 +1591,8 @@
       "route": "established-field-impact",
       "reasons": [
         "title_match=1",
-        "citations=1050",
-        "recent_citations=472",
+        "citations=1051",
+        "recent_citations=473",
         "age_days=1188",
         "publication_date_delta_days=0"
       ],
@@ -1781,40 +1805,52 @@
       "eventSlug": "encoder-side-neuron-identification-and-amplification-for-acoustic-perception-in-large-audi-2026-07-14",
       "arxivId": "2607.11801",
       "paperTitle": "Encoder-Side Neuron Identification and Amplification for Acoustic Perception in Large Audio-Language Models",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168287789",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
-      "route": "rejected",
+      "route": "watch",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "impact_threshold_not_met"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11801"
+        "https://arxiv.org/abs/2607.11801",
+        "https://openalex.org/W7168287789"
       ]
     },
     {
       "eventSlug": "evidence-backed-video-question-answering-2026-07-14",
       "arxivId": "2607.11862",
       "paperTitle": "Evidence-Backed Video Question Answering",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168289900",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
-      "route": "rejected",
+      "route": "watch",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "impact_threshold_not_met"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11862"
+        "https://arxiv.org/abs/2607.11862",
+        "https://openalex.org/W7168289900"
       ]
     },
     {
@@ -2075,20 +2111,26 @@
       "eventSlug": "from-world-action-models-to-embodied-brains-a-roadmap-for-open-world-physical-intelligence-2026-07-14",
       "arxivId": "2607.11689",
       "paperTitle": "From World Action Models to Embodied Brains: A Roadmap for Open-World Physical Intelligence",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168277472",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": false,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
       "route": "rejected",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "outside_core_ai_research_scope"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11689"
+        "https://arxiv.org/abs/2607.11689",
+        "https://openalex.org/W7168277472"
       ]
     },
     {
@@ -2148,8 +2190,8 @@
       "arxivId": "2211.09085",
       "paperTitle": "Galactica: A Large Language Model for Science",
       "openAlexId": "https://openalex.org/W4320005767",
-      "citedByCount": 262,
-      "recentCitations": 54,
+      "citedByCount": 263,
+      "recentCitations": 55,
       "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2022-11-16",
@@ -2158,8 +2200,8 @@
       "route": "established-field-impact",
       "reasons": [
         "title_match=1",
-        "citations=262",
-        "recent_citations=54",
+        "citations=263",
+        "recent_citations=55",
         "age_days=1337",
         "publication_date_delta_days=0"
       ],
@@ -2576,20 +2618,26 @@
       "eventSlug": "hcrmap-pressure-aware-hot-expert-residency-mapping-for-3-5d-moe-chiplet-inference-2026-07-14",
       "arxivId": "2607.11586",
       "paperTitle": "HCRMap: Pressure-Aware Hot-Expert Residency Mapping for 3.5D MoE Chiplet Inference",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168278545",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": false,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
       "route": "rejected",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "outside_core_ai_research_scope"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11586"
+        "https://arxiv.org/abs/2607.11586",
+        "https://openalex.org/W7168278545"
       ]
     },
     {
@@ -2816,20 +2864,26 @@
       "eventSlug": "interaction-scaling-grounding-the-third-axis-of-test-time-compute-2026-07-14",
       "arxivId": "2607.11598",
       "paperTitle": "Interaction Scaling: Grounding the Third Axis of Test-Time Compute",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168283979",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": false,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
       "route": "rejected",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "outside_core_ai_research_scope"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11598"
+        "https://arxiv.org/abs/2607.11598",
+        "https://openalex.org/W7168283979"
       ]
     },
     {
@@ -3026,8 +3080,8 @@
       "arxivId": "2302.13971",
       "paperTitle": "LLaMA: Open and Efficient Foundation Language Models",
       "openAlexId": "https://openalex.org/W4322718191",
-      "citedByCount": 3920,
-      "recentCitations": 1186,
+      "citedByCount": 3921,
+      "recentCitations": 1187,
       "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2023-02-27",
@@ -3036,8 +3090,8 @@
       "route": "established-field-impact",
       "reasons": [
         "title_match=1",
-        "citations=3920",
-        "recent_citations=1186",
+        "citations=3921",
+        "recent_citations=1187",
         "age_days=1234",
         "publication_date_delta_days=0"
       ],
@@ -3326,40 +3380,52 @@
       "eventSlug": "lora-based-cascaded-multimodal-fusion-for-action-recognition-in-medical-training-environme-2026-07-14",
       "arxivId": "2607.11839",
       "paperTitle": "LoRA-Based Cascaded Multimodal Fusion for Action Recognition in Medical Training Environments",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168276855",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
-      "route": "rejected",
+      "route": "watch",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "impact_threshold_not_met"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11839"
+        "https://arxiv.org/abs/2607.11839",
+        "https://openalex.org/W7168276855"
       ]
     },
     {
       "eventSlug": "magic-transition-aware-generation-of-navigable-multi-scene-game-worlds-with-large-language-2026-07-14",
       "arxivId": "2607.11594",
       "paperTitle": "MAGIC: Transition-Aware Generation of Navigable Multi-Scene Game Worlds with Large Language Models",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168276913",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
-      "route": "rejected",
+      "route": "watch",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "impact_threshold_not_met"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11594"
+        "https://arxiv.org/abs/2607.11594",
+        "https://openalex.org/W7168276913"
       ]
     },
     {
@@ -3418,8 +3484,8 @@
       "arxivId": "2402.05079",
       "paperTitle": "Mamba-UNet: UNet-Like Pure Visual Mamba for Medical Image Segmentation",
       "openAlexId": "https://openalex.org/W4391670385",
-      "citedByCount": 85,
-      "recentCitations": 65,
+      "citedByCount": 86,
+      "recentCitations": 66,
       "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2024-02-07",
@@ -3428,8 +3494,8 @@
       "route": "watch",
       "reasons": [
         "title_match=1",
-        "citations=85",
-        "recent_citations=65",
+        "citations=86",
+        "recent_citations=66",
         "age_days=889",
         "publication_date_delta_days=0",
         "impact_threshold_not_met"
@@ -3496,8 +3562,8 @@
       "arxivId": "2405.04967",
       "paperTitle": "MatterSim: A Deep Learning Atomistic Model Across Elements, Temperatures and Pressures",
       "openAlexId": "https://openalex.org/W4396816788",
-      "citedByCount": 95,
-      "recentCitations": 89,
+      "citedByCount": 96,
+      "recentCitations": 90,
       "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2024-05-08",
@@ -3506,8 +3572,8 @@
       "route": "accelerating-field-impact",
       "reasons": [
         "title_match=1",
-        "citations=95",
-        "recent_citations=89",
+        "citations=96",
+        "recent_citations=90",
         "age_days=798",
         "publication_date_delta_days=0"
       ],
@@ -3800,8 +3866,8 @@
       "arxivId": "2310.06825",
       "paperTitle": "Mistral 7B",
       "openAlexId": "https://openalex.org/W4387561528",
-      "citedByCount": 296,
-      "recentCitations": 189,
+      "citedByCount": 297,
+      "recentCitations": 190,
       "titleMatchScore": 1,
       "topicRelevant": false,
       "publicationDate": "2023-10-10",
@@ -3810,8 +3876,8 @@
       "route": "rejected",
       "reasons": [
         "title_match=1",
-        "citations=296",
-        "recent_citations=189",
+        "citations=297",
+        "recent_citations=190",
         "age_days=1009",
         "publication_date_delta_days=0",
         "outside_core_ai_research_scope"
@@ -3825,20 +3891,26 @@
       "eventSlug": "mm-toolsandbox-a-unified-framework-for-evaluating-visual-tool-calling-agents-2026-07-14",
       "arxivId": "2607.11818",
       "paperTitle": "MM-ToolSandBox: A Unified Framework for Evaluating Visual Tool-Calling Agents",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168239320",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
-      "route": "rejected",
+      "route": "watch",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "impact_threshold_not_met"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11818"
+        "https://arxiv.org/abs/2607.11818",
+        "https://openalex.org/W7168239320"
       ]
     },
     {
@@ -3846,8 +3918,8 @@
       "arxivId": "2406.01574",
       "paperTitle": "MMLU-Pro: A More Robust and Challenging Multi-Task Language Understanding Benchmark",
       "openAlexId": "https://openalex.org/W4399404161",
-      "citedByCount": 32,
-      "recentCitations": 28,
+      "citedByCount": 33,
+      "recentCitations": 29,
       "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2024-06-03",
@@ -3856,8 +3928,8 @@
       "route": "watch",
       "reasons": [
         "title_match=1",
-        "citations=32",
-        "recent_citations=28",
+        "citations=33",
+        "recent_citations=29",
         "age_days=772",
         "publication_date_delta_days=0",
         "impact_threshold_not_met"
@@ -3898,8 +3970,8 @@
       "arxivId": "2307.07662",
       "paperTitle": "MPDIoU: A Loss for Efficient and Accurate Bounding Box Regression",
       "openAlexId": "https://openalex.org/W4384652394",
-      "citedByCount": 222,
-      "recentCitations": 113,
+      "citedByCount": 223,
+      "recentCitations": 114,
       "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2023-07-14",
@@ -3908,8 +3980,8 @@
       "route": "established-field-impact",
       "reasons": [
         "title_match=1",
-        "citations=222",
-        "recent_citations=113",
+        "citations=223",
+        "recent_citations=114",
         "age_days=1097",
         "publication_date_delta_days=0"
       ],
@@ -4712,8 +4784,8 @@
       "arxivId": "2308.12966",
       "paperTitle": "Qwen-VL: A Versatile Vision-Language Model for Understanding, Localization, Text Reading, and Beyond",
       "openAlexId": "https://openalex.org/W4386185600",
-      "citedByCount": 141,
-      "recentCitations": 74,
+      "citedByCount": 142,
+      "recentCitations": 75,
       "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2023-08-24",
@@ -4722,8 +4794,8 @@
       "route": "watch",
       "reasons": [
         "title_match=1",
-        "citations=141",
-        "recent_citations=74",
+        "citations=142",
+        "recent_citations=75",
         "age_days=1056",
         "publication_date_delta_days=0",
         "impact_threshold_not_met"
@@ -5062,8 +5134,8 @@
       "arxivId": "2312.10997",
       "paperTitle": "Retrieval-Augmented Generation for Large Language Models: A Survey",
       "openAlexId": "https://openalex.org/W4389984066",
-      "citedByCount": 673,
-      "recentCitations": 456,
+      "citedByCount": 674,
+      "recentCitations": 457,
       "titleMatchScore": 0,
       "topicRelevant": true,
       "publicationDate": "2023-12-18",
@@ -5072,8 +5144,8 @@
       "route": "rejected",
       "reasons": [
         "title_match=0",
-        "citations=673",
-        "recent_citations=456",
+        "citations=674",
+        "recent_citations=457",
         "age_days=940",
         "publication_date_delta_days=0",
         "paper_title_identity_mismatch"
@@ -5472,20 +5544,26 @@
       "eventSlug": "see-like-a-robot-robot-centric-pointmaps-for-vision-language-action-models-2026-07-14",
       "arxivId": "2607.11498",
       "paperTitle": "See like a Robot: Robot-Centric Pointmaps for Vision-Language-Action Models",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168294455",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
-      "route": "rejected",
+      "route": "watch",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "impact_threshold_not_met"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11498"
+        "https://arxiv.org/abs/2607.11498",
+        "https://openalex.org/W7168294455"
       ]
     },
     {
@@ -5727,8 +5805,8 @@
       "arxivId": "2502.14786",
       "paperTitle": "SigLIP 2: Multilingual Vision-Language Encoders with Improved Semantic Understanding, Localization, and Dense Features",
       "openAlexId": "https://openalex.org/W4407815020",
-      "citedByCount": 12,
-      "recentCitations": 12,
+      "citedByCount": 13,
+      "recentCitations": 13,
       "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2025-02-20",
@@ -5737,8 +5815,8 @@
       "route": "watch",
       "reasons": [
         "title_match=1",
-        "citations=12",
-        "recent_citations=12",
+        "citations=13",
+        "recent_citations=13",
         "age_days=510",
         "publication_date_delta_days=0",
         "impact_threshold_not_met"
@@ -6179,20 +6257,26 @@
       "eventSlug": "storyteller-training-free-narrative-grounding-for-long-form-audio-description-2026-07-14",
       "arxivId": "2607.11798",
       "paperTitle": "StoryTeller: Training-Free Narrative Grounding for Long-Form Audio Description",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168250719",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
-      "route": "rejected",
+      "route": "watch",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "impact_threshold_not_met"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11798"
+        "https://arxiv.org/abs/2607.11798",
+        "https://openalex.org/W7168250719"
       ]
     },
     {
@@ -6367,20 +6451,26 @@
       "eventSlug": "technical-report-on-the-cvpr-2026-advml-workshop-challenge-2026-07-14",
       "arxivId": "2607.11560",
       "paperTitle": "Technical Report on the CVPR 2026@AdvML Workshop Challenge",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168240749",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
-      "route": "rejected",
+      "route": "watch",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "impact_threshold_not_met"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11560"
+        "https://arxiv.org/abs/2607.11560",
+        "https://openalex.org/W7168240749"
       ]
     },
     {
@@ -6485,20 +6575,26 @@
       "eventSlug": "the-ebb-and-flow-of-multimodal-focus-scheduling-visual-relay-windows-for-grounded-vlm-reas-2026-07-14",
       "arxivId": "2607.11436",
       "paperTitle": "The Ebb and Flow of Multimodal Focus: Scheduling Visual Relay Windows for Grounded VLM Reasoning",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168257849",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
-      "route": "rejected",
+      "route": "watch",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "impact_threshold_not_met"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11436"
+        "https://arxiv.org/abs/2607.11436",
+        "https://openalex.org/W7168257849"
       ]
     },
     {
@@ -6531,20 +6627,26 @@
       "eventSlug": "think-through-a-bottleneck-hourglass-reasoning-for-rigorous-induction-2026-07-14",
       "arxivId": "2607.11696",
       "paperTitle": "Think Through a Bottleneck: Hourglass Reasoning for Rigorous Induction",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168298163",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
-      "route": "rejected",
+      "route": "watch",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "impact_threshold_not_met"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11696"
+        "https://arxiv.org/abs/2607.11696",
+        "https://openalex.org/W7168298163"
       ]
     },
     {
@@ -6604,7 +6706,7 @@
       "arxivId": "2302.04761",
       "paperTitle": "Toolformer: Language Models Can Teach Themselves to Use Tools",
       "openAlexId": "https://openalex.org/W4320165837",
-      "citedByCount": 395,
+      "citedByCount": 394,
       "recentCitations": 134,
       "titleMatchScore": 1,
       "topicRelevant": true,
@@ -6614,7 +6716,7 @@
       "route": "established-field-impact",
       "reasons": [
         "title_match=1",
-        "citations=395",
+        "citations=394",
         "recent_citations=134",
         "age_days=1252",
         "publication_date_delta_days=0"
@@ -6758,8 +6860,8 @@
       "arxivId": "2401.04722",
       "paperTitle": "U-Mamba: Enhancing Long-range Dependency for Biomedical Image Segmentation",
       "openAlexId": "https://openalex.org/W4390784781",
-      "citedByCount": 221,
-      "recentCitations": 174,
+      "citedByCount": 223,
+      "recentCitations": 176,
       "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2024-01-09",
@@ -6768,8 +6870,8 @@
       "route": "established-field-impact",
       "reasons": [
         "title_match=1",
-        "citations=221",
-        "recent_citations=174",
+        "citations=223",
+        "recent_citations=176",
         "age_days=918",
         "publication_date_delta_days=0"
       ],
@@ -6834,20 +6936,26 @@
       "eventSlug": "uncertainty-quantification-for-eo-regression-tasks-building-height-tree-canopy-height-and--2026-07-14",
       "arxivId": "2607.11412",
       "paperTitle": "Uncertainty Quantification for EO Regression Tasks: Building Height, Tree Canopy Height and Above-ground Biomass Estimation",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168289127",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
-      "route": "rejected",
+      "route": "watch",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "impact_threshold_not_met"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11412"
+        "https://arxiv.org/abs/2607.11412",
+        "https://openalex.org/W7168289127"
       ]
     },
     {
@@ -6972,20 +7080,26 @@
       "eventSlug": "vinci2-providing-proactive-assistance-in-continuous-egocentric-videos-2026-07-14",
       "arxivId": "2607.11523",
       "paperTitle": "Vinci2: Providing Proactive Assistance in Continuous Egocentric Videos",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168275645",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": false,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
       "route": "rejected",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "outside_core_ai_research_scope"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11523"
+        "https://arxiv.org/abs/2607.11523",
+        "https://openalex.org/W7168275645"
       ]
     },
     {
@@ -7119,20 +7233,26 @@
       "eventSlug": "voxenes-2026-benchmarking-generalization-of-speech-spoofing-detectors-against-llm-era-tts--2026-07-14",
       "arxivId": "2607.11706",
       "paperTitle": "VoxENES 2026: Benchmarking Generalization of Speech Spoofing Detectors Against LLM-Era TTS and Voice Conversion",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168285406",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
-      "route": "rejected",
+      "route": "watch",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "impact_threshold_not_met"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11706"
+        "https://arxiv.org/abs/2607.11706",
+        "https://openalex.org/W7168285406"
       ]
     },
     {
@@ -7165,8 +7285,8 @@
       "arxivId": "2503.20314",
       "paperTitle": "Wan: Open and Advanced Large-Scale Video Generative Models",
       "openAlexId": "https://openalex.org/W4409092337",
-      "citedByCount": 8,
-      "recentCitations": 8,
+      "citedByCount": 9,
+      "recentCitations": 9,
       "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2025-03-26",
@@ -7175,8 +7295,8 @@
       "route": "watch",
       "reasons": [
         "title_match=1",
-        "citations=8",
-        "recent_citations=8",
+        "citations=9",
+        "recent_citations=9",
         "age_days=476",
         "publication_date_delta_days=0",
         "impact_threshold_not_met"
@@ -7481,20 +7601,26 @@
       "eventSlug": "xiaomi-robotics-u0-unified-embodied-synthesis-with-world-foundation-model-2026-07-14",
       "arxivId": "2607.11643",
       "paperTitle": "Xiaomi-Robotics-U0: Unified Embodied Synthesis with World Foundation Model",
-      "openAlexId": null,
+      "openAlexId": "https://openalex.org/W7168236621",
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 0,
+      "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2026-07-13",
-      "publicationDateDeltaDays": null,
+      "publicationDateDeltaDays": 0,
       "qualified": false,
-      "route": "rejected",
+      "route": "watch",
       "reasons": [
-        "openalex_work_missing"
+        "title_match=1",
+        "citations=0",
+        "recent_citations=0",
+        "age_days=2",
+        "publication_date_delta_days=0",
+        "impact_threshold_not_met"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.11643"
+        "https://arxiv.org/abs/2607.11643",
+        "https://openalex.org/W7168236621"
       ]
     },
     {
@@ -7502,8 +7628,8 @@
       "arxivId": "2405.14458",
       "paperTitle": "YOLOv10: Real-Time End-to-End Object Detection",
       "openAlexId": "https://openalex.org/W4398810114",
-      "citedByCount": 1051,
-      "recentCitations": 873,
+      "citedByCount": 1052,
+      "recentCitations": 874,
       "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2024-05-23",
@@ -7512,8 +7638,8 @@
       "route": "established-field-impact",
       "reasons": [
         "title_match=1",
-        "citations=1051",
-        "recent_citations=873",
+        "citations=1052",
+        "recent_citations=874",
         "age_days=783",
         "publication_date_delta_days=0"
       ],
@@ -7527,8 +7653,8 @@
       "arxivId": "2502.12524",
       "paperTitle": "YOLOv12: Attention-Centric Real-Time Object Detectors",
       "openAlexId": "https://openalex.org/W4407759488",
-      "citedByCount": 245,
-      "recentCitations": 245,
+      "citedByCount": 247,
+      "recentCitations": 247,
       "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2025-02-18",
@@ -7537,8 +7663,8 @@
       "route": "established-field-impact",
       "reasons": [
         "title_match=1",
-        "citations=245",
-        "recent_citations=245",
+        "citations=247",
+        "recent_citations=247",
         "age_days=512",
         "publication_date_delta_days=0"
       ],
@@ -7552,8 +7678,8 @@
       "arxivId": "2402.13616",
       "paperTitle": "YOLOv9: Learning What You Want to Learn Using Programmable Gradient Information",
       "openAlexId": "https://openalex.org/W4392089963",
-      "citedByCount": 354,
-      "recentCitations": 250,
+      "citedByCount": 355,
+      "recentCitations": 251,
       "titleMatchScore": 1,
       "topicRelevant": true,
       "publicationDate": "2024-02-21",
@@ -7562,8 +7688,8 @@
       "route": "established-field-impact",
       "reasons": [
         "title_match=1",
-        "citations=354",
-        "recent_citations=250",
+        "citations=355",
+        "recent_citations=251",
         "age_days=875",
         "publication_date_delta_days=0"
       ],

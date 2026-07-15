@@ -23,7 +23,7 @@ concurrency:
 
 env:
   DATABASE_URL: sqlite:./var/monitor-check.db
-  PUBLIC_SITE_URL: https://barretlee.github.io/agent-pulse/
+  PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL || format('https://{0}.github.io/{1}/', github.repository_owner, github.event.repository.name) }}
 
 jobs:
   check:
@@ -54,7 +54,9 @@ jobs:
         run: |
           set -euo pipefail
           latest_success="$(gh run list --workflow source-audit.yml --status success --limit 1 --json updatedAt --jq '.[0].updatedAt // empty')"
-          issue_json="$(gh issue view 4 --json state,updatedAt,body)"
+          issue_json="$(gh issue list --state open --label "source:health" --limit 100 --json state,updatedAt,body \
+            --jq '[.[] | select(.body | contains("agent-pulse-source-health-summary:v1"))][0] // empty')"
+          test -n "$issue_json"
           issue_state="$(jq -r '.state' <<< "$issue_json")"
           issue_updated="$(jq -r '.updatedAt' <<< "$issue_json")"
           issue_body="$(jq -r '.body' <<< "$issue_json")"

@@ -35,7 +35,7 @@ jobs:
     timeout-minutes: 35
     env:
       DATABASE_URL: sqlite:./var/automation.db
-      PUBLIC_SITE_URL: https://barretlee.github.io/agent-pulse/
+      PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL || format('https://{0}.github.io/{1}/', github.repository_owner, github.event.repository.name) }}
       REFRESH_MODE: ${{ inputs.mode || 'incremental' }}
       PUBLISH_WEEKLY: ${{ inputs.publish_weekly || false }}
     steps:

@@ -84,6 +84,29 @@ describe("GitHub source governance workflows", () => {
     expect(pages.indexOf("gh api")).toBeLessThan(pages.indexOf("npm run export"));
   });
 
+  it("derives the public site URL from the current repository while allowing an override", async () => {
+    const workflows = await Promise.all([
+      workflow("pages.yml"),
+      workflow("data-refresh.yml"),
+      workflow("monitor.yml"),
+    ]);
+    const dynamicSiteUrl = [
+      "$",
+      "{{ vars.PUBLIC_SITE_URL || format('https://{0}.github.io/{1}/', github.repository_owner, github.event.repository.name) }}",
+    ].join("");
+    for (const content of workflows) {
+      expect(content).toContain(`PUBLIC_SITE_URL: ${dynamicSiteUrl}`);
+      expect(content).not.toContain("https://barretlee.github.io/agent-pulse/");
+    }
+  });
+
+  it("discovers the source health issue by label and marker instead of a fixed number", async () => {
+    const monitor = await workflow("monitor.yml");
+    expect(monitor).toContain('gh issue list --state open --label "source:health"');
+    expect(monitor).toContain("agent-pulse-source-health-summary:v1");
+    expect(monitor).not.toContain("gh issue view 4");
+  });
+
   it("refreshes daily and deploys Pages after each successful refresh", async () => {
     const refresh = await workflow("data-refresh.yml");
     expect(refresh).toContain('cron: "17 12 * * *"');

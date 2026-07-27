@@ -319,7 +319,9 @@ export function reportIsStale(
   referenceAt = new Date().toISOString(),
 ): boolean {
   const age = Date.parse(referenceAt) - Date.parse(report.generatedAt);
-  return !Number.isFinite(age) || age < 0 || age > RESEARCH_REPORT_MAX_AGE_DAYS * 86_400_000;
+  // A report newer than the reference time is fresh, not stale: only age
+  // beyond the maximum window (or an unparseable timestamp) fails closed.
+  return !Number.isFinite(age) || age > RESEARCH_REPORT_MAX_AGE_DAYS * 86_400_000;
 }
 
 function arxivUrl(id: string): string {

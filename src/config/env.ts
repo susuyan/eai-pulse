@@ -26,7 +26,10 @@ const EnvSchema = z.object({
   COLLECTOR_CONCURRENCY: z.coerce.number().int().min(1).max(16).default(4),
   COLLECTOR_PROXY_MODE: z.enum(["off", "env-fallback"]).default("env-fallback"),
   PUBLIC_SITE_URL: z.string().url().default("https://barretlee.github.io/agent-pulse/"),
-  DEEPSEEK_API_KEY: z.string().min(16).optional(),
+  DEEPSEEK_API_KEY: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().min(16).optional(),
+  ),
   DEEPSEEK_BASE_URL: z.string().url().default("https://api.deepseek.com"),
   DEEPSEEK_MODEL: z.string().min(3).default("deepseek-v4-flash"),
   AI_ENRICHMENT_ENABLED: booleanEnv,

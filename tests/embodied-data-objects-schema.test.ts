@@ -3,7 +3,16 @@ import { afterEach, describe, expect, it } from "vitest";
 import { loadConfig } from "../src/config/env.js";
 import { createDatabase } from "../src/db/database.js";
 import { migrateToLatest } from "../src/db/migrate.js";
+import { Repository } from "../src/db/repository.js";
 import { seedDatabase } from "../src/db/seed.js";
+import actorCapabilities from "./fixtures/embodied-data/objects/actor-capabilities.json" with {
+  type: "json",
+};
+import collectionMethods from "./fixtures/embodied-data/objects/collection-methods.json" with {
+  type: "json",
+};
+import datasets from "./fixtures/embodied-data/objects/datasets.json" with { type: "json" };
+import standards from "./fixtures/embodied-data/objects/standards.json" with { type: "json" };
 
 const databases: ReturnType<typeof createDatabase>[] = [];
 
@@ -199,6 +208,88 @@ describe("embodied data object persistence", () => {
     expect(
       await db.selectFrom("events").select("id").where("id", "=", event.id).executeTakeFirst(),
     ).toBeDefined();
+  });
+
+  it("validates, upserts and links reusable domain objects", async () => {
+    const db = await setup();
+    const repository = new Repository(db);
+    const event = await db.selectFrom("events").select("id").executeTakeFirstOrThrow();
+    const datasetFixture = datasets[0];
+    const standardFixture = standards[0];
+    const methodFixture = collectionMethods[0];
+    if (!datasetFixture || !standardFixture || !methodFixture) throw new Error("Missing fixture");
+
+    const datasetId = await repository.upsertDataset(datasetFixture.slug, datasetFixture.profile);
+    const standardId = await repository.upsertStandard(
+      standardFixture.slug,
+      standardFixture.profile,
+    );
+    const methodId = await repository.upsertCollectionMethod(
+      methodFixture.slug,
+      methodFixture.profile,
+    );
+    await repository.linkDatasetEvent(datasetId, event.id, "release");
+    await repository.linkDatasetEvent(datasetId, event.id, "release");
+    await repository.linkStandardEvent(standardId, event.id, "publication");
+    await repository.linkCollectionMethodEvent(methodId, event.id, "demonstration");
+
+    expect(await repository.getDatasetBySlug(datasetFixture.slug)).toMatchObject({
+      id: datasetId,
+      slug: datasetFixture.slug,
+      profile: datasetFixture.profile,
+    });
+    expect(await repository.listDatasets()).toHaveLength(1);
+    expect(await repository.getStandardBySlug(standardFixture.slug)).toMatchObject({
+      id: standardId,
+      profile: standardFixture.profile,
+    });
+    expect(await repository.listStandards()).toHaveLength(1);
+    expect(await repository.getCollectionMethodBySlug(methodFixture.slug)).toMatchObject({
+      id: methodId,
+      profile: methodFixture.profile,
+    });
+    expect(await repository.listCollectionMethods()).toHaveLength(1);
+    expect(await countRows(db, "dataset_events")).toBe(1);
+    expect(await countRows(db, "standard_events")).toBe(1);
+    expect(await countRows(db, "collection_method_events")).toBe(1);
+
+    await expect(
+      repository.upsertDataset(datasetFixture.slug, {
+        ...datasetFixture.profile,
+        canonicalUrl: "http://example.com/unsafe",
+      }),
+    ).rejects.toThrow();
+    expect((await repository.getDatasetBySlug(datasetFixture.slug))?.profile).toEqual(
+      datasetFixture.profile,
+    );
+  });
+
+  it("derives PeerCompanyProfile without treating Actor collection as capability proof", async () => {
+    const db = await setup();
+    const repository = new Repository(db);
+    const actors = await db.selectFrom("actors").select(["id", "slug"]).limit(2).execute();
+    const actor = actors[0];
+    const emptyActor = actors[1];
+    const event = await db.selectFrom("events").select("id").executeTakeFirstOrThrow();
+    const capability = actorCapabilities[0];
+    if (!actor || !emptyActor || !capability) throw new Error("Missing fixture");
+
+    const capabilityId = await repository.upsertActorDataCapability(actor.id, capability);
+    await repository.linkActorCapabilityEvidence(capabilityId, event.id, "claim");
+    await repository.linkActorCapabilityEvidence(capabilityId, event.id, "claim");
+
+    expect(await repository.listActorDataCapabilities(actor.id)).toEqual([capability]);
+    expect(await repository.getPeerCompanyProfile(actor.id)).toMatchObject({
+      actorId: actor.id,
+      actorSlug: actor.slug,
+      capabilities: [capability],
+    });
+    expect(await repository.getPeerCompanyProfile(emptyActor.id)).toMatchObject({
+      actorId: emptyActor.id,
+      actorSlug: emptyActor.slug,
+      capabilities: [],
+    });
+    expect(await countRows(db, "actor_capability_evidence")).toBe(1);
   });
 });
 

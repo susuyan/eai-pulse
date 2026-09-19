@@ -8,6 +8,22 @@ import {
   EventDataProfileSchema,
 } from "../domain/embodied-data.js";
 import {
+  ActorCapabilityEvidenceRoleSchema,
+  type ActorDataCapability,
+  ActorDataCapabilitySchema,
+  CollectionMethodEventRoleSchema,
+  type CollectionMethodProfile,
+  CollectionMethodProfileSchema,
+  DatasetEventRoleSchema,
+  type DatasetProfile,
+  DatasetProfileSchema,
+  type PeerCompanyProfile,
+  PeerCompanyProfileSchema,
+  StandardEventRoleSchema,
+  type StandardProfile,
+  StandardProfileSchema,
+} from "../domain/embodied-data-objects.js";
+import {
   type CollectedSignal,
   type OriginReference,
   type PublicEvent,
@@ -51,6 +67,24 @@ export interface SourceDiscoveryListItem {
   metrics: Record<string, unknown>;
   firstDiscoveredAt: string;
   lastDiscoveredAt: string;
+}
+
+export interface DomainObjectRecord<T> {
+  id: string;
+  slug: string;
+  profile: T;
+  schemaVersion: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface DomainObjectRowLike {
+  id: string;
+  slug: string;
+  profile_json: string;
+  schema_version: number;
+  created_at: string;
+  updated_at: string;
 }
 
 const now = () => new Date().toISOString();
@@ -1069,6 +1103,278 @@ export class Repository {
     return EventDataProfileSchema.parse(JSON.parse(row.profile_json));
   }
 
+  async upsertDataset(slug: string, profile: unknown): Promise<string> {
+    const parsed = DatasetProfileSchema.parse(profile);
+    const existing = await this.db
+      .selectFrom("datasets")
+      .select("id")
+      .where("slug", "=", slug)
+      .executeTakeFirst();
+    if (existing) {
+      await this.db
+        .updateTable("datasets")
+        .set({ profile_json: json(parsed), schema_version: 1, updated_at: now() })
+        .where("id", "=", existing.id)
+        .execute();
+      return existing.id;
+    }
+    const id = randomUUID();
+    const timestamp = now();
+    await this.db
+      .insertInto("datasets")
+      .values({
+        id,
+        slug,
+        profile_json: json(parsed),
+        schema_version: 1,
+        created_at: timestamp,
+        updated_at: timestamp,
+      })
+      .execute();
+    return id;
+  }
+
+  async getDatasetBySlug(slug: string): Promise<DomainObjectRecord<DatasetProfile> | undefined> {
+    const row = await this.db
+      .selectFrom("datasets")
+      .selectAll()
+      .where("slug", "=", slug)
+      .executeTakeFirst();
+    return row ? domainObjectFromRow(row, DatasetProfileSchema) : undefined;
+  }
+
+  async listDatasets(): Promise<Array<DomainObjectRecord<DatasetProfile>>> {
+    const rows = await this.db.selectFrom("datasets").selectAll().orderBy("slug").execute();
+    return rows.map((row) => domainObjectFromRow(row, DatasetProfileSchema));
+  }
+
+  async linkDatasetEvent(datasetId: string, eventId: string, relationRole: unknown): Promise<void> {
+    await this.db
+      .insertInto("dataset_events")
+      .values({
+        dataset_id: datasetId,
+        event_id: eventId,
+        relation_role: DatasetEventRoleSchema.parse(relationRole),
+        created_at: now(),
+      })
+      .onConflict((conflict) =>
+        conflict.columns(["dataset_id", "event_id", "relation_role"]).doNothing(),
+      )
+      .execute();
+  }
+
+  async upsertStandard(slug: string, profile: unknown): Promise<string> {
+    const parsed = StandardProfileSchema.parse(profile);
+    const existing = await this.db
+      .selectFrom("standards")
+      .select("id")
+      .where("slug", "=", slug)
+      .executeTakeFirst();
+    if (existing) {
+      await this.db
+        .updateTable("standards")
+        .set({ profile_json: json(parsed), schema_version: 1, updated_at: now() })
+        .where("id", "=", existing.id)
+        .execute();
+      return existing.id;
+    }
+    const id = randomUUID();
+    const timestamp = now();
+    await this.db
+      .insertInto("standards")
+      .values({
+        id,
+        slug,
+        profile_json: json(parsed),
+        schema_version: 1,
+        created_at: timestamp,
+        updated_at: timestamp,
+      })
+      .execute();
+    return id;
+  }
+
+  async getStandardBySlug(slug: string): Promise<DomainObjectRecord<StandardProfile> | undefined> {
+    const row = await this.db
+      .selectFrom("standards")
+      .selectAll()
+      .where("slug", "=", slug)
+      .executeTakeFirst();
+    return row ? domainObjectFromRow(row, StandardProfileSchema) : undefined;
+  }
+
+  async listStandards(): Promise<Array<DomainObjectRecord<StandardProfile>>> {
+    const rows = await this.db.selectFrom("standards").selectAll().orderBy("slug").execute();
+    return rows.map((row) => domainObjectFromRow(row, StandardProfileSchema));
+  }
+
+  async linkStandardEvent(
+    standardId: string,
+    eventId: string,
+    relationRole: unknown,
+  ): Promise<void> {
+    await this.db
+      .insertInto("standard_events")
+      .values({
+        standard_id: standardId,
+        event_id: eventId,
+        relation_role: StandardEventRoleSchema.parse(relationRole),
+        created_at: now(),
+      })
+      .onConflict((conflict) =>
+        conflict.columns(["standard_id", "event_id", "relation_role"]).doNothing(),
+      )
+      .execute();
+  }
+
+  async upsertCollectionMethod(slug: string, profile: unknown): Promise<string> {
+    const parsed = CollectionMethodProfileSchema.parse(profile);
+    const existing = await this.db
+      .selectFrom("collection_methods")
+      .select("id")
+      .where("slug", "=", slug)
+      .executeTakeFirst();
+    if (existing) {
+      await this.db
+        .updateTable("collection_methods")
+        .set({ profile_json: json(parsed), schema_version: 1, updated_at: now() })
+        .where("id", "=", existing.id)
+        .execute();
+      return existing.id;
+    }
+    const id = randomUUID();
+    const timestamp = now();
+    await this.db
+      .insertInto("collection_methods")
+      .values({
+        id,
+        slug,
+        profile_json: json(parsed),
+        schema_version: 1,
+        created_at: timestamp,
+        updated_at: timestamp,
+      })
+      .execute();
+    return id;
+  }
+
+  async getCollectionMethodBySlug(
+    slug: string,
+  ): Promise<DomainObjectRecord<CollectionMethodProfile> | undefined> {
+    const row = await this.db
+      .selectFrom("collection_methods")
+      .selectAll()
+      .where("slug", "=", slug)
+      .executeTakeFirst();
+    return row ? domainObjectFromRow(row, CollectionMethodProfileSchema) : undefined;
+  }
+
+  async listCollectionMethods(): Promise<Array<DomainObjectRecord<CollectionMethodProfile>>> {
+    const rows = await this.db
+      .selectFrom("collection_methods")
+      .selectAll()
+      .orderBy("slug")
+      .execute();
+    return rows.map((row) => domainObjectFromRow(row, CollectionMethodProfileSchema));
+  }
+
+  async linkCollectionMethodEvent(
+    collectionMethodId: string,
+    eventId: string,
+    relationRole: unknown,
+  ): Promise<void> {
+    await this.db
+      .insertInto("collection_method_events")
+      .values({
+        collection_method_id: collectionMethodId,
+        event_id: eventId,
+        relation_role: CollectionMethodEventRoleSchema.parse(relationRole),
+        created_at: now(),
+      })
+      .onConflict((conflict) =>
+        conflict.columns(["collection_method_id", "event_id", "relation_role"]).doNothing(),
+      )
+      .execute();
+  }
+
+  async upsertActorDataCapability(actorId: string, capability: unknown): Promise<string> {
+    const parsed = ActorDataCapabilitySchema.parse(capability);
+    const existing = await this.db
+      .selectFrom("actor_data_capabilities")
+      .select("id")
+      .where("actor_id", "=", actorId)
+      .where("capability_key", "=", parsed.capabilityKey)
+      .executeTakeFirst();
+    if (existing) {
+      await this.db
+        .updateTable("actor_data_capabilities")
+        .set({ profile_json: json(parsed), schema_version: 1, updated_at: now() })
+        .where("id", "=", existing.id)
+        .execute();
+      return existing.id;
+    }
+    const id = randomUUID();
+    const timestamp = now();
+    await this.db
+      .insertInto("actor_data_capabilities")
+      .values({
+        id,
+        actor_id: actorId,
+        capability_key: parsed.capabilityKey,
+        profile_json: json(parsed),
+        schema_version: 1,
+        created_at: timestamp,
+        updated_at: timestamp,
+      })
+      .execute();
+    return id;
+  }
+
+  async listActorDataCapabilities(actorId: string): Promise<ActorDataCapability[]> {
+    const rows = await this.db
+      .selectFrom("actor_data_capabilities")
+      .select("profile_json")
+      .where("actor_id", "=", actorId)
+      .orderBy("capability_key")
+      .execute();
+    return rows.map((row) => ActorDataCapabilitySchema.parse(JSON.parse(row.profile_json)));
+  }
+
+  async linkActorCapabilityEvidence(
+    capabilityId: string,
+    eventId: string,
+    evidenceRole: unknown,
+  ): Promise<void> {
+    await this.db
+      .insertInto("actor_capability_evidence")
+      .values({
+        capability_id: capabilityId,
+        event_id: eventId,
+        evidence_role: ActorCapabilityEvidenceRoleSchema.parse(evidenceRole),
+        created_at: now(),
+      })
+      .onConflict((conflict) =>
+        conflict.columns(["capability_id", "event_id", "evidence_role"]).doNothing(),
+      )
+      .execute();
+  }
+
+  async getPeerCompanyProfile(actorId: string): Promise<PeerCompanyProfile | undefined> {
+    const actor = await this.db
+      .selectFrom("actors")
+      .select(["id", "slug", "name", "content_scope"])
+      .where("id", "=", actorId)
+      .executeTakeFirst();
+    if (!actor) return undefined;
+    return PeerCompanyProfileSchema.parse({
+      actorId: actor.id,
+      actorSlug: actor.slug,
+      actorName: actor.name,
+      contentScope: actor.content_scope,
+      capabilities: await this.listActorDataCapabilities(actor.id),
+    });
+  }
+
   async attachSignal(
     eventId: string,
     signalId: string,
@@ -1591,6 +1897,20 @@ function discoveryIdentity(
   }
   if (handles.length) return handles.map((item) => `@${item.handle}`).join(", ");
   return safeUrl(discoveryUrl)?.hostname ?? discoveryUrl;
+}
+
+function domainObjectFromRow<T>(
+  row: DomainObjectRowLike,
+  schema: { parse(value: unknown): T },
+): DomainObjectRecord<T> {
+  return {
+    id: row.id,
+    slug: row.slug,
+    profile: schema.parse(JSON.parse(row.profile_json)),
+    schemaVersion: row.schema_version,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
 export { json, now, parseJson };

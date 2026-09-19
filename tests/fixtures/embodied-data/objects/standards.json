@@ -1,0 +1,65 @@
+[
+  {
+    "slug": "rlds",
+    "profile": {
+      "name": "RLDS",
+      "standardType": "de-facto",
+      "organization": "Google Research",
+      "version": null,
+      "lifecycle": "active",
+      "canonicalUrl": "https://github.com/google-research/rlds",
+      "pipelineStages": ["data-engineering-standards", "quality-training-feedback"],
+      "areas": ["schema", "metadata", "storage", "interface"],
+      "implementations": ["EnvLogger", "RLDS Creator"],
+      "compatibleTools": ["TensorFlow Datasets"],
+      "adopters": ["DROID", "Open X-Embodiment"],
+      "migrationRequirements": [
+        "Represent data as episodes containing step datasets and required step boundary fields."
+      ],
+      "verifiedAt": "2026-09-19T00:00:00.000Z",
+      "evidenceStatus": "verified"
+    }
+  },
+  {
+    "slug": "lerobot-dataset-v3",
+    "profile": {
+      "name": "LeRobotDataset",
+      "standardType": "project-format",
+      "organization": "Hugging Face",
+      "version": "3.0",
+      "lifecycle": "active",
+      "canonicalUrl": "https://huggingface.co/docs/lerobot/lerobot-dataset-v3",
+      "pipelineStages": ["data-engineering-standards", "quality-training-feedback"],
+      "areas": ["schema", "metadata", "storage", "interface"],
+      "implementations": ["LeRobotDataset", "StreamingLeRobotDataset"],
+      "compatibleTools": ["Hugging Face Hub", "PyTorch", "Apache Parquet", "MP4"],
+      "adopters": [],
+      "migrationRequirements": [
+        "Convert v2.1 episode files to v3 relational metadata with sharded Parquet and MP4 storage."
+      ],
+      "verifiedAt": "2026-09-19T00:00:00.000Z",
+      "evidenceStatus": "verified"
+    }
+  },
+  {
+    "slug": "ros2-rosbag2",
+    "profile": {
+      "name": "ROS 2 rosbag2",
+      "standardType": "project-format",
+      "organization": "ROS 2",
+      "version": "rolling",
+      "lifecycle": "active",
+      "canonicalUrl": "https://github.com/ros2/rosbag2",
+      "pipelineStages": ["multimodal-capture", "data-engineering-standards"],
+      "areas": ["storage", "interface"],
+      "implementations": ["rosbag2"],
+      "compatibleTools": ["MCAP storage plugin", "SQLite3 storage plugin", "CDR serialization"],
+      "adopters": ["ROS 2 ecosystem"],
+      "migrationRequirements": [
+        "Select compatible storage and serialization plugins when converting or replaying bags."
+      ],
+      "verifiedAt": "2026-09-19T00:00:00.000Z",
+      "evidenceStatus": "verified"
+    }
+  }
+]

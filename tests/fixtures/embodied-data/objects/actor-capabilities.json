@@ -1,0 +1,50 @@
+[
+  {
+    "capabilityKey": "teleoperation-production",
+    "pipelineStages": ["acquisition-route", "production-operations"],
+    "claimText": "Fixture Company states that it operates a teleoperation data production line.",
+    "claimant": "company",
+    "sourceUrl": "https://example.com/fixture-company/teleoperation",
+    "claimedAt": "2026-09-01T00:00:00.000Z",
+    "verificationStatus": "self-claimed",
+    "verifiedAt": null,
+    "confidence": 45,
+    "limitations": ["No independent production evidence is attached."]
+  },
+  {
+    "capabilityKey": "multimodal-capture",
+    "pipelineStages": ["multimodal-capture"],
+    "claimText": "An independent fixture source verifies synchronized multimodal capture capability.",
+    "claimant": "independent",
+    "sourceUrl": "https://example.org/fixture-verification/multimodal",
+    "claimedAt": "2026-09-02T00:00:00.000Z",
+    "verificationStatus": "independently-verified",
+    "verifiedAt": "2026-09-03T00:00:00.000Z",
+    "confidence": 85,
+    "limitations": []
+  },
+  {
+    "capabilityKey": "delivery-capacity",
+    "pipelineStages": ["production-operations"],
+    "claimText": "Fixture sources report conflicting delivery-capacity figures for the same period.",
+    "claimant": "independent",
+    "sourceUrl": "https://example.org/fixture-verification/capacity-conflict",
+    "claimedAt": "2026-09-04T00:00:00.000Z",
+    "verificationStatus": "conflicting",
+    "verifiedAt": "2026-09-05T00:00:00.000Z",
+    "confidence": 35,
+    "limitations": ["The conflicting values remain unresolved."]
+  },
+  {
+    "capabilityKey": "training-feedback",
+    "pipelineStages": ["quality-training-feedback"],
+    "claimText": "Fixture Company is listed for follow-up on training-feedback capability.",
+    "claimant": "company",
+    "sourceUrl": "https://example.com/fixture-company/training-feedback",
+    "claimedAt": "2026-09-06T00:00:00.000Z",
+    "verificationStatus": "unknown",
+    "verifiedAt": null,
+    "confidence": 20,
+    "limitations": ["No capability detail is available."]
+  }
+]

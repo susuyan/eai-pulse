@@ -1,0 +1,187 @@
+[
+  {
+    "slug": "droid",
+    "profile": {
+      "name": "DROID",
+      "version": null,
+      "publisher": "DROID Dataset Team",
+      "releaseDate": null,
+      "canonicalUrl": "https://droid-dataset.github.io/",
+      "pipelineStages": [
+        "acquisition-route",
+        "multimodal-capture",
+        "production-operations",
+        "quality-training-feedback"
+      ],
+      "scenarios": ["in-the-wild robot manipulation"],
+      "embodiments": ["single-arm"],
+      "tasks": ["manipulation"],
+      "modalities": ["rgb", "joint-state", "pose", "action", "language"],
+      "acquisitionMethods": ["teleoperation"],
+      "scaleClaims": [
+        {
+          "metric": "demonstration trajectories",
+          "value": 76000,
+          "unit": "trajectories",
+          "sourceUrl": "https://droid-dataset.github.io/"
+        },
+        {
+          "metric": "interaction duration",
+          "value": 350,
+          "unit": "hours",
+          "sourceUrl": "https://droid-dataset.github.io/"
+        },
+        {
+          "metric": "collection scenes",
+          "value": 564,
+          "unit": "scenes",
+          "sourceUrl": "https://droid-dataset.github.io/"
+        },
+        {
+          "metric": "collection tasks",
+          "value": 86,
+          "unit": "tasks",
+          "sourceUrl": "https://droid-dataset.github.io/"
+        }
+      ],
+      "dataFormats": ["RLDS"],
+      "sensorConfiguration": [
+        "two adjustable ZED 2 stereo cameras",
+        "wrist-mounted ZED Mini stereo camera"
+      ],
+      "synchronization": [],
+      "calibration": ["camera calibration files"],
+      "annotations": ["language instructions"],
+      "qualityMethods": ["successful episode labeling"],
+      "license": null,
+      "access": { "mode": "open", "url": "https://droid-dataset.github.io/" },
+      "useCases": ["robot manipulation policy training", "robustness evaluation"],
+      "knownResults": [
+        {
+          "claim": "The project reports improved policy performance, robustness, and generalization when training with DROID.",
+          "sourceUrl": "https://droid-dataset.github.io/"
+        }
+      ],
+      "limitations": ["The dataset focuses on robot manipulation with a shared hardware setup."],
+      "evidenceStatus": "verified"
+    }
+  },
+  {
+    "slug": "open-x-embodiment",
+    "profile": {
+      "name": "Open X-Embodiment",
+      "version": null,
+      "publisher": "Open X-Embodiment Collaboration",
+      "releaseDate": null,
+      "canonicalUrl": "https://robotics-transformer-x.github.io/",
+      "pipelineStages": [
+        "acquisition-route",
+        "data-engineering-standards",
+        "quality-training-feedback"
+      ],
+      "scenarios": ["cross-embodiment robot manipulation"],
+      "embodiments": ["single-arm", "dual-arm", "mobile-manipulator", "other"],
+      "tasks": ["manipulation"],
+      "modalities": ["rgb", "joint-state", "action", "language"],
+      "acquisitionMethods": ["hybrid"],
+      "scaleClaims": [
+        {
+          "metric": "contributing datasets",
+          "value": 60,
+          "unit": "datasets",
+          "sourceUrl": "https://robotics-transformer-x.github.io/paper.pdf"
+        },
+        {
+          "metric": "robot embodiments",
+          "value": 22,
+          "unit": "embodiments",
+          "sourceUrl": "https://robotics-transformer-x.github.io/paper.pdf"
+        }
+      ],
+      "dataFormats": ["RLDS"],
+      "sensorConfiguration": [],
+      "synchronization": [],
+      "calibration": [],
+      "annotations": ["natural language task descriptions"],
+      "qualityMethods": ["dataset-specific conversion and validation"],
+      "license": null,
+      "access": { "mode": "open", "url": "https://robotics-transformer-x.github.io/" },
+      "useCases": ["cross-embodiment policy training", "robot learning transfer evaluation"],
+      "knownResults": [
+        {
+          "claim": "The project reports positive transfer from cross-embodiment training in RT-X experiments.",
+          "sourceUrl": "https://robotics-transformer-x.github.io/paper.pdf"
+        }
+      ],
+      "limitations": [
+        "Contributing datasets have heterogeneous robots, tasks, observations, and action spaces."
+      ],
+      "evidenceStatus": "verified"
+    }
+  },
+  {
+    "slug": "bridgedata-v2",
+    "profile": {
+      "name": "BridgeData V2",
+      "version": "2",
+      "publisher": "UC Berkeley RAIL",
+      "releaseDate": null,
+      "canonicalUrl": "https://rail-berkeley.github.io/bridgedata/",
+      "pipelineStages": [
+        "acquisition-route",
+        "multimodal-capture",
+        "production-operations",
+        "quality-training-feedback"
+      ],
+      "scenarios": ["multi-environment robot manipulation"],
+      "embodiments": ["single-arm"],
+      "tasks": ["manipulation"],
+      "modalities": ["rgb", "rgbd", "action", "language"],
+      "acquisitionMethods": ["teleoperation", "autonomous"],
+      "scaleClaims": [
+        {
+          "metric": "total trajectories",
+          "value": 60096,
+          "unit": "trajectories",
+          "sourceUrl": "https://rail-berkeley.github.io/bridgedata/"
+        },
+        {
+          "metric": "teleoperated demonstrations",
+          "value": 50365,
+          "unit": "trajectories",
+          "sourceUrl": "https://rail-berkeley.github.io/bridgedata/"
+        },
+        {
+          "metric": "scripted policy rollouts",
+          "value": 9731,
+          "unit": "trajectories",
+          "sourceUrl": "https://rail-berkeley.github.io/bridgedata/"
+        },
+        {
+          "metric": "collection environments",
+          "value": 24,
+          "unit": "environments",
+          "sourceUrl": "https://rail-berkeley.github.io/bridgedata/"
+        }
+      ],
+      "dataFormats": ["JPEG trajectory archive"],
+      "sensorConfiguration": [
+        "over-the-shoulder RGB-D camera",
+        "two randomized RGB cameras",
+        "wrist-mounted RGB camera"
+      ],
+      "synchronization": ["5 Hz control and recording loop"],
+      "calibration": [],
+      "annotations": ["natural language task instructions"],
+      "qualityMethods": [],
+      "license": { "name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/" },
+      "access": { "mode": "open", "url": "https://rail-berkeley.github.io/bridgedata/" },
+      "useCases": ["multi-task robot learning", "language-conditioned manipulation"],
+      "knownResults": [],
+      "limitations": [
+        "Camera coverage varies across trajectories because sensors were added during collection."
+      ],
+      "evidenceStatus": "verified"
+    }
+  }
+]

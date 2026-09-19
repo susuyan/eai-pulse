@@ -1,5 +1,11 @@
 import type { Generated, Insertable, Selectable, Updateable } from "kysely";
 import type { ContentScope } from "../domain/embodied-data.js";
+import type {
+  ActorCapabilityEvidenceRole,
+  CollectionMethodEventRole,
+  DatasetEventRole,
+  StandardEventRole,
+} from "../domain/embodied-data-objects.js";
 
 export interface SourceTable {
   id: string;
@@ -351,6 +357,71 @@ export interface EventDataProfileTable {
   updated_at: string;
 }
 
+export interface DatasetTable {
+  id: string;
+  slug: string;
+  profile_json: string;
+  schema_version: Generated<number>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DatasetEventTable {
+  dataset_id: string;
+  event_id: string;
+  relation_role: DatasetEventRole;
+  created_at: string;
+}
+
+export interface StandardTable {
+  id: string;
+  slug: string;
+  profile_json: string;
+  schema_version: Generated<number>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StandardEventTable {
+  standard_id: string;
+  event_id: string;
+  relation_role: StandardEventRole;
+  created_at: string;
+}
+
+export interface CollectionMethodTable {
+  id: string;
+  slug: string;
+  profile_json: string;
+  schema_version: Generated<number>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CollectionMethodEventTable {
+  collection_method_id: string;
+  event_id: string;
+  relation_role: CollectionMethodEventRole;
+  created_at: string;
+}
+
+export interface ActorDataCapabilityTable {
+  id: string;
+  actor_id: string;
+  capability_key: string;
+  profile_json: string;
+  schema_version: Generated<number>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ActorCapabilityEvidenceTable {
+  capability_id: string;
+  event_id: string;
+  evidence_role: ActorCapabilityEvidenceRole;
+  created_at: string;
+}
+
 export interface ModelResourceTable {
   id: string;
   slug: string;
@@ -407,6 +478,14 @@ export interface DatabaseSchema {
   actors: ActorTable;
   event_actors: EventActorTable;
   event_data_profiles: EventDataProfileTable;
+  datasets: DatasetTable;
+  dataset_events: DatasetEventTable;
+  standards: StandardTable;
+  standard_events: StandardEventTable;
+  collection_methods: CollectionMethodTable;
+  collection_method_events: CollectionMethodEventTable;
+  actor_data_capabilities: ActorDataCapabilityTable;
+  actor_capability_evidence: ActorCapabilityEvidenceTable;
   model_resources: ModelResourceTable;
   views: ViewTable;
   scout_insights: ScoutInsightTable;
@@ -428,5 +507,9 @@ export type EventRow = Selectable<EventTable>;
 export type NewEventRow = Insertable<EventTable>;
 export type EventDataProfileRow = Selectable<EventDataProfileTable>;
 export type NewEventDataProfileRow = Insertable<EventDataProfileTable>;
+export type DatasetRow = Selectable<DatasetTable>;
+export type StandardRow = Selectable<StandardTable>;
+export type CollectionMethodRow = Selectable<CollectionMethodTable>;
+export type ActorDataCapabilityRow = Selectable<ActorDataCapabilityTable>;
 
 export type IgnoreGenerated = Generated<never>;

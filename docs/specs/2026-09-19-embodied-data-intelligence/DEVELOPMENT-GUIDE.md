@@ -4,6 +4,14 @@
 日期：2026-09-19  
 适用对象：产品、数据、采集运营、研究与研发团队
 
+首个实施包：
+
+- [PRD](PRD.md)
+- [SYSTEM](SYSTEM.md)
+- [TEST](TEST.md)
+- [TASKS](TASKS.md)
+- [Implementation Plan](../../superpowers/plans/2026-09-19-embodied-data-foundation.md)
+
 ## 1. 直接结论
 
 本项目应从“通用 AI 行业认知系统”垂直重构为“具身智能数据板块的认知与行动系统”。

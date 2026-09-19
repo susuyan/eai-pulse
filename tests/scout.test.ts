@@ -77,8 +77,7 @@ describe("Scout deterministic cards", () => {
             "The workflow has explicit inputs, outputs, controls, and failure boundaries.",
           industry_insight:
             "The change can affect a real operating workflow and merits a bounded validation.",
-          future_outlook:
-            "Verify adoption, cost, completion rate, and human takeover frequency.",
+          future_outlook: "Verify adoption, cost, completion rate, and human takeover frequency.",
           business_value: "Run a reversible test with success, cost, and stop thresholds.",
           category: "test-fixture",
           company: `Fixture Company ${index}`,

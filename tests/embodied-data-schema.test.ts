@@ -3,7 +3,9 @@ import { afterEach, describe, expect, it } from "vitest";
 import { loadConfig } from "../src/config/env.js";
 import { createDatabase } from "../src/db/database.js";
 import { migrateToLatest } from "../src/db/migrate.js";
+import { Repository } from "../src/db/repository.js";
 import { seedDatabase } from "../src/db/seed.js";
+import profiles from "./fixtures/embodied-data/data-profiles.json" with { type: "json" };
 
 const databases: ReturnType<typeof createDatabase>[] = [];
 
@@ -66,5 +68,24 @@ describe("embodied data database foundation", () => {
     `.execute(db);
 
     expect(Number(result.rows[0]?.count)).toBe(0);
+  });
+
+  it("validates DataProfiles on write and read and filters Events by scope", async () => {
+    const db = await setup();
+    const repository = new Repository(db);
+    const event = await db.selectFrom("events").selectAll().executeTakeFirstOrThrow();
+    const profile = profiles.valid[0];
+
+    await repository.updateEvent(event.id, { content_scope: "embodied-data" });
+    await repository.upsertEventDataProfile(event.id, profile);
+
+    expect(await repository.getEventDataProfile(event.id)).toEqual(profile);
+    expect(await repository.listEventsByContentScope("embodied-data", event.status)).toContainEqual(
+      expect.objectContaining({ id: event.id }),
+    );
+
+    const invalidProfile = { ...profile, pipelineStages: [] };
+    await expect(repository.upsertEventDataProfile(event.id, invalidProfile)).rejects.toThrow();
+    expect(await repository.getEventDataProfile(event.id)).toEqual(profile);
   });
 });

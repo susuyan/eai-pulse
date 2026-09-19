@@ -3,6 +3,11 @@ import { dirname, isAbsolute, join } from "node:path";
 import type { Kysely, Transaction } from "kysely";
 import { parseJson } from "../db/repository.js";
 import type { DatabaseSchema, EventRow } from "../db/types.js";
+import {
+  type ContentScope,
+  ContentScopeSchema,
+  EventDataProfileSchema,
+} from "../domain/embodied-data.js";
 import { canonicalizeUrl, sha256 } from "../domain/url.js";
 
 export const SNAPSHOT_SCHEMA_VERSION = 1;
@@ -19,6 +24,7 @@ interface RepositorySnapshot {
   signalTriage?: Array<Record<string, unknown>>;
   discoveries: Array<Record<string, unknown>>;
   events: Array<Record<string, unknown>>;
+  eventDataProfiles?: Array<Record<string, unknown>>;
   eventSignals: Array<Record<string, unknown>>;
   eventTracks?: Array<Record<string, unknown>>;
   eventActors?: Array<Record<string, unknown>>;
@@ -76,6 +82,7 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
     triageRows,
     discoveryRows,
     eventRows,
+    eventDataProfileRows,
     eventSignalRows,
     eventTrackRows,
     eventActorRows,
@@ -119,6 +126,12 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
       .select(["aggregator.slug as aggregatorSlug", "matched.slug as matchedSourceSlug"])
       .execute(),
     db.selectFrom("events").selectAll().execute(),
+    db
+      .selectFrom("event_data_profiles")
+      .innerJoin("events", "events.id", "event_data_profiles.event_id")
+      .selectAll("event_data_profiles")
+      .select("events.slug as eventSlug")
+      .execute(),
     db.selectFrom("event_signals").selectAll().execute(),
     db
       .selectFrom("event_tracks")
@@ -169,6 +182,7 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
     sources: sourceRows
       .map((source) => ({
         slug: source.slug,
+        contentScope: source.content_scope,
         enabled: source.enabled,
         observationEnabled: source.observation_enabled,
         lifecycleStatus: source.lifecycle_status,
@@ -251,6 +265,7 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
         return {
           id: signal.id,
           sourceSlug: signal.sourceSlug,
+          contentScope: signal.content_scope,
           externalId: signal.external_id,
           canonicalUrl,
           urlHash: sha256(canonicalUrl),
@@ -345,6 +360,7 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
       .map((event) => ({
         id: event.id,
         slug: event.slug,
+        contentScope: event.content_scope,
         title: event.title,
         factSummary: event.fact_summary,
         summary: event.summary,
@@ -369,6 +385,15 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
         updatedAt: event.updated_at,
       }))
       .sort(byString("slug")),
+    eventDataProfiles: eventDataProfileRows
+      .map((profile) => ({
+        eventSlug: profile.eventSlug,
+        profile: EventDataProfileSchema.parse(JSON.parse(profile.profile_json)),
+        schemaVersion: profile.schema_version,
+        createdAt: profile.created_at,
+        updatedAt: profile.updated_at,
+      }))
+      .sort(byString("eventSlug")),
     eventSignals: eventSignalRows
       .map((link) => ({
         eventId: link.event_id,
@@ -483,6 +508,7 @@ async function restoreSnapshot(
     await db
       .updateTable("sources")
       .set({
+        content_scope: snapshotContentScope(value.contentScope),
         enabled: incomingIsNewer ? requiredNumber(value, "enabled") : current.enabled,
         observation_enabled: incomingIsNewer
           ? typeof value.observationEnabled === "number"
@@ -648,6 +674,7 @@ async function restoreSnapshot(
     const incomingMetrics = asRecord(value.metrics);
     const row = {
       source_id: sourceId,
+      content_scope: snapshotContentScope(value.contentScope),
       external_id: optionalString(value.externalId),
       canonical_url: canonicalUrl,
       url_hash: urlHash,
@@ -676,6 +703,7 @@ async function restoreSnapshot(
       await db
         .updateTable("signals")
         .set({
+          content_scope: row.content_scope,
           title,
           summary,
           author: existing.author ?? row.author,
@@ -822,6 +850,7 @@ async function restoreSnapshot(
     const id = existing?.id ?? snapshotId;
     const row = {
       slug,
+      content_scope: snapshotContentScope(value.contentScope),
       title: requiredString(value, "title"),
       fact_summary: requiredString(value, "factSummary"),
       summary: requiredString(value, "summary"),
@@ -845,15 +874,44 @@ async function restoreSnapshot(
       created_at: requiredString(value, "createdAt"),
       updated_at: optionalString(value.updatedAt) ?? requiredString(value, "createdAt"),
     };
-    if (existing && shouldReplaceEvent(existing, value, row.updated_at))
+    if (existing && shouldReplaceEvent(existing, value, row.updated_at)) {
       await db.updateTable("events").set(row).where("id", "=", id).execute();
-    else if (!existing)
+    } else if (existing && value.contentScope !== undefined) {
+      await db
+        .updateTable("events")
+        .set({ content_scope: row.content_scope })
+        .where("id", "=", id)
+        .execute();
+    } else if (!existing)
       await db
         .insertInto("events")
         .values({ id, ...row })
         .execute();
     eventIdMap.set(snapshotId, id);
     eventIdMap.set(slug, id);
+  }
+
+  for (const value of snapshot.eventDataProfiles ?? []) {
+    const eventId = eventIdMap.get(requiredString(value, "eventSlug"));
+    if (!eventId) continue;
+    const profile = EventDataProfileSchema.parse(value.profile);
+    await db
+      .insertInto("event_data_profiles")
+      .values({
+        event_id: eventId,
+        profile_json: JSON.stringify(profile),
+        schema_version: requiredNumber(value, "schemaVersion"),
+        created_at: requiredString(value, "createdAt"),
+        updated_at: requiredString(value, "updatedAt"),
+      })
+      .onConflict((conflict) =>
+        conflict.column("event_id").doUpdateSet({
+          profile_json: JSON.stringify(profile),
+          schema_version: requiredNumber(value, "schemaVersion"),
+          updated_at: requiredString(value, "updatedAt"),
+        }),
+      )
+      .execute();
   }
 
   for (const value of snapshot.signalTriage ?? []) {
@@ -1213,6 +1271,9 @@ function validateSnapshot(value: RepositorySnapshot): void {
   for (const key of ["sources", "signals", "discoveries", "events", "eventSignals"] as const) {
     if (!Array.isArray(value[key])) throw new Error(`Invalid repository snapshot field: ${key}`);
   }
+  if (value.eventDataProfiles !== undefined && !Array.isArray(value.eventDataProfiles)) {
+    throw new Error("Invalid repository snapshot field: eventDataProfiles");
+  }
 }
 
 function requiredString(value: Record<string, unknown>, key: string): string {
@@ -1235,6 +1296,10 @@ function optionalString(value: unknown): string | null {
 
 function optionalNumber(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function snapshotContentScope(value: unknown): ContentScope {
+  return value === undefined || value === null ? "legacy-ai" : ContentScopeSchema.parse(value);
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -1293,6 +1358,7 @@ function snapshotCounts(snapshot: RepositorySnapshot) {
     signalTriage: snapshot.signalTriage?.length ?? 0,
     discoveries: snapshot.discoveries.length,
     events: snapshot.events.length,
+    eventDataProfiles: snapshot.eventDataProfiles?.length ?? 0,
     eventSignals: snapshot.eventSignals.length,
     eventTracks: snapshot.eventTracks?.length ?? 0,
     eventActors: snapshot.eventActors?.length ?? 0,
@@ -1314,6 +1380,7 @@ function emptyCounts() {
     signalTriage: 0,
     discoveries: 0,
     events: 0,
+    eventDataProfiles: 0,
     eventSignals: 0,
     eventTracks: 0,
     eventActors: 0,

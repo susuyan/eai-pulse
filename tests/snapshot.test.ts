@@ -1,4 +1,4 @@
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -8,6 +8,7 @@ import { migrateToLatest } from "../src/db/migrate.js";
 import { Repository } from "../src/db/repository.js";
 import { seedDatabase } from "../src/db/seed.js";
 import { restoreRepositorySnapshot, writeRepositorySnapshot } from "../src/pipeline/snapshot.js";
+import profiles from "./fixtures/embodied-data/data-profiles.json" with { type: "json" };
 
 const databases: ReturnType<typeof createDatabase>[] = [];
 
@@ -39,6 +40,14 @@ describe("repository data snapshot", () => {
     const repository = new Repository(sourceDb);
     const openai = (await repository.listSources()).find((source) => source.slug === "openai");
     expect(openai).toBeDefined();
+    await repository.updateSource(openai?.id ?? "", { content_scope: "embodied-data" });
+    const profiledEvent = await sourceDb
+      .selectFrom("events")
+      .select(["id", "slug"])
+      .where("slug", "=", "lingbot-vla-2-cross-embodiment")
+      .executeTakeFirstOrThrow();
+    await repository.updateEvent(profiledEvent.id, { content_scope: "embodied-data" });
+    await repository.upsertEventDataProfile(profiledEvent.id, profiles.valid[0]);
     const jobId = await repository.startJob("collect", openai?.id ?? null);
     const runId = await repository.startSourceRun(openai?.id ?? "", jobId);
     await repository.finishSourceRun(runId, {
@@ -138,6 +147,11 @@ describe("repository data snapshot", () => {
     await repository.deferSignal(snapshotSignal?.id ?? "", "snapshot-triage-fixture", 42, {
       reversible: true,
     });
+    await sourceDb
+      .updateTable("signals")
+      .set({ content_scope: "embodied-data" })
+      .where("id", "=", snapshotSignal?.id ?? "")
+      .execute();
 
     const root = await mkdtemp(join(tmpdir(), "agent-pulse-snapshot-"));
     const first = await writeRepositorySnapshot(sourceDb, root);
@@ -154,6 +168,17 @@ describe("repository data snapshot", () => {
       (signal: { title: string }) => signal.title === "Snapshot persistence test signal",
     );
     expect(persisted.summary.length).toBeLessThanOrEqual(320);
+    expect(persisted.contentScope).toBe("embodied-data");
+    expect(
+      snapshot.sources.find((source: { slug: string }) => source.slug === "openai")?.contentScope,
+    ).toBe("embodied-data");
+    expect(
+      snapshot.events.find((event: { slug: string }) => event.slug === profiledEvent.slug)
+        ?.contentScope,
+    ).toBe("embodied-data");
+    expect(snapshot.eventDataProfiles).toEqual([
+      expect.objectContaining({ eventSlug: profiledEvent.slug, profile: profiles.valid[0] }),
+    ]);
     expect(first.counts.signalTriage).toBe(1);
     expect(first.counts.sourceChecks).toBe(1);
     expect(first.counts.sourceRuns).toBe(2);
@@ -324,5 +349,44 @@ describe("repository data snapshot", () => {
         .executeTakeFirst(),
     ).toEqual({ status: "not_modified" });
     expect(await targetRepository.publicScoutInsights()).toHaveLength(1);
+
+    const restoredProfileEvent = await targetDb
+      .selectFrom("events")
+      .select(["id", "content_scope"])
+      .where("slug", "=", profiledEvent.slug)
+      .executeTakeFirstOrThrow();
+    expect(restoredProfileEvent.content_scope).toBe("embodied-data");
+    expect(await targetRepository.getEventDataProfile(restoredProfileEvent.id)).toEqual(
+      profiles.valid[0],
+    );
+
+    const legacyRoot = await mkdtemp(join(tmpdir(), "agent-pulse-legacy-snapshot-"));
+    const legacySnapshot = structuredClone(snapshot);
+    for (const collection of [
+      legacySnapshot.sources,
+      legacySnapshot.signals,
+      legacySnapshot.events,
+    ]) {
+      for (const row of collection) delete row.contentScope;
+    }
+    delete legacySnapshot.eventDataProfiles;
+    await writeFile(
+      join(legacyRoot, "legacy.json"),
+      `${JSON.stringify(legacySnapshot, null, 2)}\n`,
+      "utf8",
+    );
+    const legacyDb = createDatabase(config);
+    databases.push(legacyDb);
+    await migrateToLatest(legacyDb, config);
+    await seedDatabase(legacyDb);
+    await restoreRepositorySnapshot(legacyDb, legacyRoot, "legacy.json");
+    const legacyRepository = new Repository(legacyDb);
+    const legacyProfileEvent = await legacyDb
+      .selectFrom("events")
+      .select(["id", "content_scope"])
+      .where("slug", "=", profiledEvent.slug)
+      .executeTakeFirstOrThrow();
+    expect(legacyProfileEvent.content_scope).toBe("legacy-ai");
+    expect(await legacyRepository.getEventDataProfile(legacyProfileEvent.id)).toBeUndefined();
   });
 });

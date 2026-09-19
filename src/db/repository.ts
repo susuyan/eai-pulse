@@ -2,6 +2,12 @@ import { randomUUID, timingSafeEqual } from "node:crypto";
 import type { Kysely } from "kysely";
 import { titleSimilarity } from "../domain/clustering.js";
 import {
+  type ContentScope,
+  ContentScopeSchema,
+  type EventDataProfile,
+  EventDataProfileSchema,
+} from "../domain/embodied-data.js";
+import {
   type CollectedSignal,
   type OriginReference,
   type PublicEvent,
@@ -1002,6 +1008,13 @@ export class Repository {
     return query.orderBy("featured", "desc").orderBy("happened_at", "desc").execute();
   }
 
+  async listEventsByContentScope(scope: ContentScope, status?: string): Promise<EventRow[]> {
+    const parsedScope = ContentScopeSchema.parse(scope);
+    let query = this.db.selectFrom("events").selectAll().where("content_scope", "=", parsedScope);
+    if (status) query = query.where("status", "=", status);
+    return query.orderBy("featured", "desc").orderBy("happened_at", "desc").execute();
+  }
+
   async getEvent(id: string): Promise<EventRow | undefined> {
     return this.db.selectFrom("events").selectAll().where("id", "=", id).executeTakeFirst();
   }
@@ -1016,6 +1029,44 @@ export class Repository {
       .set({ ...patch, updated_at: now() })
       .where("id", "=", id)
       .execute();
+  }
+
+  async upsertEventDataProfile(eventId: string, profile: unknown): Promise<void> {
+    const parsed = EventDataProfileSchema.parse(profile);
+    const timestamp = now();
+    const existing = await this.db
+      .selectFrom("event_data_profiles")
+      .select("event_id")
+      .where("event_id", "=", eventId)
+      .executeTakeFirst();
+    if (existing) {
+      await this.db
+        .updateTable("event_data_profiles")
+        .set({ profile_json: json(parsed), schema_version: 1, updated_at: timestamp })
+        .where("event_id", "=", eventId)
+        .execute();
+      return;
+    }
+    await this.db
+      .insertInto("event_data_profiles")
+      .values({
+        event_id: eventId,
+        profile_json: json(parsed),
+        schema_version: 1,
+        created_at: timestamp,
+        updated_at: timestamp,
+      })
+      .execute();
+  }
+
+  async getEventDataProfile(eventId: string): Promise<EventDataProfile | undefined> {
+    const row = await this.db
+      .selectFrom("event_data_profiles")
+      .select("profile_json")
+      .where("event_id", "=", eventId)
+      .executeTakeFirst();
+    if (!row) return undefined;
+    return EventDataProfileSchema.parse(JSON.parse(row.profile_json));
   }
 
   async attachSignal(

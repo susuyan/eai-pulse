@@ -1,4 +1,5 @@
 import type { Generated, Insertable, Selectable, Updateable } from "kysely";
+import type { ContentScope } from "../domain/embodied-data.js";
 
 export interface SourceTable {
   id: string;
@@ -38,6 +39,7 @@ export interface SourceTable {
   license_note: Generated<string>;
   quality_score: Generated<number>;
   last_verified_at: Generated<string | null>;
+  content_scope: Generated<ContentScope>;
   created_at: string;
   updated_at: string;
 }
@@ -191,6 +193,7 @@ export interface SignalTable {
   metrics_json: string;
   raw_meta_json: string;
   content_hash: string;
+  content_scope: Generated<ContentScope>;
   created_at: string;
   updated_at: string;
 }
@@ -246,6 +249,7 @@ export interface EventTable {
   manual_override: number;
   happened_at: string;
   published_at: string | null;
+  content_scope: Generated<ContentScope>;
   created_at: string;
   updated_at: string;
 }
@@ -325,6 +329,7 @@ export interface ActorTable {
   table_score: number;
   website_url: string;
   enabled: number;
+  content_scope: Generated<ContentScope>;
   created_at: string;
   updated_at: string;
 }
@@ -336,6 +341,14 @@ export interface EventActorTable {
   progress_stage: string;
   relevance_score: number;
   created_at: string;
+}
+
+export interface EventDataProfileTable {
+  event_id: string;
+  profile_json: string;
+  schema_version: Generated<number>;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ModelResourceTable {
@@ -393,6 +406,7 @@ export interface DatabaseSchema {
   event_tracks: EventTrackTable;
   actors: ActorTable;
   event_actors: EventActorTable;
+  event_data_profiles: EventDataProfileTable;
   model_resources: ModelResourceTable;
   views: ViewTable;
   scout_insights: ScoutInsightTable;
@@ -412,5 +426,7 @@ export type SignalRow = Selectable<SignalTable>;
 export type NewSignalRow = Insertable<SignalTable>;
 export type EventRow = Selectable<EventTable>;
 export type NewEventRow = Insertable<EventTable>;
+export type EventDataProfileRow = Selectable<EventDataProfileTable>;
+export type NewEventDataProfileRow = Insertable<EventDataProfileTable>;
 
 export type IgnoreGenerated = Generated<never>;

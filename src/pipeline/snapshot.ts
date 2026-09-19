@@ -2,7 +2,7 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join } from "node:path";
 import type { Kysely, Transaction } from "kysely";
 import { parseJson } from "../db/repository.js";
-import type { DatabaseSchema } from "../db/types.js";
+import type { DatabaseSchema, EventRow } from "../db/types.js";
 import { canonicalizeUrl, sha256 } from "../domain/url.js";
 
 export const SNAPSHOT_SCHEMA_VERSION = 1;
@@ -1264,7 +1264,7 @@ function earliestTimestamp(...values: string[]): string {
 }
 
 function shouldReplaceEvent(
-  existing: DatabaseSchema["events"],
+  existing: EventRow,
   incoming: Record<string, unknown>,
   incomingUpdatedAt: string,
 ): boolean {

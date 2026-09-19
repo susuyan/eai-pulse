@@ -97,6 +97,7 @@ export async function clusterSignals(
         manual_override: 0,
         happened_at: signal.published_at,
         published_at: null,
+        content_scope: "legacy-ai",
         created_at: timestamp,
         updated_at: timestamp,
       } satisfies EventRow;

@@ -1,0 +1,146 @@
+[
+  {
+    "name": "include teleoperation dataset release",
+    "input": {
+      "title": "Dexterous robot teleoperation dataset released",
+      "summary": "The release contains 12,000 verified demonstration hours collected with bilateral teleoperation across manipulation tasks.",
+      "technicalInsight": "The dataset records RGB-D, joint state, and force-torque streams with synchronized actions.",
+      "industryInsight": "The release provides a reproducible reference for large-scale robot data collection.",
+      "businessValue": "Production teams can compare collection throughput and modality coverage against their own lines.",
+      "category": "dataset",
+      "keywords": ["robot", "teleoperation", "dataset"]
+    },
+    "expected": {
+      "decision": "include",
+      "matchedStages": ["acquisition-route", "multimodal-capture", "production-operations"]
+    }
+  },
+  {
+    "name": "include robot data schema standard",
+    "input": {
+      "title": "Robot learning data schema reaches version 1.0",
+      "summary": "The standard defines a shared schema, metadata fields, and interchange format for embodied manipulation episodes.",
+      "technicalInsight": "The specification aligns timestamps, observations, actions, task labels, and provenance.",
+      "industryInsight": "A stable standard reduces conversion work between collection systems and training pipelines.",
+      "businessValue": "Data teams can use the schema as an acceptance contract for multi-supplier delivery.",
+      "category": "standard",
+      "keywords": ["robot", "schema", "standard", "metadata"]
+    },
+    "expected": {
+      "decision": "include",
+      "matchedStages": ["data-engineering-standards"]
+    }
+  },
+  {
+    "name": "include collection quality training effect study",
+    "input": {
+      "title": "Robot demonstration quality study measures downstream training effect",
+      "summary": "The study compares acceptance thresholds, trajectory validation, and dataset quality for manipulation training.",
+      "technicalInsight": "Removing failed demonstrations improves policy success rate by 11 percentage points.",
+      "industryInsight": "The results connect collection quality controls to measurable model performance.",
+      "businessValue": "Quality teams can tune rejection rules using downstream training feedback instead of subjective review.",
+      "category": "research",
+      "keywords": ["robot", "data quality", "training effect", "acceptance"]
+    },
+    "expected": {
+      "decision": "include",
+      "matchedStages": ["acquisition-route", "quality-training-feedback"]
+    }
+  },
+  {
+    "name": "review humanoid fleet with thin data detail",
+    "input": {
+      "title": "Humanoid company announces a 100-unit fleet",
+      "summary": "The company says the fleet will support data collection but gives no production method, scale definition, or quality evidence.",
+      "technicalInsight": "The collection architecture is not disclosed.",
+      "industryInsight": "The announcement may signal future capacity, but the claim is not yet operationally comparable.",
+      "businessValue": "Track the company until it publishes collection throughput or delivery evidence.",
+      "category": "company",
+      "keywords": ["humanoid", "data collection"]
+    },
+    "expected": {
+      "decision": "review",
+      "matchedStages": ["acquisition-route"]
+    }
+  },
+  {
+    "name": "review VLA paper with unclear data contribution",
+    "input": {
+      "title": "New VLA policy improves benchmark performance",
+      "summary": "The embodied model uses training data, but the paper does not explain the collection route or dataset contribution.",
+      "technicalInsight": "The reported gain may come from architecture or optimization rather than the data pipeline.",
+      "industryInsight": "The result needs a data ablation before it can inform production decisions.",
+      "businessValue": "Monitor follow-up material for dataset and collection details.",
+      "category": "research",
+      "keywords": ["VLA", "training data"]
+    },
+    "expected": {
+      "decision": "review",
+      "matchedStages": []
+    }
+  },
+  {
+    "name": "review robotics data company financing",
+    "input": {
+      "title": "Robotics demonstration data provider raises Series A",
+      "summary": "The company claims a robot data service but provides no verified collection capacity or delivery record.",
+      "technicalInsight": "The financing announcement does not disclose its demonstration method.",
+      "industryInsight": "Capital may expand supply, but current production capability remains unverified.",
+      "businessValue": "Keep the company in the peer watchlist pending capacity evidence.",
+      "category": "financing",
+      "keywords": ["robotics", "data provider"]
+    },
+    "expected": {
+      "decision": "review",
+      "matchedStages": ["acquisition-route"]
+    }
+  },
+  {
+    "name": "reject general LLM release",
+    "input": {
+      "title": "General language model release expands context window",
+      "summary": "The model adds stronger text reasoning and tool use.",
+      "technicalInsight": "The release changes inference efficiency for text workloads.",
+      "industryInsight": "Enterprise software teams may adopt the model.",
+      "businessValue": "Evaluate API pricing for general assistants.",
+      "category": "model",
+      "keywords": ["LLM", "language model"]
+    },
+    "expected": {
+      "decision": "reject",
+      "matchedStages": []
+    }
+  },
+  {
+    "name": "reject robot launch without data impact",
+    "input": {
+      "title": "Warehouse robot launches with a faster drive base",
+      "summary": "The mobile robot adds a larger battery and a higher maximum speed.",
+      "technicalInsight": "The change improves runtime for warehouse transport.",
+      "industryInsight": "The product competes on hardware performance.",
+      "businessValue": "Fleet buyers can compare battery life and payload.",
+      "category": "product",
+      "keywords": ["robot", "warehouse"]
+    },
+    "expected": {
+      "decision": "reject",
+      "matchedStages": []
+    }
+  },
+  {
+    "name": "reject generic AI financing",
+    "input": {
+      "title": "AI application company raises growth round",
+      "summary": "The company develops general office automation software.",
+      "technicalInsight": "No technical or data-production change is disclosed.",
+      "industryInsight": "The round reflects demand for enterprise AI applications.",
+      "businessValue": "The transaction has no direct effect on embodied data operations.",
+      "category": "financing",
+      "keywords": ["AI", "funding"]
+    },
+    "expected": {
+      "decision": "reject",
+      "matchedStages": []
+    }
+  }
+]

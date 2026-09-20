@@ -203,7 +203,8 @@ describe("repository data snapshot", () => {
     expect(serialized).not.toMatch(/"(?:rawPayload|raw_payload|privateNote|private_note)"\s*:/i);
     expect(serialized).not.toContain("/Users/");
     expect(serialized).toContain("[local-path]");
-    expect(serialized).toContain('"tokenCount": 42');
+    expect(serialized).toBe(`${JSON.stringify(JSON.parse(serialized))}\n`);
+    expect(serialized).toContain('"tokenCount":42');
     const snapshot = JSON.parse(serialized);
     const persisted = snapshot.signals.find(
       (signal: { title: string }) => signal.title === "Snapshot persistence test signal",

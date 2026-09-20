@@ -221,11 +221,11 @@ export const embodiedSourceCatalog: EmbodiedCatalogSource[] = [
     category: "dataset-benchmark",
     topics: ["benchmark", "language-conditioned", "long-horizon"],
   }),
-  github({
+  website({
     slug: "holoassist",
     name: "HoloAssist",
     owner: "Microsoft Research",
-    repository: "facebookresearch/holoassist",
+    homepageUrl: "https://holoassist.github.io/",
     tier: 1,
     role: "research",
     region: "GLOBAL",

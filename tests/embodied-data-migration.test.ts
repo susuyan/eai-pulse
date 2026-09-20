@@ -16,10 +16,17 @@ import { migrateToLatest } from "../src/db/migrate.js";
 import { seedDatabase } from "../src/db/seed.js";
 import {
   applyEmbodiedDataMigration,
+  applyVerifiedEmbodiedDataMigration,
   assertMigrationSnapshotMatchesBaseline,
+  embodiedPublicFingerprint,
   planEmbodiedDataMigration,
   readEmbodiedDataMigrationBaseline,
 } from "../src/pipeline/embodied-data-migration.js";
+import {
+  restoreRepositorySnapshot,
+  writeRepositorySnapshot,
+  writeVerifiedRepositorySnapshot,
+} from "../src/pipeline/snapshot.js";
 
 const databases: ReturnType<typeof createDatabase>[] = [];
 const baselinePath = fileURLToPath(
@@ -141,5 +148,50 @@ describe("embodied data public switch migration", () => {
       assertMigrationSnapshotMatchesBaseline(verifiedBaseline, verifiedPath),
     ).resolves.toBeUndefined();
     expect(await readFile(verifiedPath, "utf8")).toBe(payload);
+  });
+
+  it("writes a verified migration snapshot that round-trips current and legacy data", async () => {
+    const db = await setup();
+    const baseline = await readEmbodiedDataMigrationBaseline(baselinePath);
+    const root = await mkdtemp(join(tmpdir(), "agent-pulse-migration-roundtrip-"));
+    const expectedFingerprint = await embodiedPublicFingerprint(db);
+    const testBaselineSnapshot = await writeRepositorySnapshot(db, root, "baseline.json");
+    const testBaseline = { ...baseline, snapshotSha256: testBaselineSnapshot.sha256 };
+
+    const result = await applyVerifiedEmbodiedDataMigration(db, testBaseline, {
+      baselineSnapshotPath: join(root, "baseline.json"),
+      rootDir: root,
+      relativePath: "result.json",
+      verifySnapshot: async ({ path, counts, publicFingerprint }) => {
+        const verificationDb = await setup();
+        const restored = await restoreRepositorySnapshot(verificationDb, root, path);
+        expect(restored.counts).toEqual(counts);
+        expect(await embodiedPublicFingerprint(verificationDb)).toBe(publicFingerprint);
+      },
+    });
+
+    expect(result.baselineSnapshotSha256).toBe(testBaseline.snapshotSha256);
+    expect(result.resultSnapshotSha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(result.publicFingerprint).toBe(expectedFingerprint);
+    expect(result.roundTripVerified).toBe(true);
+    expect(result.before.current).toEqual(result.after.current);
+    expect(result.after.current.events).toBe(embodiedLaunchEvents.length);
+    expect(await readFile(join(root, "result.json"), "utf8")).toContain(
+      '"contentScope":"embodied-data"',
+    );
+  });
+
+  it("leaves the prior snapshot untouched when candidate verification fails", async () => {
+    const db = await setup();
+    const root = await mkdtemp(join(tmpdir(), "agent-pulse-migration-rollback-"));
+    const target = join(root, "result.json");
+    await writeFile(target, "recoverable snapshot\n");
+
+    await expect(
+      writeVerifiedRepositorySnapshot(db, root, "result.json", async () => {
+        throw new Error("round-trip verification failed");
+      }),
+    ).rejects.toThrow("round-trip verification failed");
+    expect(await readFile(target, "utf8")).toBe("recoverable snapshot\n");
   });
 });

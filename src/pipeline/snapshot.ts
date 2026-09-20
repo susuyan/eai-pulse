@@ -1,4 +1,4 @@
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join } from "node:path";
 import type { Kysely, Transaction } from "kysely";
 import { parseJson } from "../db/repository.js";
@@ -65,22 +65,64 @@ export async function writeRepositorySnapshot(
   rootDir: string,
   relativePath = DEFAULT_SNAPSHOT_PATH,
 ) {
+  const artifact = await buildSnapshotArtifact(db);
+  const { serialized, sha256: snapshotSha256, counts } = artifact;
+  const path = snapshotPath(rootDir, relativePath);
+  const previous = await readFile(path, "utf8").catch(() => "");
+  if (previous === serialized) {
+    return { path, changed: false, sha256: snapshotSha256, counts };
+  }
+  await mkdir(dirname(path), { recursive: true });
+  const temporary = `${path}.tmp`;
+  await writeFile(temporary, serialized, { encoding: "utf8", mode: 0o600 });
+  await rename(temporary, path);
+  return { path, changed: true, sha256: snapshotSha256, counts };
+}
+
+export async function writeVerifiedRepositorySnapshot(
+  db: Kysely<DatabaseSchema>,
+  rootDir: string,
+  relativePath: string,
+  verify: (candidate: {
+    path: string;
+    sha256: string;
+    counts: ReturnType<typeof snapshotCounts>;
+  }) => Promise<void>,
+) {
+  const artifact = await buildSnapshotArtifact(db);
+  const path = snapshotPath(rootDir, relativePath);
+  const previous = await readFile(path, "utf8").catch(() => "");
+  const candidatePath = `${path}.candidate`;
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(candidatePath, artifact.serialized, { encoding: "utf8", mode: 0o600 });
+  try {
+    await verify({ path: candidatePath, sha256: artifact.sha256, counts: artifact.counts });
+    await rename(candidatePath, path);
+  } catch (error) {
+    await unlink(candidatePath).catch(() => undefined);
+    throw error;
+  }
+  return {
+    path,
+    changed: previous !== artifact.serialized,
+    sha256: artifact.sha256,
+    counts: artifact.counts,
+    verified: true,
+  };
+}
+
+async function buildSnapshotArtifact(db: Kysely<DatabaseSchema>) {
   const snapshot = await db
     .transaction()
     .execute((transaction) => buildRepositorySnapshot(transaction));
   validateEmbodiedDataObjectReferences(snapshot);
   const serialized = `${JSON.stringify(snapshot)}\n`;
   assertSnapshotSafe(serialized);
-  const path = snapshotPath(rootDir, relativePath);
-  const previous = await readFile(path, "utf8").catch(() => "");
-  if (previous === serialized) {
-    return { path, changed: false, sha256: sha256(serialized), counts: snapshotCounts(snapshot) };
-  }
-  await mkdir(dirname(path), { recursive: true });
-  const temporary = `${path}.tmp`;
-  await writeFile(temporary, serialized, { encoding: "utf8", mode: 0o600 });
-  await rename(temporary, path);
-  return { path, changed: true, sha256: sha256(serialized), counts: snapshotCounts(snapshot) };
+  return {
+    serialized,
+    sha256: sha256(serialized),
+    counts: snapshotCounts(snapshot),
+  };
 }
 
 export async function restoreRepositorySnapshot(

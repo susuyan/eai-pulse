@@ -2,7 +2,10 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { type Kysely, sql } from "kysely";
 import { z } from "zod";
+import { seedDatabase } from "../db/seed.js";
 import type { DatabaseSchema } from "../db/types.js";
+import { sha256 } from "../domain/url.js";
+import { writeVerifiedRepositorySnapshot } from "./snapshot.js";
 
 const sha256Schema = z.string().regex(/^[a-f0-9]{64}$/);
 const gitShaSchema = z.string().regex(/^[a-f0-9]{40}$/);
@@ -139,6 +142,116 @@ export async function applyEmbodiedDataMigration(
   return db
     .transaction()
     .execute((transaction) => planEmbodiedDataMigration(transaction, baseline));
+}
+
+export async function applyVerifiedEmbodiedDataMigration(
+  db: Kysely<DatabaseSchema>,
+  baseline: EmbodiedDataMigrationBaseline,
+  options: {
+    baselineSnapshotPath: string;
+    rootDir: string;
+    relativePath: string;
+    verifySnapshot: (candidate: {
+      path: string;
+      sha256: string;
+      counts: Record<string, number>;
+      publicFingerprint: string;
+    }) => Promise<void>;
+  },
+) {
+  await assertMigrationSnapshotMatchesBaseline(baseline, options.baselineSnapshotPath);
+  const before = await planEmbodiedDataMigration(db, baseline);
+  await seedDatabase(db);
+  await applyEmbodiedDataMigration(db, baseline);
+  const after = await planEmbodiedDataMigration(db, baseline);
+  const publicFingerprint = await embodiedPublicFingerprint(db);
+  const snapshot = await writeVerifiedRepositorySnapshot(
+    db,
+    options.rootDir,
+    options.relativePath,
+    (candidate) => options.verifySnapshot({ ...candidate, publicFingerprint }),
+  );
+  return {
+    before,
+    after,
+    baselineSnapshotSha256: baseline.snapshotSha256,
+    resultSnapshotSha256: snapshot.sha256,
+    publicFingerprint,
+    roundTripVerified: snapshot.verified,
+    snapshotPath: snapshot.path,
+    snapshotCounts: snapshot.counts,
+  };
+}
+
+export async function embodiedPublicFingerprint(db: Kysely<DatabaseSchema>): Promise<string> {
+  const [sources, signals, events, tracks, actors, views, scouts, eventTracks, eventEvidence] =
+    await Promise.all([
+      db
+        .selectFrom("sources")
+        .select(["slug", "lifecycle_status", "enabled", "observation_enabled"])
+        .where("content_scope", "=", "embodied-data")
+        .execute(),
+      db
+        .selectFrom("signals")
+        .innerJoin("sources", "sources.id", "signals.source_id")
+        .select(["signals.canonical_url", "sources.slug as sourceSlug"])
+        .where("signals.content_scope", "=", "embodied-data")
+        .where("sources.content_scope", "=", "embodied-data")
+        .execute(),
+      db
+        .selectFrom("events")
+        .select(["slug", "status", "happened_at", "published_at"])
+        .where("content_scope", "=", "embodied-data")
+        .execute(),
+      db.selectFrom("tracks").select(["slug", "enabled"]).where("enabled", "=", 1).execute(),
+      db
+        .selectFrom("actors")
+        .select(["slug", "region", "enabled"])
+        .where("content_scope", "=", "embodied-data")
+        .execute(),
+      db
+        .selectFrom("views")
+        .select(["slug", "status", "is_default"])
+        .where("is_default", "=", 1)
+        .execute(),
+      db
+        .selectFrom("scout_insights")
+        .innerJoin("scout_evidence", "scout_evidence.insight_id", "scout_insights.id")
+        .innerJoin("events", "events.id", "scout_evidence.event_id")
+        .select(["scout_insights.slug", "scout_insights.status", "events.slug as eventSlug"])
+        .where("events.content_scope", "=", "embodied-data")
+        .where("scout_insights.status", "=", "published")
+        .execute(),
+      db
+        .selectFrom("event_tracks")
+        .innerJoin("events", "events.id", "event_tracks.event_id")
+        .innerJoin("tracks", "tracks.id", "event_tracks.track_id")
+        .select(["events.slug as eventSlug", "tracks.slug as trackSlug"])
+        .where("events.content_scope", "=", "embodied-data")
+        .execute(),
+      db
+        .selectFrom("event_signals")
+        .innerJoin("events", "events.id", "event_signals.event_id")
+        .innerJoin("signals", "signals.id", "event_signals.signal_id")
+        .select([
+          "events.slug as eventSlug",
+          "signals.canonical_url as url",
+          "event_signals.evidence_role as role",
+        ])
+        .where("events.content_scope", "=", "embodied-data")
+        .where("signals.content_scope", "=", "embodied-data")
+        .execute(),
+    ]);
+  return sha256(
+    JSON.stringify(
+      [sources, signals, events, tracks, actors, views, scouts, eventTracks, eventEvidence].map(
+        (rows) =>
+          [...rows].sort((left, right) =>
+            JSON.stringify(left).localeCompare(JSON.stringify(right)),
+          ),
+      ),
+    ),
+  );
 }
 
 async function scopeCounts(db: Kysely<DatabaseSchema>, scope: "legacy-ai" | "embodied-data") {

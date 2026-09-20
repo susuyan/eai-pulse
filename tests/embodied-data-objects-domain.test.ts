@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { embodiedCollectionMethods } from "../src/catalog/embodied-data/collection-methods.js";
 import { embodiedDatasets } from "../src/catalog/embodied-data/datasets.js";
+import { embodiedPeers } from "../src/catalog/embodied-data/peers.js";
 import { embodiedStandards } from "../src/catalog/embodied-data/standards.js";
 import {
   ActorDataCapabilitySchema,
@@ -159,17 +160,26 @@ describe("embodied data domain objects", () => {
     for (const slug of fixtureSlugs) {
       expect(seedSource).not.toContain(`"${slug}"`);
     }
-    for (const key of [
-      "datasets",
-      "datasetEvents",
-      "standards",
-      "standardEvents",
-      "collectionMethods",
-      "collectionMethodEvents",
-      "actorDataCapabilities",
-      "actorCapabilityEvidence",
-    ]) {
-      expect(snapshot[key] ?? []).toEqual([]);
-    }
+    expect((snapshot.datasets as Array<{ slug: string }>).map((item) => item.slug).sort()).toEqual(
+      embodiedDatasets.map((item) => item.slug).sort(),
+    );
+    expect(snapshot.datasetEvents).toHaveLength(
+      embodiedDatasets.reduce((sum, item) => sum + item.events.length, 0),
+    );
+    expect((snapshot.standards as Array<{ slug: string }>).map((item) => item.slug).sort()).toEqual(
+      embodiedStandards.map((item) => item.slug).sort(),
+    );
+    expect(snapshot.standardEvents).toHaveLength(
+      embodiedStandards.reduce((sum, item) => sum + item.events.length, 0),
+    );
+    expect(
+      (snapshot.collectionMethods as Array<{ slug: string }>).map((item) => item.slug).sort(),
+    ).toEqual(embodiedCollectionMethods.map((item) => item.slug).sort());
+    expect(snapshot.collectionMethodEvents).toHaveLength(
+      embodiedCollectionMethods.reduce((sum, item) => sum + item.events.length, 0),
+    );
+    const capabilityCount = embodiedPeers.reduce((sum, peer) => sum + peer.capabilities.length, 0);
+    expect(snapshot.actorDataCapabilities).toHaveLength(capabilityCount);
+    expect(snapshot.actorCapabilityEvidence).toHaveLength(capabilityCount);
   });
 });

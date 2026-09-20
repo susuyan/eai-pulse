@@ -1,35 +1,35 @@
 {
-  "schemaVersion": 1,
-  "id": "e308a9b6-13dd-4083-ad7c-7db524c128b7",
+  "schemaVersion": 2,
+  "id": "4c97ac2a-5ef4-469a-9dcb-67213427c8ea",
   "releaseVersion": "0.11.1",
   "status": "partial",
-  "overallScore": 62,
-  "rawWeightedScore": 66,
+  "overallScore": 61,
+  "rawWeightedScore": 65,
   "evidenceCoverage": 72,
   "dimensions": [
     {
       "slug": "source-coverage",
       "name": "有效来源覆盖",
-      "score": 96,
-      "rawScore": 96,
+      "score": 95,
+      "rawScore": 95,
       "scoreCap": 100,
       "weight": 10,
       "status": "measured",
-      "sampleSize": 138,
+      "sampleSize": 136,
       "sampleTarget": 100,
-      "summary": "416 个目录源中 266 个单轮健康、81 个处于隔离观察，只有 138 个既 active 且健康；E2/E3 不等同生产覆盖。",
+      "summary": "417 个目录源中 266 个单轮健康、77 个处于隔离观察，只有 136 个既 active 且健康；E2/E3 不等同生产覆盖。",
       "evidence": {
-        "catalog": 416,
+        "catalog": 417,
         "checked": 414,
         "healthy": 266,
         "degraded": 25,
-        "failed": 74,
-        "skipped": 49,
+        "failed": 76,
+        "skipped": 47,
         "active": 138,
-        "activeHealthy": 138,
-        "observingHealthy": 81,
+        "activeHealthy": 136,
+        "observingHealthy": 77,
         "healthyCategories": 13,
-        "healthyChina": 59
+        "healthyChina": 60
       },
       "penalties": [],
       "nextAction": "让 E3 来源完成 20 次健康检查和 7 天观察，再由自动契约验证逐批晋级 E4。"
@@ -37,8 +37,8 @@
     {
       "slug": "source-quality",
       "name": "来源内容质量",
-      "score": 79,
-      "rawScore": 79,
+      "score": 80,
+      "rawScore": 80,
       "scoreCap": 100,
       "weight": 10,
       "status": "measured",
@@ -63,15 +63,15 @@
       "scoreCap": 100,
       "weight": 10,
       "status": "measured",
-      "sampleSize": 15779,
+      "sampleSize": 16967,
       "sampleTarget": 100,
-      "summary": "15779 条信号中 11505 条来自 primary/research/policy，4912 条证据进入事件。",
+      "summary": "16967 条信号中 12456 条来自 primary/research/policy，5204 条证据进入事件。",
       "evidence": {
-        "signals": 15779,
-        "direct": 15779,
-        "primary": 11505,
-        "linkedEvidence": 4912,
-        "linkedSourceCount": 161,
+        "signals": 16967,
+        "direct": 16967,
+        "primary": 12456,
+        "linkedEvidence": 5204,
+        "linkedSourceCount": 162,
         "aggregatorDebt": 0
       },
       "penalties": [],
@@ -92,10 +92,10 @@
         "checked": 414,
         "healthy": 266,
         "degraded": 25,
-        "failed": 74,
-        "skipped": 49,
+        "failed": 76,
+        "skipped": 47,
         "latestRuns": 216,
-        "latestRunSuccess": 215,
+        "latestRunSuccess": 216,
         "auditWindows": 8
       },
       "penalties": [],
@@ -149,8 +149,8 @@
     {
       "slug": "realtime",
       "name": "端到端实时性",
-      "score": 85,
-      "rawScore": 85,
+      "score": 83,
+      "rawScore": 83,
       "scoreCap": 100,
       "weight": 8,
       "status": "measured",
@@ -159,8 +159,8 @@
       "summary": "collector 耗时不是上游发布到页面可见的端到端延迟；以成功运行比例作为实时性估算。",
       "evidence": {
         "latestSourceRuns": 216,
-        "latestRunSuccess": 215,
-        "freshHealthySources": 145,
+        "latestRunSuccess": 216,
+        "freshHealthySources": 126,
         "activeWithRecentSuccess": 135,
         "endToEndLatencySamples": 0
       },
@@ -172,21 +172,21 @@
     {
       "slug": "timeliness",
       "name": "内容时效性",
-      "score": 61,
-      "rawScore": 61,
+      "score": 52,
+      "rawScore": 52,
       "scoreCap": 100,
       "weight": 10,
       "status": "measured",
       "sampleSize": 266,
       "sampleTarget": 100,
-      "summary": "145/266 个健康来源在 7 天窗口内有新内容，最近 30 天公开事件 157 个。",
+      "summary": "126/266 个健康来源在 7 天窗口内有新内容，最近 30 天公开事件 38 个。",
       "evidence": {
         "healthy": 266,
-        "freshHealthy": 145,
+        "freshHealthy": 126,
         "active": 138,
         "activeWithRecentSuccess": 135,
         "published": 538,
-        "recentPublished": 157
+        "recentPublished": 38
       },
       "penalties": [],
       "nextAction": "按 cadence 衡量来源 freshness lag，并补齐从事件发生到页面发布的延迟。"
@@ -201,10 +201,10 @@
       "status": "insufficient_data",
       "sampleSize": 0,
       "sampleTarget": 30,
-      "summary": "48 条星探卡片的编辑状态不是用户行动结果，当前真实行动/产物复盘样本为 0。",
+      "summary": "55 条星探卡片的编辑状态不是用户行动结果，当前真实行动/产物复盘样本为 0。",
       "evidence": {
-        "ideas": 48,
-        "editorialAccepted": 43,
+        "ideas": 55,
+        "editorialAccepted": 44,
         "outcomeFeedback": 0,
         "completedArtifacts": 0
       },
@@ -222,15 +222,15 @@
       "weight": 8,
       "status": "insufficient_data",
       "sampleSize": 414,
-      "sampleTarget": 416,
+      "sampleTarget": 417,
       "summary": "字段存在只证明策略已声明，不证明策略有效；当前缺少策略版本回放、发布回滚演练和审计抽检。",
       "evidence": {
-        "sources": 416,
+        "sources": 417,
         "checked": 414,
-        "licenseDeclared": 416,
+        "licenseDeclared": 417,
         "restrictedEnabled": 0,
         "readyEvents": 513,
-        "totalEvents": 4128,
+        "totalEvents": 4375,
         "rollbackDrills": 0
       },
       "penalties": [
@@ -275,6 +275,15 @@
       "maturity": 42,
       "release": "unreleased",
       "evidence": "DeepSeek V4 Flash produces schema-validated Event drafts and weekly decision cards behind evidence, readiness and public-DTO gates"
+    },
+    {
+      "slug": "embodied-data-foundation",
+      "name": "具身数据领域基础",
+      "domain": "intelligence",
+      "status": "experimental",
+      "maturity": 24,
+      "release": "unreleased",
+      "evidence": "strict controlled vocabularies and Event DataProfile schema, additive content-scope migration, Dataset, Standard, CollectionMethod and sourced peer capability objects, evidence relations, backward-compatible snapshot restore, nine-case relevance golden set and a private read-only migration preview"
     },
     {
       "slug": "public-source-observations",
@@ -652,7 +661,7 @@
       "status": "experimental",
       "maturity": 62,
       "release": "0.2.0",
-      "evidence": "versioned evaluation history, a current scorecard, previous-main CI regression gates and ranked evidence-backed improvement actions"
+      "evidence": "versioned evaluation history and time context, fixed-reference change gates, current-time operational freshness gates and ranked evidence-backed improvement actions"
     },
     {
       "slug": "bounded-evolution",
@@ -682,9 +691,11 @@
       "evidence": "capability map links status, maturity, release and implementation evidence"
     }
   ],
-  "notes": "3 dimensions lack sufficient evidence; calibrated weighted score 66, evidence coverage 72%, final score 62",
-  "startedAt": "2026-08-26T12:39:38.460Z",
-  "finishedAt": "2026-08-26T12:39:38.724Z",
+  "notes": "3 dimensions lack sufficient evidence; calibrated weighted score 65, evidence coverage 72%, final score 61",
+  "startedAt": "2026-09-20T04:21:25.236Z",
+  "finishedAt": "2026-09-20T04:21:25.671Z",
+  "evaluationAsOf": "2026-09-20T04:21:25.182Z",
+  "gateMode": "operational",
   "target": 80,
   "targetReached": false,
   "policy": "measured-evidence-only",
@@ -712,6 +723,15 @@
       "nextAction": "采集至少 30 条读后帮助度、保存/引用、行动与付费意愿反馈。"
     },
     {
+      "slug": "timeliness",
+      "name": "内容时效性",
+      "score": 52,
+      "status": "measured",
+      "weightedGap": 3,
+      "penalties": [],
+      "nextAction": "按 cadence 衡量来源 freshness lag，并补齐从事件发生到页面发布的延迟。"
+    },
+    {
       "slug": "confidence",
       "name": "事实置信度",
       "score": 59,
@@ -732,15 +752,6 @@
       "nextAction": "增加 audit log、策略版本、release snapshot hash 与定期回滚演练。"
     },
     {
-      "slug": "timeliness",
-      "name": "内容时效性",
-      "score": 61,
-      "status": "measured",
-      "weightedGap": 2,
-      "penalties": [],
-      "nextAction": "按 cadence 衡量来源 freshness lag，并补齐从事件发生到页面发布的延迟。"
-    },
-    {
       "slug": "primary-source-provenance",
       "name": "一手来源归属",
       "score": 67,
@@ -750,16 +761,15 @@
       "nextAction": "提升一手信号占比和 Signal→Event 证据绑定率，并核验媒体集团独立性。"
     }
   ],
-  "comparison": {
-    "passed": false,
-    "baselineScore": 62,
-    "currentScore": 62,
-    "scoreDelta": 0,
-    "baselineEvidenceCoverage": 72,
-    "currentEvidenceCoverage": 72,
-    "evidenceCoverageDelta": 0,
-    "regressions": [
-      "dimension realtime regressed from 86 to 85"
-    ]
+  "operationalDecision": {
+    "status": "critical",
+    "reasonCodes": [
+      "evaluation_persistently_stale"
+    ],
+    "currentScore": 61,
+    "persistedEvaluationAsOf": "2026-08-26T12:39:38.724Z",
+    "ageMinutes": 35502,
+    "refreshEligible": true,
+    "fingerprint": "d068e69f0c07d365"
   }
 }

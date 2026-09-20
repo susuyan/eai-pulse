@@ -42,15 +42,21 @@ export const webScraperAdapter: SourceAdapter = {
     const listItems = extractListItems(body, source);
     results.push(...listItems);
 
-    // Strategy 4: Extract from RSS/Atom discovery links. HTML listing cards
+    // Strategy 4: Extract self-contained links that carry a real publication
+    // date. Modern sites often render the href before the class attribute and
+    // use spans instead of headings inside the card.
+    const datedLinkItems = extractDatedLinks(body, source);
+    results.push(...datedLinkItems);
+
+    // Strategy 5: Extract from RSS/Atom discovery links. HTML listing cards
     // without a publication date cannot pass the collector contract, so they
     // must not prevent a stable first-party feed from being used.
     const feedUrl = discoverFeed(body, source.homepageUrl);
-    if (feedUrl && !results.some(hasTrustedPublicationDate)) {
+    if (feedUrl && !results.some(isContractReady)) {
       const { body: feedBody, status: feedStatus } = await context.fetchText(feedUrl);
       if (feedStatus === 200 && feedBody) {
         const feedItems = parseFeed(feedBody, source);
-        if (feedItems.some(hasTrustedPublicationDate)) {
+        if (feedItems.some(isContractReady)) {
           results.splice(0, results.length, ...feedItems);
         }
       }
@@ -58,7 +64,7 @@ export const webScraperAdapter: SourceAdapter = {
 
     // Deduplicate by URL
     const seen = new Set<string>();
-    const deduped = results.filter((item) => {
+    const deduped = results.filter(isContractReady).filter((item) => {
       if (seen.has(item.url)) return false;
       seen.add(item.url);
       return true;
@@ -76,6 +82,16 @@ export const webScraperAdapter: SourceAdapter = {
 
 function hasTrustedPublicationDate(item: CollectedSignal): boolean {
   return item.rawMeta.dateInferred !== true && Number.isFinite(Date.parse(item.publishedAt));
+}
+
+function isContractReady(item: CollectedSignal): boolean {
+  if (!item.title.trim() || !hasTrustedPublicationDate(item)) return false;
+  try {
+    const url = new URL(item.url);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 // ─── JSON-LD Extraction ────────────────────────────────────────────────
@@ -190,6 +206,45 @@ function extractListItems(body: string, source: SourceLike): CollectedSignal[] {
       }
     }
     if (results.length >= 5) break;
+  }
+  return results;
+}
+
+function extractDatedLinks(body: string, source: SourceLike): CollectedSignal[] {
+  const results: CollectedSignal[] = [];
+  const anchorRegex = /<a\b([^>]*)>([\s\S]*?)<\/a>/gi;
+  for (const match of body.matchAll(anchorRegex)) {
+    const attributes = match[1] ?? "";
+    const html = match[2] ?? "";
+    const href = attributes.match(/\bhref\s*=\s*(["'])(.*?)\1/i)?.[2] ?? "";
+    const url = resolvePublicUrl(href, source.config.url);
+    if (!url || !isSameSiteUrl(url, source.config.url)) continue;
+
+    const published = extractPublishedDate(html);
+    const date = normalizeDate(published);
+    if (date.inferred) continue;
+
+    const summary = stripHtml(decodeEntities(extractTextContent(html))).slice(0, 8_000);
+    const title = extractFirstHeading(html) || extractSemanticTitle(html) || summary;
+    const normalizedTitle = stripHtml(decodeEntities(title)).trim();
+    if (!normalizedTitle) continue;
+
+    results.push({
+      externalId: url,
+      url,
+      title: normalizedTitle,
+      summary: summary || normalizedTitle,
+      language: source.language,
+      publishedAt: date.value,
+      category: source.config.category ?? "industry",
+      tags: [],
+      metrics: { platforms: ["web"] },
+      rawMeta: {
+        adapter: "web-scraper",
+        source: "dated-link",
+        dateInferred: false,
+      },
+    });
   }
   return results;
 }
@@ -361,6 +416,13 @@ function extractFirstHeading(html: string): string {
   return "";
 }
 
+function extractSemanticTitle(html: string): string {
+  const match = html.match(
+    /<(?:span|div|p)[^>]*class=["'][^"']*(?:title|headline|heading)[^"']*["'][^>]*>([\s\S]*?)<\/(?:span|div|p)>/i,
+  );
+  return match?.[1]?.trim() ?? "";
+}
+
 function extractPublishedDate(html: string): string {
   const time = html.match(/<time[^>]*datetime=["']([^"']+)["'][^>]*>/i)?.[1];
   if (time) return time;
@@ -373,9 +435,7 @@ function extractPublishedDate(html: string): string {
   )?.[1];
   if (itemPropReversed) return itemPropReversed;
   const text = extractTextContent(html);
-  const monthName = text.match(
-    /\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}\b/i,
-  )?.[0];
+  const monthName = text.match(MONTH_DATE_PATTERN)?.[0];
   if (monthName) return monthName;
   const isoDate = text.match(/\b(?:19|20)\d{2}-\d{2}-\d{2}\b/)?.[0];
   if (isoDate) return isoDate;
@@ -422,9 +482,7 @@ function normalizeDate(value: string): { value: string; inferred: boolean } {
   const chinese = value.match(/((?:19|20)\d{2})年(\d{1,2})月(\d{1,2})日/);
   const normalized = chinese
     ? `${chinese[1]}-${chinese[2]?.padStart(2, "0")}-${chinese[3]?.padStart(2, "0")}`
-    : /^(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}$/i.test(
-          value.trim(),
-        )
+    : MONTH_DATE_PATTERN.test(value.trim())
       ? `${value.trim()} UTC`
       : value;
   const date = new Date(normalized);
@@ -433,6 +491,9 @@ function normalizeDate(value: string): { value: string; inferred: boolean } {
     : { value: date.toISOString(), inferred: false };
 }
 
+const MONTH_DATE_PATTERN =
+  /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+\d{1,2},?\s+\d{4}\b/i;
+
 function resolvePublicUrl(value: string, base: string): string | null {
   if (!value) return null;
   try {
@@ -440,6 +501,16 @@ function resolvePublicUrl(value: string, base: string): string | null {
     return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : null;
   } catch {
     return null;
+  }
+}
+
+function isSameSiteUrl(value: string, base: string): boolean {
+  try {
+    const host = new URL(value).hostname.toLowerCase().replace(/^www\./, "");
+    const baseHost = new URL(base).hostname.toLowerCase().replace(/^www\./, "");
+    return host === baseHost || host.endsWith(`.${baseHost}`) || baseHost.endsWith(`.${host}`);
+  } catch {
+    return false;
   }
 }
 

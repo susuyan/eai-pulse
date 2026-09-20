@@ -63,6 +63,14 @@ describe("knowledge source catalog", () => {
     ]);
   });
 
+  it("uses the live first-party Databricks feed", () => {
+    expect(sourceCatalog.find((source) => source.slug === "databricks")).toMatchObject({
+      acquisition: "rss",
+      adapter: "rss",
+      endpoint: "https://www.databricks.com/feed",
+    });
+  });
+
   it("adds official macro and filing sources without activating unverified collectors", () => {
     const supplementalSlugs = [
       "fred",

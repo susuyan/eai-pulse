@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
-  "jobId": "4b7ed05e-e8ae-443b-9a1c-ce65176627ed",
-  "startedAt": "2026-09-20T12:07:04.054Z",
-  "finishedAt": "2026-09-20T12:11:20.924Z",
+  "jobId": "67e0eaca-ef69-494b-993c-9e1faa5bd6d1",
+  "startedAt": "2026-09-20T12:41:12.985Z",
+  "finishedAt": "2026-09-20T12:46:25.981Z",
   "total": 449,
-  "healthy": 301,
-  "degraded": 53,
+  "healthy": 299,
+  "degraded": 55,
   "failed": 44,
   "skipped": 51,
   "accessible": 436,
   "fetched": 398,
-  "withContent": 301,
+  "withContent": 299,
   "results": [
     {
       "slug": "01-ai",
@@ -31,7 +31,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 1315
+      "durationMs": 793
     },
     {
       "slug": "01ai-yi-updates",
@@ -52,7 +52,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 230
+      "durationMs": 332
     },
     {
       "slug": "1x",
@@ -73,7 +73,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 365
+      "durationMs": 361
     },
     {
       "slug": "a2a-protocol-releases",
@@ -94,7 +94,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 715
+      "durationMs": 602
     },
     {
       "slug": "ag2-releases",
@@ -136,7 +136,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 106
+      "durationMs": 173
     },
     {
       "slug": "amd-ai",
@@ -157,7 +157,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 60385
+      "durationMs": 60333
     },
     {
       "slug": "arc-prize",
@@ -178,7 +178,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 589
+      "durationMs": 112
     },
     {
       "slug": "ario-dataset",
@@ -199,7 +199,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 74
+      "durationMs": 196
     },
     {
       "slug": "aws-ml",
@@ -220,7 +220,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 163
+      "durationMs": 122
     },
     {
       "slug": "agibot-world",
@@ -241,7 +241,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 84
+      "durationMs": 158
     },
     {
       "slug": "agility-robotics",
@@ -262,7 +262,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 303
+      "durationMs": 189
     },
     {
       "slug": "aider",
@@ -283,7 +283,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 340
+      "durationMs": 329
     },
     {
       "slug": "alibaba-cloud-ai",
@@ -304,7 +304,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 2095
+      "durationMs": 1043
     },
     {
       "slug": "qwen-pricing",
@@ -325,7 +325,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 1489
+      "durationMs": 737
     },
     {
       "slug": "ai2",
@@ -346,7 +346,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1326
+      "durationMs": 811
     },
     {
       "slug": "amazon-science",
@@ -367,7 +367,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 511
+      "durationMs": 90
     },
     {
       "slug": "ant-ai",
@@ -388,7 +388,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 1125
+      "durationMs": 1439
     },
     {
       "slug": "anthropic",
@@ -409,7 +409,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 368
+      "durationMs": 201
     },
     {
       "slug": "anthropic-go-releases",
@@ -430,7 +430,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 411
+      "durationMs": 453
     },
     {
       "slug": "anthropic-java-releases",
@@ -451,7 +451,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 443
+      "durationMs": 614
     },
     {
       "slug": "anthropic-pricing",
@@ -472,7 +472,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 179
+      "durationMs": 261
     },
     {
       "slug": "anthropic-python-releases",
@@ -493,7 +493,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 387
+      "durationMs": 465
     },
     {
       "slug": "anthropic-typescript-releases",
@@ -514,7 +514,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 214
+      "durationMs": 324
     },
     {
       "slug": "tvm-releases",
@@ -535,7 +535,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1382
+      "durationMs": 1521
     },
     {
       "slug": "apple-app-store-ai-pricing",
@@ -556,7 +556,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 39
+      "durationMs": 25
     },
     {
       "slug": "apple-ml",
@@ -577,7 +577,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 43
+      "durationMs": 99
     },
     {
       "slug": "alfred",
@@ -598,7 +598,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 467
+      "durationMs": 100
     },
     {
       "slug": "arize-blog-feed",
@@ -619,7 +619,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 221
+      "durationMs": 191
     },
     {
       "slug": "phoenix-releases",
@@ -640,7 +640,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 299
+      "durationMs": 451
     },
     {
       "slug": "astribot",
@@ -661,7 +661,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 1688
+      "durationMs": 1084
     },
     {
       "slug": "azure-ai",
@@ -682,7 +682,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 62
+      "durationMs": 30
     },
     {
       "slug": "behavior-1k",
@@ -703,7 +703,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "shadow",
-      "durationMs": 797
+      "durationMs": 879
     },
     {
       "slug": "bis-credit-gaps",
@@ -724,7 +724,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 2294
+      "durationMs": 1263
     },
     {
       "slug": "bisheng-releases",
@@ -745,7 +745,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 234
+      "durationMs": 272
     },
     {
       "slug": "baichuan",
@@ -766,7 +766,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 1715
+      "durationMs": 1079
     },
     {
       "slug": "baichuan-m3-updates",
@@ -787,7 +787,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 177
+      "durationMs": 242
     },
     {
       "slug": "baidu-ernie",
@@ -808,7 +808,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 3401
+      "durationMs": 2408
     },
     {
       "slug": "baidu-ernie-updates",
@@ -829,7 +829,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 172
+      "durationMs": 228
     },
     {
       "slug": "baidu-research",
@@ -850,7 +850,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 1206
+      "durationMs": 936
     },
     {
       "slug": "bentoml-releases",
@@ -871,7 +871,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 503
+      "durationMs": 565
     },
     {
       "slug": "bair",
@@ -892,7 +892,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 881
+      "durationMs": 70
     },
     {
       "slug": "boston-dynamics",
@@ -913,7 +913,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 660
+      "durationMs": 856
     },
     {
       "slug": "braintrust-sdk-releases",
@@ -934,7 +934,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 478
+      "durationMs": 744
     },
     {
       "slug": "bridge-data-v2",
@@ -955,7 +955,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 93
+      "durationMs": 164
     },
     {
       "slug": "browser-use",
@@ -976,7 +976,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 724
+      "durationMs": 449
     },
     {
       "slug": "bytedance-seed",
@@ -997,7 +997,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 953
+      "durationMs": 768
     },
     {
       "slug": "bytedance-seed-blog",
@@ -1018,7 +1018,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 529
+      "durationMs": 694
     },
     {
       "slug": "calvin-benchmark",
@@ -1039,7 +1039,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 91
+      "durationMs": 143
     },
     {
       "slug": "camel-ai-releases",
@@ -1060,7 +1060,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 760
+      "durationMs": 623
     },
     {
       "slug": "cninfo",
@@ -1081,7 +1081,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 4139
+      "durationMs": 2479
     },
     {
       "slug": "cmu-ml-feed",
@@ -1102,7 +1102,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 655
+      "durationMs": 1110
     },
     {
       "slug": "cerebras",
@@ -1123,7 +1123,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 591
+      "durationMs": 948
     },
     {
       "slug": "chatbox-releases",
@@ -1144,7 +1144,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 179
+      "durationMs": 282
     },
     {
       "slug": "cherry-studio-releases",
@@ -1165,7 +1165,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1647
+      "durationMs": 1395
     },
     {
       "slug": "china-mobile-jiutian",
@@ -1186,7 +1186,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 1684
+      "durationMs": 4201
     },
     {
       "slug": "teleai",
@@ -1207,7 +1207,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 7674
+      "durationMs": 1581
     },
     {
       "slug": "chroma-releases",
@@ -1228,7 +1228,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 532
+      "durationMs": 600
     },
     {
       "slug": "claude-code-releases",
@@ -1249,7 +1249,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 207
+      "durationMs": 332
     },
     {
       "slug": "cline",
@@ -1270,7 +1270,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 279
+      "durationMs": 302
     },
     {
       "slug": "cncf-blog-feed",
@@ -1291,7 +1291,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 382
+      "durationMs": 333
     },
     {
       "slug": "cloudflare-ai",
@@ -1312,7 +1312,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 59
+      "durationMs": 109
     },
     {
       "slug": "cohere",
@@ -1333,7 +1333,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 531
+      "durationMs": 658
     },
     {
       "slug": "cohere-release-notes",
@@ -1354,7 +1354,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 455
+      "durationMs": 179
     },
     {
       "slug": "continue",
@@ -1375,7 +1375,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 252
+      "durationMs": 232
     },
     {
       "slug": "coreweave",
@@ -1396,7 +1396,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 355
+      "durationMs": 288
     },
     {
       "slug": "cosyvoice-releases",
@@ -1417,7 +1417,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 262
+      "durationMs": 314
     },
     {
       "slug": "crewai-releases",
@@ -1438,7 +1438,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 311
+      "durationMs": 238
     },
     {
       "slug": "cursor",
@@ -1459,7 +1459,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 214
+      "durationMs": 145
     },
     {
       "slug": "cisa-news-feed",
@@ -1480,7 +1480,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 41
+      "durationMs": 28
     },
     {
       "slug": "cac-ai",
@@ -1501,7 +1501,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 1980
+      "durationMs": 1344
     },
     {
       "slug": "droid-consortium",
@@ -1522,7 +1522,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 95
+      "durationMs": 114
     },
     {
       "slug": "droid-project",
@@ -1564,7 +1564,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1130
+      "durationMs": 981
     },
     {
       "slug": "databricks",
@@ -1585,7 +1585,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 70
+      "durationMs": 77
     },
     {
       "slug": "deepeval-releases",
@@ -1606,7 +1606,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 323
+      "durationMs": 279
     },
     {
       "slug": "deepseek",
@@ -1627,7 +1627,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 996
+      "durationMs": 655
     },
     {
       "slug": "deepseek-pricing",
@@ -1648,7 +1648,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 437
+      "durationMs": 321
     },
     {
       "slug": "deepseek-r1-releases",
@@ -1669,7 +1669,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 92
+      "durationMs": 213
     },
     {
       "slug": "deepseek-v3-releases",
@@ -1690,7 +1690,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 154
+      "durationMs": 178
     },
     {
       "slug": "deepspeed",
@@ -1711,7 +1711,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 947
+      "durationMs": 843
     },
     {
       "slug": "deer-flow-releases",
@@ -1732,7 +1732,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 343
+      "durationMs": 429
     },
     {
       "slug": "diffusers-releases",
@@ -1753,7 +1753,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1298
+      "durationMs": 1330
     },
     {
       "slug": "dify",
@@ -1774,7 +1774,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 3213
+      "durationMs": 4030
     },
     {
       "slug": "docling-releases",
@@ -1795,7 +1795,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 543
+      "durationMs": 540
     },
     {
       "slug": "doubao",
@@ -1816,7 +1816,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 1408
+      "durationMs": 1637
     },
     {
       "slug": "ecb-data-portal",
@@ -1837,7 +1837,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 691
+      "durationMs": 704
     },
     {
       "slug": "ego-exo4d",
@@ -1858,7 +1858,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 390
+      "durationMs": 423
     },
     {
       "slug": "elevenlabs",
@@ -1879,7 +1879,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 223
+      "durationMs": 262
     },
     {
       "slug": "eu-ai-office",
@@ -1900,7 +1900,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 497
+      "durationMs": 508
     },
     {
       "slug": "eurostat-data",
@@ -1921,7 +1921,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 517
+      "durationMs": 453
     },
     {
       "slug": "executorch-releases",
@@ -1942,7 +1942,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 301
+      "durationMs": 333
     },
     {
       "slug": "fastgpt",
@@ -1963,7 +1963,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 778
+      "durationMs": 808
     },
     {
       "slug": "fred",
@@ -1984,7 +1984,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 152
+      "durationMs": 120
     },
     {
       "slug": "federal-reserve-press-feed",
@@ -2005,7 +2005,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 65
+      "durationMs": 54
     },
     {
       "slug": "figure-ai",
@@ -2026,7 +2026,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 428
+      "durationMs": 50
     },
     {
       "slug": "firebase-genkit-releases",
@@ -2047,7 +2047,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 455
+      "durationMs": 574
     },
     {
       "slug": "fireworks-ai",
@@ -2068,7 +2068,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 305
+      "durationMs": 2616
     },
     {
       "slug": "fish-speech-releases",
@@ -2089,7 +2089,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 337
+      "durationMs": 650
     },
     {
       "slug": "flash-attention-releases",
@@ -2110,7 +2110,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 544
+      "durationMs": 890
     },
     {
       "slug": "fourier-intelligence",
@@ -2131,7 +2131,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 2040
+      "durationMs": 1237
     },
     {
       "slug": "frankfurter-fx",
@@ -2152,7 +2152,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 222
+      "durationMs": 392
     },
     {
       "slug": "funasr-releases",
@@ -2173,7 +2173,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 718
+      "durationMs": 500
     },
     {
       "slug": "gello",
@@ -2194,7 +2194,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "shadow",
-      "durationMs": 174
+      "durationMs": 341
     },
     {
       "slug": "galaxea-ai",
@@ -2215,7 +2215,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 9161
+      "durationMs": 6058
     },
     {
       "slug": "genesis-releases",
@@ -2236,7 +2236,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 718
+      "durationMs": 815
     },
     {
       "slug": "github-ai-ml-feed",
@@ -2257,7 +2257,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 232
+      "durationMs": 110
     },
     {
       "slug": "github-copilot",
@@ -2278,7 +2278,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 157
+      "durationMs": 17
     },
     {
       "slug": "google-ai",
@@ -2299,7 +2299,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 177
+      "durationMs": 296
     },
     {
       "slug": "google-adk-js-releases",
@@ -2320,7 +2320,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 504
+      "durationMs": 733
     },
     {
       "slug": "google-adk-python-releases",
@@ -2341,7 +2341,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 648
+      "durationMs": 361
     },
     {
       "slug": "google-cloud-ai",
@@ -2362,7 +2362,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 1249
+      "durationMs": 5457
     },
     {
       "slug": "deepmind",
@@ -2383,7 +2383,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 670
+      "durationMs": 397
     },
     {
       "slug": "google-deepmind-robotics",
@@ -2404,7 +2404,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "shadow",
-      "durationMs": 341
+      "durationMs": 1113
     },
     {
       "slug": "google-developers",
@@ -2425,7 +2425,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 363
+      "durationMs": 339
     },
     {
       "slug": "google-gemini-pricing",
@@ -2446,7 +2446,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 251
+      "durationMs": 712
     },
     {
       "slug": "google-genai-js-releases",
@@ -2467,7 +2467,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 319
+      "durationMs": 284
     },
     {
       "slug": "google-genai-python-releases",
@@ -2488,7 +2488,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 215
+      "durationMs": 297
     },
     {
       "slug": "google-research",
@@ -2509,7 +2509,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 385
+      "durationMs": 235
     },
     {
       "slug": "groq",
@@ -2530,7 +2530,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 312
+      "durationMs": 95
     },
     {
       "slug": "guardrails-releases",
@@ -2551,7 +2551,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 474
+      "durationMs": 801
     },
     {
       "slug": "helm",
@@ -2572,7 +2572,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 95
+      "durationMs": 115
     },
     {
       "slug": "haystack-releases",
@@ -2593,7 +2593,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 372
+      "durationMs": 376
     },
     {
       "slug": "holoassist",
@@ -2614,7 +2614,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 93
+      "durationMs": 100
     },
     {
       "slug": "huawei-ascend",
@@ -2635,7 +2635,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 3359
+      "durationMs": 2738
     },
     {
       "slug": "huawei-noah",
@@ -2656,7 +2656,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 3075
+      "durationMs": 2661
     },
     {
       "slug": "huggingface",
@@ -2677,7 +2677,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 96
+      "durationMs": 154
     },
     {
       "slug": "accelerate-releases",
@@ -2698,7 +2698,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 687
+      "durationMs": 751
     },
     {
       "slug": "tokenizers-releases",
@@ -2719,7 +2719,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 404
+      "durationMs": 493
     },
     {
       "slug": "smolagents-releases",
@@ -2740,7 +2740,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 510
+      "durationMs": 521
     },
     {
       "slug": "ibm-research",
@@ -2761,7 +2761,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 298
+      "durationMs": 517
     },
     {
       "slug": "imf-weo",
@@ -2782,7 +2782,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 3924
+      "durationMs": 2764
     },
     {
       "slug": "infinity-releases",
@@ -2803,7 +2803,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 640
+      "durationMs": 440
     },
     {
       "slug": "inspect-ai-releases",
@@ -2824,7 +2824,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 260
+      "durationMs": 275
     },
     {
       "slug": "instructor-releases",
@@ -2845,7 +2845,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 574
+      "durationMs": 583
     },
     {
       "slug": "intel-ai",
@@ -2866,7 +2866,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 404
+      "durationMs": 117
     },
     {
       "slug": "internvl-releases",
@@ -2887,7 +2887,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 168
+      "durationMs": 240
     },
     {
       "slug": "jax",
@@ -2908,7 +2908,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 402
+      "durationMs": 427
     },
     {
       "slug": "jd-explore",
@@ -2929,7 +2929,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 4022
+      "durationMs": 3198
     },
     {
       "slug": "kserve-releases",
@@ -2950,7 +2950,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1022
+      "durationMs": 1142
     },
     {
       "slug": "ktransformers-releases",
@@ -2971,7 +2971,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 447
+      "durationMs": 421
     },
     {
       "slug": "keras-releases",
@@ -2992,7 +2992,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 657
+      "durationMs": 529
     },
     {
       "slug": "kuaishou-kling",
@@ -3013,7 +3013,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 1745
+      "durationMs": 1342
     },
     {
       "slug": "kubeflow-pipelines-releases",
@@ -3034,7 +3034,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 744
+      "durationMs": 795
     },
     {
       "slug": "kubeflow-trainer-releases",
@@ -3055,7 +3055,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 612
+      "durationMs": 866
     },
     {
       "slug": "libero-benchmark",
@@ -3076,7 +3076,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 86
+      "durationMs": 147
     },
     {
       "slug": "lmcache-releases",
@@ -3097,7 +3097,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 419
+      "durationMs": 539
     },
     {
       "slug": "lmdeploy-releases",
@@ -3118,7 +3118,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 859
+      "durationMs": 748
     },
     {
       "slug": "lmsys",
@@ -3139,7 +3139,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 1032
+      "durationMs": 746
     },
     {
       "slug": "langchain",
@@ -3160,7 +3160,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 428
+      "durationMs": 483
     },
     {
       "slug": "langchain-releases",
@@ -3181,7 +3181,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 953
+      "durationMs": 505
     },
     {
       "slug": "langgraph-releases",
@@ -3202,7 +3202,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 563
+      "durationMs": 559
     },
     {
       "slug": "langsmith-sdk-releases",
@@ -3223,7 +3223,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 726
+      "durationMs": 572
     },
     {
       "slug": "langfuse-releases",
@@ -3244,7 +3244,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 812
+      "durationMs": 934
     },
     {
       "slug": "lerobot-releases",
@@ -3265,7 +3265,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1465
+      "durationMs": 956
     },
     {
       "slug": "huggingface-lerobot",
@@ -3286,7 +3286,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "shadow",
-      "durationMs": 1438
+      "durationMs": 738
     },
     {
       "slug": "letta-releases",
@@ -3307,7 +3307,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 429
+      "durationMs": 407
     },
     {
       "slug": "lightrag-releases",
@@ -3328,7 +3328,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 662
+      "durationMs": 816
     },
     {
       "slug": "litellm-releases",
@@ -3349,7 +3349,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1735
+      "durationMs": 1639
     },
     {
       "slug": "llama-stack-releases",
@@ -3370,7 +3370,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 651
+      "durationMs": 659
     },
     {
       "slug": "llamaindex",
@@ -3391,7 +3391,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1403
+      "durationMs": 1237
     },
     {
       "slug": "lovable-changelog",
@@ -3412,7 +3412,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 2131
+      "durationMs": 1784
     },
     {
       "slug": "foxglove-mcap",
@@ -3433,7 +3433,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "shadow",
-      "durationMs": 412
+      "durationMs": 466
     },
     {
       "slug": "mcp-python-sdk-releases",
@@ -3454,7 +3454,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 566
+      "durationMs": 372
     },
     {
       "slug": "mcp-typescript-sdk-releases",
@@ -3475,7 +3475,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 542
+      "durationMs": 455
     },
     {
       "slug": "metr",
@@ -3496,28 +3496,28 @@
       "proxyUsed": false,
       "retentionDecision": "isolate",
       "recommendedLifecycle": "retired",
-      "durationMs": 1477
+      "durationMs": 971
     },
     {
       "slug": "miit-ai",
-      "status": "failed",
+      "status": "degraded",
       "accessStatus": "reachable",
-      "fetchStatus": "failed",
-      "parseStatus": "failed",
-      "schemaStatus": "unknown",
+      "fetchStatus": "succeeded",
+      "parseStatus": "empty",
+      "schemaStatus": "empty",
       "policyStatus": "allowed_metadata",
       "itemCount": 0,
       "latestItemAt": null,
       "duplicateRatio": 0,
       "qualityScore": 0,
-      "errorType": "network",
-      "errorCode": "ADAPTER_ERROR",
-      "repairAction": "verify_network_dns_or_proxy",
-      "proxyHint": "possible",
+      "errorType": "content",
+      "errorCode": "EMPTY_RESULT",
+      "repairAction": "inspect_endpoint_or_parser",
+      "proxyHint": "not_required",
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 3563
+      "durationMs": 5242
     },
     {
       "slug": "mit-csail-feed",
@@ -3538,7 +3538,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 349
+      "durationMs": 702
     },
     {
       "slug": "mlcommons",
@@ -3559,7 +3559,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 476
+      "durationMs": 221
     },
     {
       "slug": "mlx",
@@ -3580,7 +3580,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1073
+      "durationMs": 892
     },
     {
       "slug": "mlflow-releases",
@@ -3601,7 +3601,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1224
+      "durationMs": 1184
     },
     {
       "slug": "mlflow-blog-feed",
@@ -3622,7 +3622,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1252
+      "durationMs": 1495
     },
     {
       "slug": "mnn-releases",
@@ -3643,7 +3643,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 447
+      "durationMs": 422
     },
     {
       "slug": "ms-swift-releases",
@@ -3664,7 +3664,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 560
+      "durationMs": 527
     },
     {
       "slug": "maniskill-releases",
@@ -3685,7 +3685,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 769
+      "durationMs": 674
     },
     {
       "slug": "mastra-releases",
@@ -3706,7 +3706,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 402
+      "durationMs": 452
     },
     {
       "slug": "maxkb-releases",
@@ -3727,7 +3727,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 231
+      "durationMs": 266
     },
     {
       "slug": "meituan-longcat",
@@ -3748,7 +3748,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 345
+      "durationMs": 366
     },
     {
       "slug": "mem0-releases",
@@ -3769,7 +3769,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 359
+      "durationMs": 447
     },
     {
       "slug": "meta-ai",
@@ -3790,7 +3790,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 1521
+      "durationMs": 1403
     },
     {
       "slug": "meta-engineering-ai-feed",
@@ -3811,7 +3811,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 49
+      "durationMs": 217
     },
     {
       "slug": "meta-llama-updates",
@@ -3832,7 +3832,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 192
+      "durationMs": 191
     },
     {
       "slug": "metagpt-releases",
@@ -3853,7 +3853,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 439
+      "durationMs": 453
     },
     {
       "slug": "microsoft-ai",
@@ -3874,7 +3874,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 270
+      "durationMs": 365
     },
     {
       "slug": "microsoft-agent-framework-releases",
@@ -3895,7 +3895,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 925
+      "durationMs": 732
     },
     {
       "slug": "autogen-releases",
@@ -3916,7 +3916,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 429
+      "durationMs": 500
     },
     {
       "slug": "microsoft-graphrag-releases",
@@ -3937,7 +3937,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 410
+      "durationMs": 429
     },
     {
       "slug": "markitdown-releases",
@@ -3958,7 +3958,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 565
+      "durationMs": 1193
     },
     {
       "slug": "microsoft-research",
@@ -3979,7 +3979,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 477
+      "durationMs": 710
     },
     {
       "slug": "milvus-releases",
@@ -4000,7 +4000,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 465
+      "durationMs": 589
     },
     {
       "slug": "mineru-releases",
@@ -4013,7 +4013,7 @@
       "itemCount": 10,
       "latestItemAt": "2026-09-19T18:05:10.000Z",
       "duplicateRatio": 0,
-      "qualityScore": 77,
+      "qualityScore": 76,
       "errorType": null,
       "errorCode": null,
       "repairAction": "observe_in_shadow",
@@ -4021,7 +4021,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 396
+      "durationMs": 397
     },
     {
       "slug": "minicpm-releases",
@@ -4042,7 +4042,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 129
+      "durationMs": 180
     },
     {
       "slug": "minicpm-v-releases",
@@ -4063,7 +4063,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 138
+      "durationMs": 184
     },
     {
       "slug": "minimax",
@@ -4084,7 +4084,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 4806
+      "durationMs": 2704
     },
     {
       "slug": "minimax-model-releases",
@@ -4105,7 +4105,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 5466
+      "durationMs": 4262
     },
     {
       "slug": "minimax-pricing",
@@ -4126,7 +4126,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 8964
+      "durationMs": 8495
     },
     {
       "slug": "mistral",
@@ -4147,7 +4147,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 491
+      "durationMs": 280
     },
     {
       "slug": "mistral-inference-updates",
@@ -4168,7 +4168,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 255
+      "durationMs": 270
     },
     {
       "slug": "modal-client-releases",
@@ -4189,7 +4189,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 252
+      "durationMs": 297
     },
     {
       "slug": "mcp-go-sdk-releases",
@@ -4210,7 +4210,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 658
+      "durationMs": 987
     },
     {
       "slug": "mcp-inspector-releases",
@@ -4231,7 +4231,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 833
+      "durationMs": 698
     },
     {
       "slug": "mcp-registry-releases",
@@ -4252,7 +4252,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 428
+      "durationMs": 550
     },
     {
       "slug": "mcp-rust-sdk-releases",
@@ -4273,7 +4273,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 535
+      "durationMs": 397
     },
     {
       "slug": "mcp-servers-releases",
@@ -4294,7 +4294,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 204
+      "durationMs": 309
     },
     {
       "slug": "modelbest",
@@ -4315,7 +4315,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 5329
+      "durationMs": 2683
     },
     {
       "slug": "modelscope",
@@ -4336,7 +4336,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 1203
+      "durationMs": 742
     },
     {
       "slug": "agentscope-releases",
@@ -4357,7 +4357,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 578
+      "durationMs": 953
     },
     {
       "slug": "moonshot",
@@ -4378,7 +4378,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 1629
+      "durationMs": 2128
     },
     {
       "slug": "kimi-pricing",
@@ -4399,7 +4399,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 4173
+      "durationMs": 3645
     },
     {
       "slug": "moonshot-kimi-updates",
@@ -4420,7 +4420,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 159
+      "durationMs": 239
     },
     {
       "slug": "moveit2-releases",
@@ -4441,7 +4441,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 457
+      "durationMs": 264
     },
     {
       "slug": "mozilla-ai-feed",
@@ -4462,7 +4462,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 175
+      "durationMs": 183
     },
     {
       "slug": "mujoco-releases",
@@ -4483,7 +4483,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 201
+      "durationMs": 378
     },
     {
       "slug": "nist-ai",
@@ -4504,7 +4504,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 41
+      "durationMs": 35
     },
     {
       "slug": "nvidia-blog-ai",
@@ -4525,7 +4525,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 148
+      "durationMs": 75
     },
     {
       "slug": "cutlass-releases",
@@ -4546,7 +4546,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 294
+      "durationMs": 438
     },
     {
       "slug": "isaaclab-releases",
@@ -4567,7 +4567,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 407
+      "durationMs": 360
     },
     {
       "slug": "nvidia-isaac-lab",
@@ -4588,7 +4588,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "shadow",
-      "durationMs": 140
+      "durationMs": 111
     },
     {
       "slug": "nvidia-isaac-sim",
@@ -4609,7 +4609,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "shadow",
-      "durationMs": 222
+      "durationMs": 292
     },
     {
       "slug": "nvidia-isaac-teleop",
@@ -4630,7 +4630,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 217
+      "durationMs": 348
     },
     {
       "slug": "nccl-releases",
@@ -4651,7 +4651,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 430
+      "durationMs": 361
     },
     {
       "slug": "nemo-releases",
@@ -4672,7 +4672,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1042
+      "durationMs": 888
     },
     {
       "slug": "nvidia-research",
@@ -4693,7 +4693,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 211
+      "durationMs": 186
     },
     {
       "slug": "tensorrt-releases",
@@ -4714,7 +4714,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 338
+      "durationMs": 251
     },
     {
       "slug": "nasdaq-data-link",
@@ -4735,7 +4735,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 484
+      "durationMs": 378
     },
     {
       "slug": "nbs-china",
@@ -4756,7 +4756,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 4882
+      "durationMs": 2785
     },
     {
       "slug": "navigation2-releases",
@@ -4777,7 +4777,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 306
+      "durationMs": 325
     },
     {
       "slug": "new-api-releases",
@@ -4798,7 +4798,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 555
+      "durationMs": 823
     },
     {
       "slug": "oecd-data-explorer",
@@ -4819,7 +4819,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 524
+      "durationMs": 493
     },
     {
       "slug": "oecd-ai",
@@ -4840,7 +4840,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 955
+      "durationMs": 974
     },
     {
       "slug": "onnxruntime-genai-releases",
@@ -4861,7 +4861,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 634
+      "durationMs": 499
     },
     {
       "slug": "onnxruntime-releases",
@@ -4882,7 +4882,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1003
+      "durationMs": 1310
     },
     {
       "slug": "oppo-ai",
@@ -4903,7 +4903,7 @@
       "proxyUsed": false,
       "retentionDecision": "isolate",
       "recommendedLifecycle": "retired",
-      "durationMs": 78
+      "durationMs": 90
     },
     {
       "slug": "ollama",
@@ -4924,7 +4924,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 252
+      "durationMs": 330
     },
     {
       "slug": "open-robotics",
@@ -4945,7 +4945,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 572
+      "durationMs": 441
     },
     {
       "slug": "open-webui",
@@ -4966,7 +4966,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1306
+      "durationMs": 1053
     },
     {
       "slug": "open-x-embodiment",
@@ -4987,7 +4987,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 88
+      "durationMs": 102
     },
     {
       "slug": "openai",
@@ -5008,7 +5008,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 130
+      "durationMs": 116
     },
     {
       "slug": "openai-dotnet-releases",
@@ -5029,7 +5029,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 456
+      "durationMs": 396
     },
     {
       "slug": "openai-agents-js-releases",
@@ -5050,7 +5050,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 626
+      "durationMs": 637
     },
     {
       "slug": "openai-agents-python-releases",
@@ -5071,7 +5071,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 825
+      "durationMs": 1132
     },
     {
       "slug": "openai-codex-releases",
@@ -5092,7 +5092,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 322
+      "durationMs": 318
     },
     {
       "slug": "openai-go-releases",
@@ -5113,7 +5113,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 654
+      "durationMs": 390
     },
     {
       "slug": "openai-java-releases",
@@ -5134,7 +5134,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 488
+      "durationMs": 447
     },
     {
       "slug": "openai-node-releases",
@@ -5155,7 +5155,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 339
+      "durationMs": 493
     },
     {
       "slug": "openai-pricing",
@@ -5176,7 +5176,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 22
+      "durationMs": 23
     },
     {
       "slug": "openai-python-releases",
@@ -5197,7 +5197,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 364
+      "durationMs": 540
     },
     {
       "slug": "modelbest-minicpm-updates",
@@ -5218,7 +5218,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 141
+      "durationMs": 224
     },
     {
       "slug": "opencompass",
@@ -5239,7 +5239,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 489
+      "durationMs": 760
     },
     {
       "slug": "openhands",
@@ -5260,7 +5260,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 721
+      "durationMs": 761
     },
     {
       "slug": "openlit-releases",
@@ -5281,7 +5281,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 598
+      "durationMs": 468
     },
     {
       "slug": "openmanus-releases",
@@ -5302,7 +5302,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 81
+      "durationMs": 175
     },
     {
       "slug": "openrouter",
@@ -5323,7 +5323,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 129
+      "durationMs": 261
     },
     {
       "slug": "openvino-releases",
@@ -5344,7 +5344,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 421
+      "durationMs": 295
     },
     {
       "slug": "outlines-releases",
@@ -5365,7 +5365,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 675
+      "durationMs": 508
     },
     {
       "slug": "peft-releases",
@@ -5386,7 +5386,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1006
+      "durationMs": 927
     },
     {
       "slug": "fastdeploy-releases",
@@ -5407,7 +5407,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1486
+      "durationMs": 2201
     },
     {
       "slug": "paddlenlp-releases",
@@ -5428,7 +5428,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1580
+      "durationMs": 1145
     },
     {
       "slug": "paddleocr-releases",
@@ -5449,7 +5449,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 415
+      "durationMs": 347
     },
     {
       "slug": "paddlex-releases",
@@ -5470,7 +5470,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 258
+      "durationMs": 277
     },
     {
       "slug": "pboc-statistics",
@@ -5491,7 +5491,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 1196
+      "durationMs": 1229
     },
     {
       "slug": "perplexity",
@@ -5512,7 +5512,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 56
+      "durationMs": 34
     },
     {
       "slug": "perplexity-changelog",
@@ -5533,7 +5533,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 808
+      "durationMs": 754
     },
     {
       "slug": "physical-intelligence",
@@ -5554,7 +5554,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "shadow",
-      "durationMs": 209
+      "durationMs": 177
     },
     {
       "slug": "playwright",
@@ -5575,7 +5575,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 310
+      "durationMs": 320
     },
     {
       "slug": "princeton-nlp-feed",
@@ -5596,7 +5596,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 110
+      "durationMs": 111
     },
     {
       "slug": "promptfoo-releases",
@@ -5617,7 +5617,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 803
+      "durationMs": 719
     },
     {
       "slug": "pytorch",
@@ -5638,7 +5638,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1999
+      "durationMs": 2544
     },
     {
       "slug": "pytorch-core-releases",
@@ -5649,9 +5649,9 @@
       "schemaStatus": "valid",
       "policyStatus": "allowed_metadata",
       "itemCount": 10,
-      "latestItemAt": "2026-09-20T07:23:33.000Z",
+      "latestItemAt": "2026-09-20T08:40:21.000Z",
       "duplicateRatio": 0,
-      "qualityScore": 88,
+      "qualityScore": 89,
       "errorType": null,
       "errorCode": null,
       "repairAction": "observe_in_shadow",
@@ -5659,7 +5659,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 789
+      "durationMs": 897
     },
     {
       "slug": "pydantic-ai-releases",
@@ -5680,7 +5680,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 369
+      "durationMs": 553
     },
     {
       "slug": "qanything-releases",
@@ -5701,7 +5701,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 333
+      "durationMs": 393
     },
     {
       "slug": "qdrant-blog-feed",
@@ -5722,7 +5722,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 205
+      "durationMs": 78
     },
     {
       "slug": "qdrant-releases",
@@ -5743,7 +5743,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 582
+      "durationMs": 669
     },
     {
       "slug": "qwen",
@@ -5764,7 +5764,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 65
+      "durationMs": 23
     },
     {
       "slug": "qwen-agent-releases",
@@ -5785,7 +5785,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 258
+      "durationMs": 215
     },
     {
       "slug": "ragflow",
@@ -5806,7 +5806,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 690
+      "durationMs": 657
     },
     {
       "slug": "rh20t",
@@ -5827,7 +5827,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 96
+      "durationMs": 112
     },
     {
       "slug": "google-rlds",
@@ -5848,7 +5848,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 87
+      "durationMs": 155
     },
     {
       "slug": "ros2-releases",
@@ -5869,7 +5869,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 379
+      "durationMs": 349
     },
     {
       "slug": "ros2-rosbag2",
@@ -5890,7 +5890,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "shadow",
-      "durationMs": 266
+      "durationMs": 273
     },
     {
       "slug": "ragas-releases",
@@ -5911,7 +5911,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 592
+      "durationMs": 694
     },
     {
       "slug": "ray-releases",
@@ -5932,7 +5932,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 2364
+      "durationMs": 1594
     },
     {
       "slug": "redhat-ai-feed",
@@ -5953,7 +5953,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 70
+      "durationMs": 143
     },
     {
       "slug": "robbyant",
@@ -5974,7 +5974,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 368
+      "durationMs": 369
     },
     {
       "slug": "robocasa",
@@ -5995,7 +5995,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "shadow",
-      "durationMs": 152
+      "durationMs": 226
     },
     {
       "slug": "robomind",
@@ -6016,7 +6016,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 125
+      "durationMs": 106
     },
     {
       "slug": "roboset",
@@ -6037,7 +6037,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 86
+      "durationMs": 101
     },
     {
       "slug": "robotera",
@@ -6058,7 +6058,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 2679
+      "durationMs": 1597
     },
     {
       "slug": "runway",
@@ -6079,7 +6079,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 542
+      "durationMs": 167
     },
     {
       "slug": "sapien-releases",
@@ -6100,7 +6100,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 255
+      "durationMs": 319
     },
     {
       "slug": "sec-edgar",
@@ -6121,7 +6121,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 34
+      "durationMs": 44
     },
     {
       "slug": "sec-press-releases-feed",
@@ -6142,7 +6142,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 146
+      "durationMs": 33
     },
     {
       "slug": "sglang",
@@ -6163,7 +6163,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 2023
+      "durationMs": 1639
     },
     {
       "slug": "swe-bench",
@@ -6184,7 +6184,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 159
+      "durationMs": 212
     },
     {
       "slug": "safetensors-releases",
@@ -6205,7 +6205,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 510
+      "durationMs": 663
     },
     {
       "slug": "salesforce-research",
@@ -6226,7 +6226,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 997
+      "durationMs": 299
     },
     {
       "slug": "semantic-kernel-releases",
@@ -6247,7 +6247,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 654
+      "durationMs": 604
     },
     {
       "slug": "sensetime",
@@ -6268,7 +6268,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1613
+      "durationMs": 2785
     },
     {
       "slug": "sensetime-news-en",
@@ -6289,7 +6289,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1866
+      "durationMs": 2011
     },
     {
       "slug": "sensevoice-releases",
@@ -6310,7 +6310,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 252
+      "durationMs": 595
     },
     {
       "slug": "sse-announcements",
@@ -6331,7 +6331,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 2485
+      "durationMs": 3126
     },
     {
       "slug": "szse-announcements",
@@ -6352,7 +6352,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 4552
+      "durationMs": 4164
     },
     {
       "slug": "skypilot-releases",
@@ -6373,7 +6373,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 563
+      "durationMs": 530
     },
     {
       "slug": "xai-release-notes",
@@ -6394,7 +6394,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 110
+      "durationMs": 310
     },
     {
       "slug": "xai-model-docs",
@@ -6415,7 +6415,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 85
+      "durationMs": 128
     },
     {
       "slug": "stability-ai",
@@ -6436,7 +6436,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 930
+      "durationMs": 1139
     },
     {
       "slug": "stagehand",
@@ -6457,7 +6457,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 499
+      "durationMs": 427
     },
     {
       "slug": "stanford-crfm",
@@ -6478,7 +6478,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 13
+      "durationMs": 96
     },
     {
       "slug": "stanford-hai",
@@ -6499,7 +6499,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 440
+      "durationMs": 43
     },
     {
       "slug": "stepfun",
@@ -6520,7 +6520,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 953
+      "durationMs": 2318
     },
     {
       "slug": "stepfun-model-updates",
@@ -6541,7 +6541,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 187
+      "durationMs": 221
     },
     {
       "slug": "trl-releases",
@@ -6562,7 +6562,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1118
+      "durationMs": 1185
     },
     {
       "slug": "tencent-ai-lab",
@@ -6583,7 +6583,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 1118
+      "durationMs": 1090
     },
     {
       "slug": "tencent-hunyuan",
@@ -6604,7 +6604,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 1022
+      "durationMs": 1235
     },
     {
       "slug": "tencent-hunyuan-updates",
@@ -6625,7 +6625,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 203
+      "durationMs": 227
     },
     {
       "slug": "ncnn-releases",
@@ -6646,7 +6646,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 635
+      "durationMs": 739
     },
     {
       "slug": "tensorflow-core-releases",
@@ -6667,7 +6667,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 295
+      "durationMs": 301
     },
     {
       "slug": "tensorrt-llm",
@@ -6688,7 +6688,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 2203
+      "durationMs": 1657
     },
     {
       "slug": "tgi-releases",
@@ -6709,7 +6709,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 565
+      "durationMs": 626
     },
     {
       "slug": "thinking-machines",
@@ -6730,7 +6730,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 119
+      "durationMs": 298
     },
     {
       "slug": "together-ai",
@@ -6751,7 +6751,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 95
+      "durationMs": 49
     },
     {
       "slug": "torchtune-releases",
@@ -6772,7 +6772,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 521
+      "durationMs": 700
     },
     {
       "slug": "transformers",
@@ -6793,7 +6793,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1915
+      "durationMs": 1502
     },
     {
       "slug": "triton-releases",
@@ -6814,7 +6814,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 683
+      "durationMs": 1153
     },
     {
       "slug": "trulens-releases",
@@ -6835,7 +6835,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 752
+      "durationMs": 615
     },
     {
       "slug": "bea-api",
@@ -6856,7 +6856,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 144
+      "durationMs": 279
     },
     {
       "slug": "bls-public-data",
@@ -6877,7 +6877,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 124
+      "durationMs": 255
     },
     {
       "slug": "us-treasury-fiscal-data",
@@ -6898,7 +6898,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 313
+      "durationMs": 477
     },
     {
       "slug": "ubtech-robotics",
@@ -6919,7 +6919,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 2648
+      "durationMs": 1898
     },
     {
       "slug": "uk-aisi",
@@ -6940,7 +6940,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 198
+      "durationMs": 221
     },
     {
       "slug": "uk-dsit-feed",
@@ -6961,7 +6961,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 149
+      "durationMs": 243
     },
     {
       "slug": "us-caisi",
@@ -6982,7 +6982,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 48
+      "durationMs": 42
     },
     {
       "slug": "ultralytics-releases",
@@ -7003,7 +7003,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 567
+      "durationMs": 935
     },
     {
       "slug": "unitree",
@@ -7024,7 +7024,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1069
+      "durationMs": 1376
     },
     {
       "slug": "unitree-robotics",
@@ -7045,7 +7045,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 110
+      "durationMs": 124
     },
     {
       "slug": "universal-manipulation-interface",
@@ -7066,7 +7066,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 75
+      "durationMs": 145
     },
     {
       "slug": "verl-releases",
@@ -7087,7 +7087,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 3528
+      "durationMs": 2594
     },
     {
       "slug": "vercel-ai-sdk",
@@ -7108,7 +7108,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 3143
+      "durationMs": 2597
     },
     {
       "slug": "volcengine-ai",
@@ -7129,7 +7129,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 1140
+      "durationMs": 1388
     },
     {
       "slug": "weaviate-blog-feed",
@@ -7150,7 +7150,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 381
+      "durationMs": 308
     },
     {
       "slug": "weaviate-releases",
@@ -7171,7 +7171,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 390
+      "durationMs": 574
     },
     {
       "slug": "wandb-releases",
@@ -7192,7 +7192,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 589
+      "durationMs": 743
     },
     {
       "slug": "white-house-ostp",
@@ -7213,7 +7213,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 462
+      "durationMs": 65
     },
     {
       "slug": "windsurf",
@@ -7234,7 +7234,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 2747
+      "durationMs": 3023
     },
     {
       "slug": "world-bank-indicators",
@@ -7255,7 +7255,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 173
+      "durationMs": 199
     },
     {
       "slug": "worldlabs",
@@ -7276,7 +7276,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 191
+      "durationMs": 459
     },
     {
       "slug": "xtuner-releases",
@@ -7297,7 +7297,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 442
+      "durationMs": 472
     },
     {
       "slug": "xiaomi-mimo",
@@ -7318,7 +7318,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 784
+      "durationMs": 814
     },
     {
       "slug": "xinference-releases",
@@ -7339,7 +7339,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 810
+      "durationMs": 733
     },
     {
       "slug": "yi-releases",
@@ -7360,7 +7360,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 120
+      "durationMs": 298
     },
     {
       "slug": "zai-glm-skills-updates",
@@ -7381,7 +7381,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 147
+      "durationMs": 222
     },
     {
       "slug": "zai-glm4-updates",
@@ -7402,7 +7402,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 174
+      "durationMs": 194
     },
     {
       "slug": "zai-glm5-updates",
@@ -7423,7 +7423,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 161
+      "durationMs": 201
     },
     {
       "slug": "zai-glm-ocr-updates",
@@ -7444,7 +7444,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 187
+      "durationMs": 259
     },
     {
       "slug": "zai-glmv-updates",
@@ -7465,7 +7465,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 129
+      "durationMs": 200
     },
     {
       "slug": "zai-model-docs",
@@ -7486,7 +7486,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 282
+      "durationMs": 336
     },
     {
       "slug": "zai-release-notes",
@@ -7507,7 +7507,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 249
+      "durationMs": 273
     },
     {
       "slug": "zhipu",
@@ -7528,7 +7528,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 7164
+      "durationMs": 4690
     },
     {
       "slug": "zhipu-pricing",
@@ -7549,7 +7549,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 475
+      "durationMs": 548
     },
     {
       "slug": "arxiv-ai",
@@ -7570,7 +7570,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 82
+      "durationMs": 114
     },
     {
       "slug": "arxiv-cl",
@@ -7591,7 +7591,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 35
+      "durationMs": 89
     },
     {
       "slug": "arxiv-lg",
@@ -7612,7 +7612,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 49
+      "durationMs": 115
     },
     {
       "slug": "arxiv-ro",
@@ -7633,7 +7633,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 31
+      "durationMs": 88
     },
     {
       "slug": "bitsandbytes-releases",
@@ -7654,7 +7654,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 544
+      "durationMs": 509
     },
     {
       "slug": "iflytek",
@@ -7675,7 +7675,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 1649
+      "durationMs": 1663
     },
     {
       "slug": "iflytek-spark-docs",
@@ -7696,7 +7696,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 1352
+      "durationMs": 1293
     },
     {
       "slug": "llama-cpp-python-releases",
@@ -7717,7 +7717,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 162
+      "durationMs": 204
     },
     {
       "slug": "llamacpp",
@@ -7728,9 +7728,9 @@
       "schemaStatus": "valid",
       "policyStatus": "allowed_metadata",
       "itemCount": 10,
-      "latestItemAt": "2026-09-20T09:50:38.000Z",
+      "latestItemAt": "2026-09-20T12:31:35.000Z",
       "duplicateRatio": 0,
-      "qualityScore": 87,
+      "qualityScore": 88,
       "errorType": null,
       "errorCode": null,
       "repairAction": "observe_in_shadow",
@@ -7738,7 +7738,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 808
+      "durationMs": 1394
     },
     {
       "slug": "pgvector-releases",
@@ -7759,7 +7759,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 210
+      "durationMs": 250
     },
     {
       "slug": "vllm",
@@ -7780,7 +7780,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 559
+      "durationMs": 662
     },
     {
       "slug": "vivo-ai",
@@ -7801,7 +7801,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 848
+      "durationMs": 426
     },
     {
       "slug": "whispercpp-releases",
@@ -7822,7 +7822,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 554
+      "durationMs": 676
     },
     {
       "slug": "xai",
@@ -7843,7 +7843,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 171
+      "durationMs": 28
     },
     {
       "slug": "xai-pricing",
@@ -7864,7 +7864,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 139
+      "durationMs": 317
     },
     {
       "slug": "xai-cookbook-updates",
@@ -7885,7 +7885,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 209
+      "durationMs": 255
     },
     {
       "slug": "xai-grok1-updates",
@@ -7906,7 +7906,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 627
+      "durationMs": 388
     },
     {
       "slug": "xai-sdk-python-updates",
@@ -7927,7 +7927,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 141
+      "durationMs": 214
     },
     {
       "slug": "36kr-ai",
@@ -7948,7 +7948,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 1462
+      "durationMs": 848
     },
     {
       "slug": "aihot",
@@ -7969,7 +7969,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 3165
+      "durationMs": 955
     },
     {
       "slug": "air-street-press-feed",
@@ -7990,7 +7990,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 161
+      "durationMs": 78
     },
     {
       "slug": "apollo-research",
@@ -8011,7 +8011,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 76
+      "durationMs": 47
     },
     {
       "slug": "ars-technica-ai",
@@ -8022,7 +8022,7 @@
       "schemaStatus": "valid",
       "policyStatus": "allowed_metadata",
       "itemCount": 20,
-      "latestItemAt": "2026-09-17T18:33:13.000Z",
+      "latestItemAt": "2026-09-20T11:07:00.000Z",
       "duplicateRatio": 0,
       "qualityScore": 55,
       "errorType": null,
@@ -8032,7 +8032,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 90
+      "durationMs": 72
     },
     {
       "slug": "artificial-analysis",
@@ -8053,7 +8053,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 201
+      "durationMs": 90
     },
     {
       "slug": "battery-ventures",
@@ -8074,7 +8074,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 84
+      "durationMs": 61
     },
     {
       "slug": "bessemer-ai",
@@ -8095,7 +8095,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 852
+      "durationMs": 836
     },
     {
       "slug": "cais",
@@ -8116,7 +8116,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 332
+      "durationMs": 603
     },
     {
       "slug": "discover-robotics-data",
@@ -8137,7 +8137,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 3768
+      "durationMs": 4107
     },
     {
       "slug": "epoch-ai",
@@ -8158,7 +8158,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 119
+      "durationMs": 223
     },
     {
       "slug": "eugene-yan",
@@ -8179,7 +8179,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 98
+      "durationMs": 236
     },
     {
       "slug": "open-er-api-fx",
@@ -8200,7 +8200,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 37
+      "durationMs": 41
     },
     {
       "slug": "ft-ai",
@@ -8221,7 +8221,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 186
+      "durationMs": 49
     },
     {
       "slug": "gesen-ai",
@@ -8242,7 +8242,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "shadow",
-      "durationMs": 2687
+      "durationMs": 2123
     },
     {
       "slug": "greylock",
@@ -8263,7 +8263,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 268
+      "durationMs": 239
     },
     {
       "slug": "huggingface-papers",
@@ -8284,7 +8284,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 176
+      "durationMs": 219
     },
     {
       "slug": "ithome-ai",
@@ -8295,7 +8295,7 @@
       "schemaStatus": "valid",
       "policyStatus": "allowed_metadata",
       "itemCount": 30,
-      "latestItemAt": "2026-09-20T12:07:09.000Z",
+      "latestItemAt": "2026-09-20T12:39:07.000Z",
       "duplicateRatio": 0,
       "qualityScore": 76,
       "errorType": null,
@@ -8305,7 +8305,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 4113
+      "durationMs": 4976
     },
     {
       "slug": "index-ventures",
@@ -8326,7 +8326,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 251
+      "durationMs": 94
     },
     {
       "slug": "infoq-cn-ai",
@@ -8347,7 +8347,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 2779
+      "durationMs": 2087
     },
     {
       "slug": "lmarena",
@@ -8368,7 +8368,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 615
+      "durationMs": 685
     },
     {
       "slug": "latepost",
@@ -8389,7 +8389,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 3024
+      "durationMs": 2141
     },
     {
       "slug": "lightspeed",
@@ -8410,7 +8410,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 305
+      "durationMs": 251
     },
     {
       "slug": "lilian-weng",
@@ -8431,7 +8431,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 208
+      "durationMs": 28
     },
     {
       "slug": "mit-tech-review-ai",
@@ -8452,7 +8452,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 192
+      "durationMs": 84
     },
     {
       "slug": "madrona-ventures",
@@ -8473,7 +8473,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 183
+      "durationMs": 80
     },
     {
       "slug": "menlo-ai",
@@ -8494,7 +8494,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 223
+      "durationMs": 92
     },
     {
       "slug": "nfx",
@@ -8515,7 +8515,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 233
+      "durationMs": 407
     },
     {
       "slug": "nexdata-embodied-ai",
@@ -8536,7 +8536,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "shadow",
-      "durationMs": 279
+      "durationMs": 97
     },
     {
       "slug": "radical-ventures-feed",
@@ -8557,7 +8557,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 195
+      "durationMs": 441
     },
     {
       "slug": "redwood-research",
@@ -8578,7 +8578,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 183
+      "durationMs": 333
     },
     {
       "slug": "reuters-ai",
@@ -8599,7 +8599,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 167
+      "durationMs": 71
     },
     {
       "slug": "semianalysis",
@@ -8620,7 +8620,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 271
+      "durationMs": 121
     },
     {
       "slug": "sequoia-ai",
@@ -8641,7 +8641,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 436
+      "durationMs": 202
     },
     {
       "slug": "techcrunch-ai",
@@ -8662,7 +8662,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 30
+      "durationMs": 51
     },
     {
       "slug": "the-decoder",
@@ -8683,7 +8683,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1650
+      "durationMs": 1564
     },
     {
       "slug": "gradient-feed",
@@ -8704,7 +8704,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 886
+      "durationMs": 196
     },
     {
       "slug": "the-information-ai",
@@ -8725,7 +8725,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 130
+      "durationMs": 117
     },
     {
       "slug": "the-verge-ai",
@@ -8736,9 +8736,9 @@
       "schemaStatus": "valid",
       "policyStatus": "allowed_metadata",
       "itemCount": 10,
-      "latestItemAt": "2026-09-19T20:44:40.000Z",
+      "latestItemAt": "2026-09-20T12:00:00.000Z",
       "duplicateRatio": 0,
-      "qualityScore": 66,
+      "qualityScore": 67,
       "errorType": null,
       "errorCode": null,
       "repairAction": "observe_in_shadow",
@@ -8746,7 +8746,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 24
+      "durationMs": 59
     },
     {
       "slug": "tom-tunguz",
@@ -8767,7 +8767,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 346
+      "durationMs": 390
     },
     {
       "slug": "ycombinator-blog-feed",
@@ -8809,7 +8809,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 353
+      "durationMs": 301
     },
     {
       "slug": "baoyu",
@@ -8830,7 +8830,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 323
+      "durationMs": 318
     },
     {
       "slug": "mu-li-blog",
@@ -8851,7 +8851,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 101
+      "durationMs": 122
     },
     {
       "slug": "shunwei-capital",
@@ -8872,7 +8872,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 158012
+      "durationMs": 220736
     },
     {
       "slug": "alphasignal",
@@ -8893,7 +8893,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 160
+      "durationMs": 310
     },
     {
       "slug": "karpathy",
@@ -8935,7 +8935,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 310
+      "durationMs": 447
     },
     {
       "slug": "huggingnews",
@@ -8956,7 +8956,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 155872
+      "durationMs": 219064
     },
     {
       "slug": "import-ai",
@@ -8977,7 +8977,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 156068
+      "durationMs": 39
     },
     {
       "slug": "interconnects",
@@ -8998,7 +8998,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 155635
+      "durationMs": 51
     },
     {
       "slug": "latent-space",
@@ -9019,28 +9019,28 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 133
+      "durationMs": 218803
     },
     {
       "slug": "marktechpost",
-      "status": "healthy",
+      "status": "degraded",
       "accessStatus": "reachable",
       "fetchStatus": "succeeded",
-      "parseStatus": "succeeded",
-      "schemaStatus": "valid",
+      "parseStatus": "empty",
+      "schemaStatus": "empty",
       "policyStatus": "allowed_metadata",
-      "itemCount": 10,
-      "latestItemAt": "2026-09-20T06:46:08.000Z",
+      "itemCount": 0,
+      "latestItemAt": null,
       "duplicateRatio": 0,
-      "qualityScore": 65,
-      "errorType": null,
-      "errorCode": null,
-      "repairAction": "observe_in_shadow",
+      "qualityScore": 0,
+      "errorType": "content",
+      "errorCode": "EMPTY_RESULT",
+      "repairAction": "inspect_endpoint_or_parser",
       "proxyHint": "not_required",
       "proxyUsed": false,
-      "retentionDecision": "keep",
+      "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 1463
+      "durationMs": 218745
     },
     {
       "slug": "ethan-mollick",
@@ -9061,7 +9061,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 204
+      "durationMs": 307
     },
     {
       "slug": "ros-discourse",
@@ -9082,7 +9082,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 1269
+      "durationMs": 1092
     },
     {
       "slug": "sebastian-raschka",
@@ -9103,7 +9103,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 260
+      "durationMs": 88
     },
     {
       "slug": "simon-willison",
@@ -9124,7 +9124,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 186
+      "durationMs": 63
     },
     {
       "slug": "tldr-ai",
@@ -9145,7 +9145,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_manual",
       "recommendedLifecycle": "retired",
-      "durationMs": 218
+      "durationMs": 235
     },
     {
       "slug": "bilibili-ai",
@@ -9187,7 +9187,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 1084
+      "durationMs": 1029
     },
     {
       "slug": "hackernews-ai",
@@ -9198,9 +9198,9 @@
       "schemaStatus": "valid",
       "policyStatus": "allowed_metadata",
       "itemCount": 20,
-      "latestItemAt": "2026-09-20T12:07:10.000Z",
+      "latestItemAt": "2026-09-20T12:23:19.000Z",
       "duplicateRatio": 0,
-      "qualityScore": 61,
+      "qualityScore": 60,
       "errorType": null,
       "errorCode": null,
       "repairAction": "observe_in_shadow",
@@ -9208,7 +9208,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 374
+      "durationMs": 527
     },
     {
       "slug": "linux-do-ai",
@@ -9229,7 +9229,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 346
+      "durationMs": 87
     },
     {
       "slug": "linkedin-ai-experts",
@@ -9271,28 +9271,28 @@
       "proxyUsed": false,
       "retentionDecision": "keep",
       "recommendedLifecycle": "retired",
-      "durationMs": 215
+      "durationMs": 32
     },
     {
       "slug": "reddit-localllama",
-      "status": "healthy",
+      "status": "failed",
       "accessStatus": "reachable",
-      "fetchStatus": "succeeded",
-      "parseStatus": "succeeded",
-      "schemaStatus": "valid",
+      "fetchStatus": "failed",
+      "parseStatus": "failed",
+      "schemaStatus": "unknown",
       "policyStatus": "allowed_metadata",
-      "itemCount": 25,
-      "latestItemAt": "2026-09-20T11:47:17.000Z",
+      "itemCount": 0,
+      "latestItemAt": null,
       "duplicateRatio": 0,
-      "qualityScore": 60,
-      "errorType": null,
-      "errorCode": null,
-      "repairAction": "observe_in_shadow",
+      "qualityScore": 0,
+      "errorType": "permanent_http",
+      "errorCode": "HTTP_403",
+      "repairAction": "replace_or_correct_endpoint",
       "proxyHint": "not_required",
       "proxyUsed": false,
-      "retentionDecision": "keep",
+      "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 642
+      "durationMs": 107
     },
     {
       "slug": "reddit-ml",
@@ -9313,7 +9313,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 254
+      "durationMs": 369
     },
     {
       "slug": "v2ex-ai",
@@ -9334,7 +9334,7 @@
       "proxyUsed": false,
       "retentionDecision": "observe",
       "recommendedLifecycle": "retired",
-      "durationMs": 256
+      "durationMs": 99
     },
     {
       "slug": "weibo-ai",
@@ -9376,7 +9376,7 @@
       "proxyUsed": false,
       "retentionDecision": "keep_restricted",
       "recommendedLifecycle": "retired",
-      "durationMs": 1
+      "durationMs": 0
     },
     {
       "slug": "youtube-ai",

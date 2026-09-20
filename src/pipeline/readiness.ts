@@ -1,11 +1,16 @@
 import type { Kysely } from "kysely";
 import { parseJson } from "../db/repository.js";
 import type { DatabaseSchema, EventRow } from "../db/types.js";
+import { EventDataProfileSchema, EvidenceUrlSchema } from "../domain/embodied-data.js";
 import type { ScoreFactors } from "../domain/types.js";
 import { isAtOrBefore } from "./evaluation-context.js";
 
 export type ReadinessBlocker =
   | "event_not_found"
+  | "legacy_scope"
+  | "missing_data_profile"
+  | "invalid_data_profile"
+  | "missing_pipeline_stage"
   | "placeholder_content"
   | "thin_fact"
   | "thin_research_analysis"
@@ -15,6 +20,7 @@ export type ReadinessBlocker =
   | "missing_track"
   | "missing_evidence"
   | "missing_primary_evidence"
+  | "unsafe_evidence_url"
   | "low_confidence"
   | "unsupported_heat";
 
@@ -44,7 +50,7 @@ export async function evaluateEventReadiness(
     return result(eventId, ["event_not_found"], 0, 0, 0, 0);
   }
   const candidate = { ...event, ...candidatePatch };
-  const [evidence, tracks] = await Promise.all([
+  const [evidence, tracks, profile] = await Promise.all([
     db
       .selectFrom("event_signals")
       .innerJoin("signals", "signals.id", "event_signals.signal_id")
@@ -54,6 +60,7 @@ export async function evaluateEventReadiness(
         "sources.tier as tier",
         "sources.role as role",
         "sources.source_category as sourceCategory",
+        "signals.canonical_url as evidenceUrl",
       ])
       .where("event_signals.event_id", "=", eventId)
       .execute(),
@@ -62,6 +69,11 @@ export async function evaluateEventReadiness(
       .select(({ fn }) => fn.countAll<number>().as("count"))
       .where("event_id", "=", eventId)
       .executeTakeFirstOrThrow(),
+    db
+      .selectFrom("event_data_profiles")
+      .select(["profile_json", "schema_version"])
+      .where("event_id", "=", eventId)
+      .executeTakeFirst(),
   ]);
   const independentSources = new Set(evidence.map((item) => item.sourceId)).size;
   const primaryEvidence = new Set(
@@ -74,6 +86,7 @@ export async function evaluateEventReadiness(
   ).size;
   const trackCount = Number(tracks.count);
   const blockers: ReadinessBlocker[] = [];
+  addEmbodiedBoundaryBlockers(blockers, candidate, profile, evidence);
   const content = [
     candidate.fact_summary,
     candidate.summary,
@@ -116,7 +129,7 @@ export async function evaluateEventReadiness(
 }
 
 export async function eventReadinessSummary(db: Kysely<DatabaseSchema>, asOf?: Date) {
-  const [events, evidence, tracks] = await Promise.all([
+  const [events, evidence, profiles, tracks] = await Promise.all([
     db.selectFrom("events").selectAll().execute(),
     db
       .selectFrom("event_signals")
@@ -130,7 +143,12 @@ export async function eventReadinessSummary(db: Kysely<DatabaseSchema>, asOf?: D
         "sources.source_category as sourceCategory",
         "event_signals.created_at as evidenceCreatedAt",
         "signals.created_at as signalCreatedAt",
+        "signals.canonical_url as evidenceUrl",
       ])
+      .execute(),
+    db
+      .selectFrom("event_data_profiles")
+      .select(["event_id as eventId", "profile_json", "schema_version", "created_at as createdAt"])
       .execute(),
     db
       .selectFrom("event_tracks")
@@ -149,6 +167,9 @@ export async function eventReadinessSummary(db: Kysely<DatabaseSchema>, asOf?: D
   const visibleTracks = asOf
     ? tracks.filter((row) => isAtOrBefore(row.trackCreatedAt, asOf))
     : tracks;
+  const visibleProfiles = asOf
+    ? profiles.filter((row) => isAtOrBefore(row.createdAt, asOf))
+    : profiles;
   const evidenceByEvent = new Map<string, typeof evidence>();
   for (const row of visibleEvidence) {
     const rows = evidenceByEvent.get(row.eventId) ?? [];
@@ -159,11 +180,13 @@ export async function eventReadinessSummary(db: Kysely<DatabaseSchema>, asOf?: D
   for (const row of visibleTracks) {
     tracksByEvent.set(row.eventId, (tracksByEvent.get(row.eventId) ?? 0) + 1);
   }
+  const profileByEvent = new Map(visibleProfiles.map((profile) => [profile.eventId, profile]));
   const readiness = visibleEvents.map((event) =>
     evaluateReadinessRow(
       event,
       evidenceByEvent.get(event.id) ?? [],
       tracksByEvent.get(event.id) ?? 0,
+      profileByEvent.get(event.id),
     ),
   );
   const blockerCounts: Record<string, number> = {};
@@ -188,8 +211,10 @@ function evaluateReadinessRow(
     tier: number;
     role: string;
     sourceCategory: string;
+    evidenceUrl: string;
   }>,
   trackCount: number,
+  profile?: { profile_json: string; schema_version: number },
 ): EventReadiness {
   const independentSources = new Set(evidence.map((item) => item.sourceId)).size;
   const primaryEvidence = new Set(
@@ -201,6 +226,7 @@ function evaluateReadinessRow(
       .map((item) => item.sourceId),
   ).size;
   const blockers: ReadinessBlocker[] = [];
+  addEmbodiedBoundaryBlockers(blockers, candidate, profile, evidence);
   const content = [
     candidate.fact_summary,
     candidate.summary,
@@ -246,6 +272,32 @@ function evaluateReadinessRow(
     warnings:
       independentSources < 2 ? ["single-source fact; cross-source corroboration pending"] : [],
   };
+}
+
+function addEmbodiedBoundaryBlockers(
+  blockers: ReadinessBlocker[],
+  candidate: EventRow,
+  profile: { profile_json: string; schema_version: number } | undefined,
+  evidence: Array<{ evidenceUrl: string }>,
+): void {
+  if (candidate.content_scope !== "embodied-data") blockers.push("legacy_scope");
+  if (!profile) {
+    blockers.push("missing_data_profile");
+  } else {
+    const value = parseJson<unknown>(profile.profile_json, null);
+    const parsed = EventDataProfileSchema.safeParse(value);
+    if (!parsed.success || profile.schema_version !== 1) blockers.push("invalid_data_profile");
+    const pipelineStages =
+      value &&
+      typeof value === "object" &&
+      Array.isArray((value as { pipelineStages?: unknown }).pipelineStages)
+        ? (value as { pipelineStages: unknown[] }).pipelineStages
+        : [];
+    if (pipelineStages.length === 0) blockers.push("missing_pipeline_stage");
+  }
+  if (evidence.some((item) => !EvidenceUrlSchema.safeParse(item.evidenceUrl).success)) {
+    blockers.push("unsafe_evidence_url");
+  }
 }
 
 function hasPlaceholder(value: string): boolean {

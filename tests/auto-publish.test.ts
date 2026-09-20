@@ -27,16 +27,27 @@ describe("autonomous publication", () => {
     const ready = await db
       .selectFrom("events")
       .select("id")
-      .where("slug", "=", "gemma-4-open-model-efficiency")
+      .where("slug", "=", "droid-distributed-collection")
       .executeTakeFirstOrThrow();
     const blocked = await db
       .selectFrom("events")
       .select("id")
-      .where("slug", "=", "gpt-5-6-agent-platform-shift")
+      .where("slug", "=", "rh20t-force-aware-capture")
       .executeTakeFirstOrThrow();
     await db
       .updateTable("events")
-      .set({ status: "review", published_at: null })
+      .set({
+        status: "review",
+        published_at: null,
+        title: "Dexterous robot teleoperation dataset released",
+        fact_summary:
+          "The dataset contains verified demonstration hours from robot teleoperation tasks.",
+        summary:
+          "The release provides robot data collection methods and synchronized multimodal records.",
+        technical_insight: "RGB-D, joint state, and force-torque streams preserve aligned actions.",
+        industry_insight:
+          "The release creates a reproducible reference for large-scale robot data collection.",
+      })
       .where("id", "=", ready.id)
       .execute();
     await db
@@ -54,10 +65,39 @@ describe("autonomous publication", () => {
     expect(
       await db
         .selectFrom("events")
-        .select("status")
+        .select(["status", "readiness_blockers_json"])
         .where("id", "=", blocked.id)
         .executeTakeFirst(),
-    ).toEqual({ status: "review" });
+    ).toEqual({
+      status: "review",
+      readiness_blockers_json: expect.stringContaining("placeholder_content"),
+    });
+  });
+
+  it("never republishes legacy review events", async () => {
+    const db = await database();
+    const legacy = await db
+      .selectFrom("events")
+      .select("id")
+      .where("slug", "=", "openai-o1-test-time-reasoning")
+      .executeTakeFirstOrThrow();
+    await db
+      .updateTable("events")
+      .set({ status: "review", published_at: null })
+      .where("id", "=", legacy.id)
+      .execute();
+
+    await autoPublishReadyEvents(db);
+
+    const result = await db
+      .selectFrom("events")
+      .select(["status", "readiness_blockers_json"])
+      .where("id", "=", legacy.id)
+      .executeTakeFirstOrThrow();
+    expect(result.status).toBe("review");
+    expect(JSON.parse(result.readiness_blockers_json)).toEqual(
+      expect.arrayContaining(["legacy_scope", "missing_data_profile"]),
+    );
   });
 
   it("publishes or archives old Scout inbox items without a human queue", async () => {

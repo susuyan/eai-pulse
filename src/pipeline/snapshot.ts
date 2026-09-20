@@ -528,6 +528,7 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
         manualOverride: event.manual_override,
         happenedAt: event.happened_at,
         publishedAt: event.published_at,
+        readinessBlockers: parseJson(event.readiness_blockers_json, []),
         createdAt: event.created_at,
         updatedAt: event.updated_at,
       }))
@@ -1117,15 +1118,22 @@ async function restoreSnapshot(
       manual_override: requiredNumber(value, "manualOverride"),
       happened_at: requiredString(value, "happenedAt"),
       published_at: optionalString(value.publishedAt),
+      readiness_blockers_json: JSON.stringify(value.readinessBlockers ?? []),
       created_at: requiredString(value, "createdAt"),
       updated_at: optionalString(value.updatedAt) ?? requiredString(value, "createdAt"),
     };
     if (existing && shouldReplaceEvent(existing, value, row.updated_at)) {
       await db.updateTable("events").set(row).where("id", "=", id).execute();
-    } else if (existing && value.contentScope !== undefined) {
+    } else if (
+      existing &&
+      (value.contentScope !== undefined || value.readinessBlockers !== undefined)
+    ) {
       await db
         .updateTable("events")
-        .set({ content_scope: row.content_scope })
+        .set({
+          content_scope: row.content_scope,
+          readiness_blockers_json: row.readiness_blockers_json,
+        })
         .where("id", "=", id)
         .execute();
     } else if (!existing)

@@ -261,6 +261,7 @@ export interface EventTable {
   manual_override: number;
   happened_at: string;
   published_at: string | null;
+  readiness_blockers_json: Generated<string>;
   content_scope: Generated<ContentScope>;
   created_at: string;
   updated_at: string;

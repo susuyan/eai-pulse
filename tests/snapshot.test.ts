@@ -60,6 +60,11 @@ describe("repository data snapshot", () => {
       .where("slug", "=", "lingbot-vla-2-cross-embodiment")
       .executeTakeFirstOrThrow();
     await repository.updateEvent(profiledEvent.id, { content_scope: "embodied-data" });
+    await sourceDb
+      .updateTable("events")
+      .set({ readiness_blockers_json: JSON.stringify(["missing_track"]) })
+      .where("id", "=", profiledEvent.id)
+      .execute();
     await repository.upsertEventDataProfile(profiledEvent.id, profiles.valid[0]);
     const datasetFixture = datasets[0];
     const standardFixture = standards[0];
@@ -221,6 +226,10 @@ describe("repository data snapshot", () => {
       snapshot.events.find((event: { slug: string }) => event.slug === profiledEvent.slug)
         ?.contentScope,
     ).toBe("embodied-data");
+    expect(
+      snapshot.events.find((event: { slug: string }) => event.slug === profiledEvent.slug)
+        ?.readinessBlockers,
+    ).toEqual(["missing_track"]);
     expect(snapshot.eventDataProfiles).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ eventSlug: profiledEvent.slug, profile: profiles.valid[0] }),
@@ -652,10 +661,11 @@ describe("repository data snapshot", () => {
 
     const restoredProfileEvent = await targetDb
       .selectFrom("events")
-      .select(["id", "content_scope"])
+      .select(["id", "content_scope", "readiness_blockers_json"])
       .where("slug", "=", profiledEvent.slug)
       .executeTakeFirstOrThrow();
     expect(restoredProfileEvent.content_scope).toBe("embodied-data");
+    expect(JSON.parse(restoredProfileEvent.readiness_blockers_json)).toEqual(["missing_track"]);
     expect(await targetRepository.getEventDataProfile(restoredProfileEvent.id)).toEqual(
       profiles.valid[0],
     );

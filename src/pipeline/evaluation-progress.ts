@@ -1,6 +1,12 @@
+import { z } from "zod";
 import type { EvaluationDimension } from "./evaluate.js";
+import {
+  type EvaluationContext,
+  type EvaluationGateMode,
+  parseEvaluationInstant,
+} from "./evaluation-context.js";
 
-export const SYSTEM_EVALUATION_SCHEMA_VERSION = 1;
+export const SYSTEM_EVALUATION_SCHEMA_VERSION = 2;
 export const SYSTEM_EVALUATION_TARGET = 80;
 
 export interface EvaluationResult {
@@ -27,16 +33,31 @@ export interface EvaluationImprovement {
   nextAction: string;
 }
 
-export interface SystemEvaluationReport extends EvaluationResult {
-  schemaVersion: number;
+export interface SystemEvaluationReportV1 extends EvaluationResult {
+  schemaVersion: 1;
   target: number;
   targetReached: boolean;
   policy: "measured-evidence-only";
   improvementPlan: EvaluationImprovement[];
+  comparison?: EvaluationComparison | undefined;
 }
+
+export interface SystemEvaluationReportV2 extends EvaluationResult {
+  schemaVersion: 2;
+  evaluationAsOf: string;
+  gateMode: EvaluationGateMode;
+  target: number;
+  targetReached: boolean;
+  policy: "measured-evidence-only";
+  improvementPlan: EvaluationImprovement[];
+  comparison?: EvaluationComparison | undefined;
+}
+
+export type SystemEvaluationReport = SystemEvaluationReportV2;
 
 export interface EvaluationComparison {
   passed: boolean;
+  contextError: "evaluation_context_mismatch" | null;
   baselineScore: number;
   currentScore: number;
   scoreDelta: number;
@@ -46,7 +67,10 @@ export interface EvaluationComparison {
   regressions: string[];
 }
 
-export function buildSystemEvaluationReport(evaluation: EvaluationResult): SystemEvaluationReport {
+export function buildSystemEvaluationReport(
+  evaluation: EvaluationResult,
+  context: EvaluationContext,
+): SystemEvaluationReport {
   const totalWeight = evaluation.dimensions.reduce((sum, dimension) => sum + dimension.weight, 0);
   const improvementPlan = evaluation.dimensions
     .map((dimension) => ({
@@ -71,6 +95,8 @@ export function buildSystemEvaluationReport(evaluation: EvaluationResult): Syste
   return {
     schemaVersion: SYSTEM_EVALUATION_SCHEMA_VERSION,
     ...evaluation,
+    evaluationAsOf: context.asOf.toISOString(),
+    gateMode: context.gateMode,
     target: SYSTEM_EVALUATION_TARGET,
     targetReached: evaluation.overallScore >= SYSTEM_EVALUATION_TARGET,
     policy: "measured-evidence-only",
@@ -82,6 +108,21 @@ export function compareSystemEvaluations(
   current: SystemEvaluationReport,
   baseline: SystemEvaluationReport,
 ): EvaluationComparison {
+  if (current.evaluationAsOf !== baseline.evaluationAsOf) {
+    return {
+      passed: false,
+      contextError: "evaluation_context_mismatch",
+      baselineScore: baseline.overallScore,
+      currentScore: current.overallScore,
+      scoreDelta: current.overallScore - baseline.overallScore,
+      baselineEvidenceCoverage: baseline.evidenceCoverage,
+      currentEvidenceCoverage: current.evidenceCoverage,
+      evidenceCoverageDelta: current.evidenceCoverage - baseline.evidenceCoverage,
+      regressions: [
+        `evaluation context mismatch: baseline ${baseline.evaluationAsOf}, current ${current.evaluationAsOf}`,
+      ],
+    };
+  }
   const regressions: string[] = [];
   if (current.overallScore < baseline.overallScore) {
     regressions.push(
@@ -113,6 +154,7 @@ export function compareSystemEvaluations(
   }
   return {
     passed: regressions.length === 0,
+    contextError: null,
     baselineScore: baseline.overallScore,
     currentScore: current.overallScore,
     scoreDelta: current.overallScore - baseline.overallScore,
@@ -120,6 +162,118 @@ export function compareSystemEvaluations(
     currentEvidenceCoverage: current.evidenceCoverage,
     evidenceCoverageDelta: current.evidenceCoverage - baseline.evidenceCoverage,
     regressions,
+  };
+}
+
+const timestampSchema = z.string().refine((value) => Number.isFinite(Date.parse(value)), {
+  message: "must be a valid timestamp",
+});
+
+const evaluationDimensionSchema = z
+  .object({
+    slug: z.string(),
+    name: z.string(),
+    score: z.number(),
+    rawScore: z.number(),
+    scoreCap: z.number(),
+    weight: z.number(),
+    status: z.enum(["measured", "insufficient_data"]),
+    sampleSize: z.number(),
+    sampleTarget: z.number(),
+    summary: z.string(),
+    evidence: z.record(z.string(), z.union([z.number(), z.string()])),
+    penalties: z.array(z.string()),
+    nextAction: z.string(),
+  })
+  .strict();
+
+const evaluationImprovementSchema = z
+  .object({
+    slug: z.string(),
+    name: z.string(),
+    score: z.number(),
+    status: z.enum(["measured", "insufficient_data"]),
+    weightedGap: z.number(),
+    penalties: z.array(z.string()),
+    nextAction: z.string(),
+  })
+  .strict();
+
+const evaluationComparisonSchema = z
+  .object({
+    passed: z.boolean(),
+    contextError: z.enum(["evaluation_context_mismatch"]).nullable().optional(),
+    baselineScore: z.number(),
+    currentScore: z.number(),
+    scoreDelta: z.number(),
+    baselineEvidenceCoverage: z.number(),
+    currentEvidenceCoverage: z.number(),
+    evidenceCoverageDelta: z.number(),
+    regressions: z.array(z.string()),
+  })
+  .strict();
+
+const evaluationReportFields = {
+  id: z.string(),
+  releaseVersion: z.string(),
+  status: z.string(),
+  overallScore: z.number(),
+  rawWeightedScore: z.number(),
+  evidenceCoverage: z.number(),
+  dimensions: z.array(evaluationDimensionSchema),
+  capabilities: z.array(z.unknown()),
+  notes: z.string(),
+  startedAt: timestampSchema,
+  finishedAt: timestampSchema,
+  target: z.number(),
+  targetReached: z.boolean(),
+  policy: z.literal("measured-evidence-only"),
+  improvementPlan: z.array(evaluationImprovementSchema),
+  comparison: evaluationComparisonSchema.optional(),
+};
+
+const systemEvaluationReportV1Schema = z
+  .object({ schemaVersion: z.literal(1), ...evaluationReportFields })
+  .strict();
+
+export const systemEvaluationReportV2Schema = z
+  .object({
+    schemaVersion: z.literal(2),
+    ...evaluationReportFields,
+    evaluationAsOf: timestampSchema,
+    gateMode: z.enum(["change", "operational"]),
+  })
+  .strict();
+
+export function normalizeSystemEvaluationReport(value: unknown): SystemEvaluationReportV2 {
+  const version = z.object({ schemaVersion: z.number().int() }).parse(value).schemaVersion;
+  if (version === 2) {
+    const report = systemEvaluationReportV2Schema.parse(value);
+    return {
+      ...report,
+      evaluationAsOf: parseEvaluationInstant(report.evaluationAsOf, "evaluationAsOf").toISOString(),
+      comparison: report.comparison
+        ? { ...report.comparison, contextError: report.comparison.contextError ?? null }
+        : undefined,
+    };
+  }
+  if (version !== 1) throw new Error(`Unsupported system evaluation schema: ${version}`);
+  const legacy = systemEvaluationReportV1Schema.parse(value);
+  const evaluationAsOf = parseEvaluationInstant(legacy.finishedAt, "finishedAt").toISOString();
+  const normalized = systemEvaluationReportV2Schema.parse({
+    ...legacy,
+    schemaVersion: 2,
+    evaluationAsOf,
+    gateMode: "operational",
+    comparison: legacy.comparison
+      ? { ...legacy.comparison, contextError: legacy.comparison.contextError ?? null }
+      : undefined,
+  });
+  return {
+    ...normalized,
+    comparison: normalized.comparison
+      ? { ...normalized.comparison, contextError: normalized.comparison.contextError ?? null }
+      : undefined,
   };
 }
 

@@ -9,6 +9,7 @@ import { evaluateSystem } from "../pipeline/evaluate.js";
 import {
   buildSystemEvaluationReport,
   compareSystemEvaluations,
+  normalizeSystemEvaluationReport,
   renderEvaluationSummary,
   type SystemEvaluationReport,
 } from "../pipeline/evaluation-progress.js";
@@ -25,7 +26,11 @@ export async function runEvaluateCli(): Promise<void> {
     if (skipBootstrap) await migrateToLatest(db, config);
     else await bootstrapRepositoryDatabase(db, config);
     const evaluation = await evaluateSystem(db);
-    const report = buildSystemEvaluationReport(evaluation);
+    const report = buildSystemEvaluationReport(evaluation, {
+      asOf: new Date(evaluation.finishedAt),
+      gateMode: "operational",
+      persist: false,
+    });
     const baseline = baselinePath ? await readReport(baselinePath) : null;
     const comparison = baseline ? compareSystemEvaluations(report, baseline) : null;
     const payload = comparison ? { ...report, comparison } : report;
@@ -55,7 +60,7 @@ async function readReport(path: string): Promise<SystemEvaluationReport | null> 
     if (error.code === "ENOENT") return "";
     throw error;
   });
-  return serialized ? (JSON.parse(serialized) as SystemEvaluationReport) : null;
+  return serialized ? normalizeSystemEvaluationReport(JSON.parse(serialized)) : null;
 }
 
 async function atomicWriteJson(path: string, value: unknown): Promise<void> {

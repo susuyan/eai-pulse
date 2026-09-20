@@ -13,11 +13,19 @@ export const localePaths: Record<Locale, string> = {
 const translations: Record<string, Record<Locale, string>> = {
   // ─── Navigation ────────────────────────────────────────────
   "nav.home": { "zh-CN": "关键变化", en: "Latest Shifts" },
+  "nav.pipeline": { "zh-CN": "数据管线", en: "Data Pipeline" },
+  "nav.assets": { "zh-CN": "数据资产", en: "Data Assets" },
+  "nav.peers": { "zh-CN": "行业同行", en: "Industry Peers" },
+  "nav.sources": { "zh-CN": "来源地图", en: "Source Map" },
   "nav.lines": { "zh-CN": "领域趋势", en: "Industry Trends" },
   "nav.timeline": { "zh-CN": "事件时间线", en: "Event Timeline" },
   "nav.scout": { "zh-CN": "行动建议", en: "Action Ideas" },
   "nav.changelog": { "zh-CN": "产品更新", en: "Product Updates" },
   "mobile.home": { "zh-CN": "变化", en: "Shifts" },
+  "mobile.pipeline": { "zh-CN": "管线", en: "Pipeline" },
+  "mobile.assets": { "zh-CN": "资产", en: "Assets" },
+  "mobile.peers": { "zh-CN": "同行", en: "Peers" },
+  "mobile.sources": { "zh-CN": "来源", en: "Sources" },
   "mobile.lines": { "zh-CN": "趋势", en: "Shifts" },
   "mobile.timeline": { "zh-CN": "时间线", en: "Timeline" },
   "mobile.scout": { "zh-CN": "行动", en: "Actions" },
@@ -25,8 +33,8 @@ const translations: Record<string, Record<Locale, string>> = {
 
   // ─── Brand ─────────────────────────────────────────────────
   "brand.subtitle": {
-    "zh-CN": "AI 行业证据与趋势",
-    en: "AI Industry Evidence & Trends",
+    "zh-CN": "具身数据情报与生产洞察",
+    en: "Embodied Data Intelligence & Production Insight",
   },
   "brand.aria": { "zh-CN": "Agent Pulse 首页", en: "Agent Pulse Home" },
   "brand.switchLang": { "zh-CN": "EN", en: "中文" },
@@ -39,7 +47,10 @@ const translations: Record<string, Record<Locale, string>> = {
   "ui.mobileNav": { "zh-CN": "移动导航", en: "Mobile navigation" },
 
   // ─── Footer ────────────────────────────────────────────────
-  "footer.tagline": { "zh-CN": "用证据看清 AI 行业变化。", en: "See AI clearly through evidence." },
+  "footer.tagline": {
+    "zh-CN": "用证据看清具身数据生产变化。",
+    en: "See embodied data production through evidence.",
+  },
   "footer.lines": { "zh-CN": "领域趋势", en: "Industry Trends" },
   "footer.timeline": { "zh-CN": "事件时间线", en: "Event Timeline" },
   "footer.scout": { "zh-CN": "行动建议", en: "Action Ideas" },

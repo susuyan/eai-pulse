@@ -29,9 +29,58 @@ import {
   summarizeSourcePortfolio,
   timelineEventsForPresentation,
 } from "../src/pipeline/static-site/intelligence.js";
-import { renderTimeline } from "../src/pipeline/static-site/pages.js";
+import {
+  renderStaticPages,
+  renderTimeline,
+} from "../src/pipeline/static-site/pages.js";
 
 describe("static-site intelligence consumption model", () => {
+  it("renders the exact embodied-data route and navigation contract", () => {
+    const model = embodiedSiteModel();
+    const pages = renderStaticPages(model);
+    const paths = pages.map((page) => page.path).sort();
+    const expectedLocalePaths = [
+      "index.html",
+      "pipeline/index.html",
+      "assets/index.html",
+      "peers/index.html",
+      "sources/index.html",
+      "scout/index.html",
+      "timeline/index.html",
+      "changelog/index.html",
+      "legal/index.html",
+      "events/embodied-event/index.html",
+      "404.html",
+    ];
+    expect(paths).toEqual(
+      [...expectedLocalePaths, ...expectedLocalePaths.map((path) => `en/${path}`)].sort(),
+    );
+
+    const home = pages.find((page) => page.path === "index.html")?.content ?? "";
+    for (const [label, href] of [
+      ["关键变化", "./"],
+      ["数据管线", "./pipeline/"],
+      ["数据资产", "./assets/"],
+      ["行业同行", "./peers/"],
+      ["来源地图", "./sources/"],
+      ["行动建议", "./scout/"],
+    ]) {
+      expect(home).toContain(`href="${href}"`);
+      expect(home).toContain(label);
+    }
+    expect(
+      model.pipelineStages.map((stage) => home.indexOf(`data-pipeline-stage="${stage.slug}"`)),
+    ).toEqual([...model.pipelineStages.map((stage) => home.indexOf(`data-pipeline-stage="${stage.slug}"`))].sort((a, b) => a - b));
+    expect(home).toContain("具身数据情报与生产洞察");
+    expect(home).toContain("数据资产");
+    expect(home).toContain("行业同行");
+    expect(home).toContain("来源地图");
+    expect(home).toContain("行动建议");
+    expect(home).toContain("https://example.com/evidence");
+    expect(home).not.toContain("模型价格");
+    expect(home).not.toContain("六个领域趋势");
+  });
+
   it("sorts one event per card by its latest evidence update", () => {
     const olderEventWithNewUpdate = event("older", "2026-01-01T00:00:00Z", [
       evidence("Official update", "primary", "2026-07-10T00:00:00Z"),
@@ -180,22 +229,22 @@ describe("static-site intelligence consumption model", () => {
     ]);
   });
 
-  it("does not count the monthly research group against six visible regular events", () => {
+  it("keeps research and regular embodied events in the public timeline", () => {
     const regular = Array.from({ length: 7 }, (_, index) =>
       event(`regular-${index}`, `2026-07-${String(index + 1).padStart(2, "0")}T08:00:00Z`, []),
     );
     const model = {
-      events: [...regular, researchEvent("paper", "2026-07-15T08:00:00Z")],
+      embodiedEvents: [...regular, researchEvent("paper", "2026-07-15T08:00:00Z")],
       tracks: [],
     } as unknown as StaticSiteModel;
     const page = renderTimeline(model, "zh-CN");
 
-    expect(page).toContain('data-research-month="2026-07"');
-    expect(page.match(/data-month-extra="true"/g)).toHaveLength(1);
-    expect(page).toContain('data-timeline-item-count="7"');
+    expect(page).toContain("paper");
+    for (const item of regular) expect(page).toContain(item.slug);
+    expect(page.match(/<li>/g)).toHaveLength(8);
   });
 
-  it("lazy-mounts month groups only after the public Event total exceeds 500", () => {
+  it("keeps the embodied timeline complete without client-side mounting", () => {
     const manyEvents = Array.from({ length: 501 }, (_, index) => {
       const month = 11 - (index % 12);
       return event(
@@ -204,16 +253,19 @@ describe("static-site intelligence consumption model", () => {
         [],
       );
     });
-    const model = { events: manyEvents, tracks: [] } as unknown as StaticSiteModel;
+    const model = { embodiedEvents: manyEvents, tracks: [] } as unknown as StaticSiteModel;
     const lazyPage = renderTimeline(model, "zh-CN");
-    const regularPage = renderTimeline({ ...model, events: manyEvents.slice(0, 500) }, "zh-CN");
+    const regularPage = renderTimeline(
+      {
+        ...model,
+        embodiedEvents: manyEvents.slice(0, 500) as unknown as StaticSiteModel["embodiedEvents"],
+      },
+      "zh-CN",
+    );
 
-    expect(lazyPage).toContain('data-timeline-lazy="true"');
-    expect(lazyPage.match(/data-timeline-month-template/g)).toHaveLength(6);
-    expect(lazyPage).toContain("data-timeline-month-toggle");
-    expect(lazyPage).toContain('data-month-extra="true"');
-    expect(regularPage).toContain('data-timeline-lazy="false"');
-    expect(regularPage).not.toContain("data-timeline-month-template");
+    expect(lazyPage.match(/<li>/g)).toHaveLength(501);
+    expect(regularPage.match(/<li>/g)).toHaveLength(500);
+    expect(lazyPage).not.toContain("data-timeline-month-template");
   });
 
   it("highlights only events from the previous seven days", () => {
@@ -419,6 +471,124 @@ function event(
     tracks: [],
     actors: [],
   };
+}
+
+function embodiedSiteModel(): StaticSiteModel {
+  const legacyEvent = event("embodied-event", "2026-09-20T00:00:00.000Z", [
+    evidence("Primary evidence", "primary", "2026-09-20T00:00:00.000Z"),
+  ]);
+  legacyEvent.evidence[0]!.url = "https://example.com/evidence";
+  legacyEvent.evidence[0]!.source = "Example Lab";
+  const { id: _id, actors: _actors, ...publicEvent } = legacyEvent;
+  const pipelineStages = [
+    ["demand-definition", "需求与任务定义", "01"],
+    ["acquisition-route", "采集技术路线", "02"],
+    ["multimodal-capture", "多模态采集设备", "03"],
+    ["production-operations", "生产运营与成本", "04"],
+    ["data-engineering-standards", "数据工程与标准", "05"],
+    ["quality-training-feedback", "质量验收与训练反馈", "06"],
+  ].map(([slug, name, icon], order) => ({
+    slug,
+    name,
+    description: `${name}说明`,
+    color: "#345",
+    icon,
+    order,
+  }));
+  return {
+    siteUrl: "https://example.com/",
+    generatedAt: "2026-09-20T00:00:00.000Z",
+    events: [legacyEvent],
+    tracks: pipelineStages.map((stage) => ({
+      ...stage,
+      kind: "pipeline",
+      perspective: "production",
+    })),
+    actors: [],
+    resources: [],
+    sources: [
+      {
+        slug: "example-source",
+        name: "Example Source",
+        homepageUrl: "https://example.com/source",
+        category: "official",
+        region: "CN",
+        tier: 1,
+        role: "official",
+        acquisition: "rss",
+        topics: ["embodied-data"],
+        maintenanceStatus: "maintained",
+        lifecycle: "shadow",
+        observationEnabled: false,
+        qualityScore: 90,
+        cadence: "weekly",
+        healthStatus: "healthy",
+        lastCheckedAt: null,
+        latestItemAt: null,
+        healthErrorCode: null,
+      },
+    ],
+    signals: [],
+    influencers: [],
+    scout: [],
+    narratives: { horizon: { start: "2026", end: "2026", label: "2026" }, eras: [], tracks: [] },
+    product: {
+      version: "0.12.0",
+      generatedAt: "2026-09-20T00:00:00.000Z",
+      capabilities: [],
+      roadmap: [],
+      releases: [],
+      evaluation: null,
+      sourceCoverage: {
+        total: 1,
+        active: 0,
+        observing: 0,
+        candidate: 1,
+        regions: ["CN"],
+        categories: ["official"],
+      },
+    },
+    github: {
+      repositoryUrl: "https://github.com/example/agent-pulse",
+      stars: 1,
+      forks: 0,
+      openIssues: 0,
+      latestRelease: "v0.12.0",
+      fetchedAt: null,
+    },
+    embodiedEvents: [
+      {
+        ...publicEvent,
+        pipelineStages: ["acquisition-route"],
+        dataProfile: {
+          pipelineStages: ["acquisition-route"],
+          scenarios: ["tabletop manipulation"],
+          embodiments: ["single-arm"],
+          tasks: ["manipulation"],
+          modalities: ["rgb", "action"],
+          acquisitionMethods: ["teleoperation"],
+          dataFormats: ["RLDS"],
+          standards: ["RLDS"],
+          scaleClaims: [],
+          qualityMetrics: ["task completion"],
+          costSignals: [],
+          deliveryImpact: "Defines the production and acceptance boundary for a robot data run.",
+          evidenceStatus: "verified",
+        },
+        datasets: [{ slug: "droid", title: "DROID", role: "release" }],
+        standards: [],
+        collectionMethods: [
+          { slug: "teleoperation", title: "Robot teleoperation", role: "demonstration" },
+        ],
+        peers: [{ slug: "example-lab", title: "Example Lab", role: "claim" }],
+      },
+    ],
+    pipelineStages,
+    datasets: [],
+    standards: [],
+    collectionMethods: [],
+    peers: [],
+  } as StaticSiteModel;
 }
 
 function researchEvent(slug: string, happenedAt: string): EnrichedEvent {

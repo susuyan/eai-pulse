@@ -225,17 +225,14 @@ describe("SQLite application", () => {
     expect(publicSources[0]).not.toHaveProperty("sample_json");
     expect(publicSources[0]).not.toHaveProperty("error_summary");
     const staticPages = [
-      ["index.html", "AI 行业关键变化与证据 · Agent Pulse"],
-      ["lines/index.html", "领域趋势 · Agent Pulse"],
-      ["industry-evolution/index.html", "行业发展历程 · Agent Pulse"],
+      ["index.html", "具身数据情报与生产洞察 · Agent Pulse"],
+      ["pipeline/index.html", "数据管线 · Agent Pulse"],
+      ["assets/index.html", "数据资产 · Agent Pulse"],
+      ["peers/index.html", "行业同行 · Agent Pulse"],
       ["timeline/index.html", "事件时间线 · Agent Pulse"],
-      ["signals/index.html", "来源更新 · Agent Pulse"],
       ["scout/index.html", "行动建议 · Agent Pulse"],
-      ["actors/index.html", "公司与机构 · Agent Pulse"],
-      ["resources/index.html", "模型价格 · Agent Pulse"],
-      ["product/index.html", "我们怎么判断 · Agent Pulse"],
       ["changelog/index.html", "产品更新 · Agent Pulse"],
-      ["sources/index.html", "信息来源 · Agent Pulse"],
+      ["sources/index.html", "来源地图 · Agent Pulse"],
       ["legal/index.html", "版权与纠错 · Agent Pulse"],
       ["404.html", "页面未找到 · Agent Pulse"],
     ] as const;
@@ -250,22 +247,20 @@ describe("SQLite application", () => {
       expect(html, path).not.toContain("__PREFIX__");
       expect(html, path).not.toContain("/Users/");
     }
-    const englishActors = await readFile(join(config.distDir, "en/actors/index.html"), "utf8");
-    expect(englishActors).toContain('href="../../assets/icons.svg#sun"');
-    expect(englishActors).not.toContain('href="../assets/icons.svg#sun"');
-    expect(englishActors).toContain('data-timeline-src="../../data/timeline.json"');
-    expect(englishActors).toContain('aria-label="Back to top"');
+    const englishPeers = await readFile(join(config.distDir, "en/peers/index.html"), "utf8");
+    expect(englishPeers).toContain('href="../../assets/icons.svg#sun"');
+    expect(englishPeers).not.toContain('href="../assets/icons.svg#sun"');
+    expect(englishPeers).toContain('data-timeline-src="../../data/events.json"');
+    expect(englishPeers).toContain('aria-label="Back to top"');
     const changelog = await readFile(join(config.distDir, "changelog/index.html"), "utf8");
-    expect(changelog).toContain('id="v0-7-0"');
-    expect(changelog).toContain('id="v0-10-0"');
-    expect(changelog).toContain("LATEST RELEASE");
-    expect(changelog).toContain("Living Evidence Interface");
     expect(changelog).toContain("The Autonomous Intelligence Loop");
+    expect(changelog).toContain("Living Evidence Interface");
+    expect(changelog).toContain("产品更新");
     const englishChangelog = await readFile(
       join(config.distDir, "en/changelog/index.html"),
       "utf8",
     );
-    expect(englishChangelog).toContain("LATEST RELEASE");
+    expect(englishChangelog).toContain("Product Updates");
     const css = await readFile(join(config.distDir, "assets/app.css"), "utf8");
     const home = await readFile(join(config.distDir, "index.html"), "utf8");
     const llms = await readFile(join(config.distDir, "llms.txt"), "utf8");

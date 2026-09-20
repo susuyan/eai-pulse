@@ -4,13 +4,11 @@ import { t } from "./i18n.js";
 
 export type PageKey =
   | "home"
-  | "lines"
+  | "pipeline"
+  | "assets"
+  | "peers"
   | "timeline"
-  | "signals"
   | "scout"
-  | "actors"
-  | "resources"
-  | "product"
   | "changelog"
   | "sources"
   | "legal";
@@ -92,13 +90,10 @@ export function pageLayout(input: PageChrome): string {
   // ── Navigation ──────────────────────────────────────────────
   const navItems: Array<{ key: PageKey; label: string; route: string }> = [
     { key: "home", label: t("nav.home", locale), route: "" },
-    { key: "lines", label: t("nav.lines", locale), route: "lines/" },
-    { key: "timeline", label: t("nav.timeline", locale), route: "timeline/" },
-    {
-      key: "signals",
-      label: locale === "en" ? "Source Updates" : "来源更新",
-      route: "signals/",
-    },
+    { key: "pipeline", label: t("nav.pipeline", locale), route: "pipeline/" },
+    { key: "assets", label: t("nav.assets", locale), route: "assets/" },
+    { key: "peers", label: t("nav.peers", locale), route: "peers/" },
+    { key: "sources", label: t("nav.sources", locale), route: "sources/" },
     { key: "scout", label: t("nav.scout", locale), route: "scout/" },
   ];
   const navHtml = navItems
@@ -110,14 +105,10 @@ export function pageLayout(input: PageChrome): string {
 
   const mobileNav: Array<{ key: PageKey; icon: string; label: string; route: string }> = [
     { key: "home", icon: "home", label: t("mobile.home", locale), route: "" },
-    { key: "lines", icon: "route", label: t("mobile.lines", locale), route: "lines/" },
-    { key: "timeline", icon: "clock", label: t("mobile.timeline", locale), route: "timeline/" },
-    {
-      key: "signals",
-      icon: "menu",
-      label: locale === "en" ? "Updates" : "更新",
-      route: "signals/",
-    },
+    { key: "pipeline", icon: "route", label: t("mobile.pipeline", locale), route: "pipeline/" },
+    { key: "assets", icon: "menu", label: t("mobile.assets", locale), route: "assets/" },
+    { key: "peers", icon: "users", label: t("mobile.peers", locale), route: "peers/" },
+    { key: "sources", icon: "menu", label: t("mobile.sources", locale), route: "sources/" },
     { key: "scout", icon: "sparkles", label: t("mobile.scout", locale), route: "scout/" },
   ];
 
@@ -219,8 +210,8 @@ export function pageLayout(input: PageChrome): string {
     <div class="shell footer-grid">
       <div class="footer-brand"><strong>AGENT PULSE</strong><p>${escapeHtml(t("footer.tagline", locale))}</p>${footerAiAccess(assetPrefix, locale)}${footerSubscriptions(input.github, locale)}${footerContacts(locale)}</div>
       <div class="footer-links">
-        <nav aria-label="${locale === "en" ? "Explore" : "探索"}"><span>${locale === "en" ? "EXPLORE" : "探索"}</span><a href="${prefix}lines/">${escapeHtml(t("footer.lines", locale))}</a><a href="${prefix}industry-evolution/">${locale === "en" ? "Industry History" : "行业发展历程"}</a><a href="${prefix}timeline/">${escapeHtml(t("footer.timeline", locale))}</a><a href="${prefix}signals/">${locale === "en" ? "Source updates" : "来源更新"}</a><a href="${prefix}scout/">${escapeHtml(t("footer.scout", locale))}</a><a href="${prefix}sources/">${escapeHtml(t("footer.sources", locale))}</a></nav>
-        <nav aria-label="${locale === "en" ? "More" : "更多"}"><span>${locale === "en" ? "MORE" : "更多"}</span><a href="${prefix}actors/">${escapeHtml(t("tab.actors", locale))}</a><a href="${prefix}resources/">${escapeHtml(t("tab.resources", locale))}</a><a href="${prefix}legal/">${escapeHtml(t("footer.legal", locale))}</a><a href="${prefix}changelog/">${escapeHtml(t("footer.changelog", locale))}</a></nav>
+        <nav aria-label="${locale === "en" ? "Explore" : "探索"}"><span>${locale === "en" ? "EXPLORE" : "探索"}</span><a href="${prefix}pipeline/">${escapeHtml(t("nav.pipeline", locale))}</a><a href="${prefix}assets/">${escapeHtml(t("nav.assets", locale))}</a><a href="${prefix}peers/">${escapeHtml(t("nav.peers", locale))}</a><a href="${prefix}timeline/">${escapeHtml(t("nav.timeline", locale))}</a></nav>
+        <nav aria-label="${locale === "en" ? "More" : "更多"}"><span>${locale === "en" ? "MORE" : "更多"}</span><a href="${prefix}sources/">${escapeHtml(t("nav.sources", locale))}</a><a href="${prefix}scout/">${escapeHtml(t("nav.scout", locale))}</a><a href="${prefix}legal/">${escapeHtml(t("footer.legal", locale))}</a><a href="${prefix}changelog/">${escapeHtml(t("footer.changelog", locale))}</a></nav>
       </div>
     </div>
     <div class="shell footer-meta">
@@ -273,7 +264,7 @@ function eventDrawerShell(locale: Locale, assetPrefix: string, prefix: string): 
   const label = locale === "en" ? "Event detail drawer" : "事件详情抽屉";
   const kicker = locale === "en" ? "EVENT BRIEF" : "事件解读";
   const close = locale === "en" ? "Close event drawer" : "关闭事件抽屉";
-  return `<aside class="timeline-preview event-drawer" id="event-drawer" role="dialog" aria-modal="true" aria-hidden="true" aria-label="${escapeHtml(label)}" data-event-drawer data-timeline-src="${escapeHtml(`${assetPrefix}data/timeline.json`)}" data-event-base="${escapeHtml(`${prefix}events/`)}" inert><header class="drawer-header"><span>${escapeHtml(kicker)}</span><button class="preview-close" type="button" data-event-drawer-close aria-label="${escapeHtml(close)}">${icon("x")}</button></header><div class="event-drawer-content" data-event-drawer-content></div></aside><div class="preview-backdrop" data-event-drawer-backdrop hidden></div>`;
+  return `<aside class="timeline-preview event-drawer" id="event-drawer" role="dialog" aria-modal="true" aria-hidden="true" aria-label="${escapeHtml(label)}" data-event-drawer data-timeline-src="${escapeHtml(`${assetPrefix}data/events.json`)}" data-event-base="${escapeHtml(`${prefix}events/`)}" inert><header class="drawer-header"><span>${escapeHtml(kicker)}</span><button class="preview-close" type="button" data-event-drawer-close aria-label="${escapeHtml(close)}">${icon("x")}</button></header><div class="event-drawer-content" data-event-drawer-content></div></aside><div class="preview-backdrop" data-event-drawer-backdrop hidden></div>`;
 }
 
 function githubStarButton(github: GithubData, locale: Locale): string {
@@ -291,7 +282,6 @@ function ensureSlash(value: string): string {
 
 function isActive(active: PageKey, key: PageKey): boolean {
   if (active === key) return true;
-  if (key === "scout" && ["actors", "resources", "product"].includes(active)) return true;
   return key === "changelog" && ["sources", "legal"].includes(active);
 }
 

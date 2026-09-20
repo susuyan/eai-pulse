@@ -746,6 +746,9 @@ async function restoreSnapshot(
     if (!sourceId) continue;
     const current = sources.find((source) => source.id === sourceId);
     if (!current) continue;
+    // Catalog retirement is authoritative over historical operational state.
+    if (current.lifecycle_status === "retired" || current.maintenance_status === "retired")
+      continue;
     const incomingLatest = latestTimestamp(
       optionalString(value.lastVerifiedAt),
       optionalString(value.lastCollectedAt),

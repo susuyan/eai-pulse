@@ -3,7 +3,7 @@
  *
  * Checks:
  *   1. Site availability (HTTP GET PUBLIC_SITE_URL)
- *   2. Data freshness (age of data/snapshot/v1.json)
+ *   2. Data freshness (versioned evaluation watermark)
  *   3. Source health (DB query via generateMonitorReport)
  *
  * Exit codes:
@@ -17,11 +17,19 @@
  *   MONITOR_SKIP_SITE=1 npm run monitor:check   # skip site check
  */
 
-import { stat } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { loadConfig } from "../config/env.js";
 import { createDatabase } from "../db/database.js";
 import { migrateToLatest } from "../db/migrate.js";
 import { seedDatabase } from "../db/seed.js";
+import { evaluateSystem } from "../pipeline/evaluate.js";
+import {
+  decideOperationalEvaluation,
+  evaluateVersionedFreshness,
+} from "../pipeline/evaluation-policy.js";
+import { normalizeOperationalEvaluationReport } from "../pipeline/evaluation-progress.js";
 import {
   generateMonitorReport,
   getSeverityLevel,
@@ -43,6 +51,7 @@ interface HealthCheckDetail extends CheckDetail {
   degradedPercent: number;
   failedPercent: number;
   avgHealthScore: number;
+  evaluationScore: number;
 }
 
 export interface MonitorCheckResult {
@@ -61,8 +70,7 @@ export interface MonitorCheckResult {
 // ─── Snapshot path ────────────────────────────────────────────────────────
 
 const SNAPSHOT_PATH = "data/snapshot/v1.json";
-const FRESHNESS_WARNING_MIN = 6 * 60; // 6 hours
-const FRESHNESS_CRITICAL_MIN = 24 * 60; // 24 hours
+const EVALUATION_REPORT_PATH = "data/reports/system-evaluation.json";
 
 // ─── Checks ───────────────────────────────────────────────────────────────
 
@@ -96,45 +104,50 @@ async function checkSite(config: ReturnType<typeof loadConfig>): Promise<CheckDe
   }
 }
 
-async function checkFreshness(rootDir: string): Promise<CheckDetail> {
+export async function checkFreshness(
+  rootDir: string,
+  currentScore: number,
+  now = new Date(),
+): Promise<CheckDetail> {
   try {
-    const filePath = new URL(SNAPSHOT_PATH, `file://${rootDir}/`).pathname;
-    const fileStat = await stat(filePath);
-    const now = Date.now();
-    const ageMs = now - fileStat.mtimeMs;
-    const ageMinutes = Math.round(ageMs / 60_000);
-
-    if (ageMinutes < FRESHNESS_WARNING_MIN) {
-      return {
-        status: "ok",
-        message: `Snapshot is ${ageMinutes} minutes old (threshold: ${FRESHNESS_WARNING_MIN} min)`,
-        detail: { ageMinutes, lastModified: fileStat.mtime.toISOString() },
-      };
-    }
-    if (ageMinutes < FRESHNESS_CRITICAL_MIN) {
-      return {
-        status: "warning",
-        message: `Snapshot is ${ageMinutes} minutes old — data may be stale`,
-        detail: { ageMinutes, lastModified: fileStat.mtime.toISOString() },
-      };
-    }
-    return {
-      status: "critical",
-      message: `Snapshot is ${ageMinutes} minutes old — data is critically stale`,
-      detail: { ageMinutes, lastModified: fileStat.mtime.toISOString() },
-    };
+    const snapshotPath = new URL(SNAPSHOT_PATH, `file://${rootDir}/`).pathname;
+    const reportPath = new URL(EVALUATION_REPORT_PATH, `file://${rootDir}/`).pathname;
+    const [fileStat, serializedReport] = await Promise.all([
+      stat(snapshotPath),
+      readFile(reportPath, "utf8"),
+    ]);
+    const report = normalizeOperationalEvaluationReport(JSON.parse(serializedReport));
+    return evaluateVersionedFreshness({
+      evaluationAsOf: report.evaluationAsOf,
+      currentScore,
+      fileMtime: fileStat.mtime.toISOString(),
+      now,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    const decision = decideOperationalEvaluation({
+      currentScore: null,
+      persistedEvaluationAsOf: null,
+      reportValid: false,
+      now,
+    });
     return {
       status: "critical",
-      message: `Cannot read snapshot: ${message}`,
-      detail: { error: message },
+      message: `Cannot read versioned evaluation state: ${message}`,
+      detail: {
+        error: message,
+        reasonCode: "evaluation_report_invalid",
+        reasonCodes: decision.reasonCodes,
+        fingerprint: decision.fingerprint,
+        refreshEligible: false,
+      },
     };
   }
 }
 
 async function checkSourceHealth(
   config: ReturnType<typeof loadConfig>,
+  asOf: Date,
 ): Promise<HealthCheckDetail> {
   const db = createDatabase(config);
   try {
@@ -151,6 +164,11 @@ async function checkSourceHealth(
     }
 
     const report = await generateMonitorReport(db);
+    const evaluation = await evaluateSystem(db, {
+      asOf,
+      gateMode: "operational",
+      persist: false,
+    });
     const { activePercent, degradedPercent, failedPercent } = sourceLifecyclePercentages(report);
 
     const severity = getSeverityLevel(report);
@@ -177,6 +195,7 @@ async function checkSourceHealth(
       degradedPercent,
       failedPercent,
       avgHealthScore: report.avgHealthScore,
+      evaluationScore: evaluation.overallScore,
     };
   } finally {
     await db.destroy();
@@ -188,8 +207,9 @@ async function checkSourceHealth(
 async function main(): Promise<never> {
   const config = loadConfig();
   const skipSite = process.env.MONITOR_SKIP_SITE === "1";
+  const runStartedAt = new Date();
 
-  const checks = await Promise.all([
+  const [site, sourceHealth] = await Promise.all([
     skipSite
       ? Promise.resolve<CheckDetail>({
           status: "ok",
@@ -197,11 +217,13 @@ async function main(): Promise<never> {
           detail: {},
         })
       : checkSite(config),
-    checkFreshness(config.rootDir),
-    checkSourceHealth(config),
+    checkSourceHealth(config, runStartedAt),
   ]);
-
-  const [site, freshness, sourceHealth] = checks;
+  const freshness = await checkFreshness(
+    config.rootDir,
+    sourceHealth.evaluationScore,
+    runStartedAt,
+  );
 
   // Compute overall status: critical wins over warning, warning over ok
   const statusValue: Record<"ok" | "warning" | "critical", number> = {
@@ -232,8 +254,14 @@ async function main(): Promise<never> {
 
   if (freshness.status !== "ok") {
     const level = freshness.status === "critical" ? "Critical" : "Warning";
-    issues.push(`${level}: data snapshot is stale.`);
-    recommendations.push("Trigger the data-refresh workflow to update the snapshot.");
+    issues.push(
+      `${level}: operational evaluation state is unhealthy (${freshness.detail.reasonCode ?? "evaluation_report_invalid"}).`,
+    );
+    recommendations.push(
+      freshness.detail.refreshEligible === false
+        ? "Inspect and restore a valid operational evaluation report before recovery."
+        : "Trigger the incremental data-refresh workflow to update the watermark.",
+    );
   }
 
   if (sourceHealth.status !== "ok") {
@@ -245,15 +273,7 @@ async function main(): Promise<never> {
     recommendations.push("Review quarantined sources and repair failing adapters.");
   }
 
-  const systemScore = Math.max(
-    0,
-    Math.min(
-      100,
-      sourceHealth.status === "ok"
-        ? sourceHealth.avgHealthScore
-        : Math.round(sourceHealth.avgHealthScore * 0.7),
-    ),
-  );
+  const systemScore = sourceHealth.evaluationScore;
 
   const result: MonitorCheckResult = {
     timestamp: new Date().toISOString(),
@@ -272,28 +292,30 @@ async function main(): Promise<never> {
   process.exit(exitCode);
 }
 
-main().catch((error) => {
-  const errorResult: MonitorCheckResult = {
-    timestamp: new Date().toISOString(),
-    status: "critical",
-    systemScore: 0,
-    checks: {
-      site: { status: "critical", message: "Monitor script error", detail: {} },
-      freshness: { status: "critical", message: "Monitor script error", detail: {} },
-      sourceHealth: {
-        status: "critical",
-        message: "Monitor script error",
-        detail: {},
-        totalSources: 0,
-        activePercent: 0,
-        degradedPercent: 0,
-        failedPercent: 0,
-        avgHealthScore: 0,
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url))
+  main().catch((error) => {
+    const errorResult: MonitorCheckResult = {
+      timestamp: new Date().toISOString(),
+      status: "critical",
+      systemScore: 0,
+      checks: {
+        site: { status: "critical", message: "Monitor script error", detail: {} },
+        freshness: { status: "critical", message: "Monitor script error", detail: {} },
+        sourceHealth: {
+          status: "critical",
+          message: "Monitor script error",
+          detail: {},
+          totalSources: 0,
+          activePercent: 0,
+          degradedPercent: 0,
+          failedPercent: 0,
+          avgHealthScore: 0,
+          evaluationScore: 0,
+        },
       },
-    },
-    issues: [`Monitor script crashed: ${error instanceof Error ? error.message : String(error)}`],
-    recommendations: ["Check the monitor workflow logs for details."],
-  };
-  console.log(JSON.stringify(errorResult, null, 2));
-  process.exit(2);
-});
+      issues: [`Monitor script crashed: ${error instanceof Error ? error.message : String(error)}`],
+      recommendations: ["Check the monitor workflow logs for details."],
+    };
+    console.log(JSON.stringify(errorResult, null, 2));
+    process.exit(2);
+  });

@@ -18,8 +18,8 @@ permissions:
   issues: write
 
 concurrency:
-  group: agent-pulse-monitor-main
-  cancel-in-progress: true
+  group: agent-pulse-monitor-incident-main
+  cancel-in-progress: false
 
 env:
   DATABASE_URL: sqlite:./var/monitor-check.db
@@ -93,7 +93,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gh issue list --state open --label 'monitor:critical' --limit 1 --json number,updatedAt,body,url > "$RUNNER_TEMP/monitor-incident.json"
+          gh issue list --state open --label 'monitor:critical' --limit 100 --json number,updatedAt,body,url \
+            --jq 'sort_by(.number) | (map(select(.body | contains("agent-pulse-monitor:v")))[0] // .[0]) | if . == null then [] else [.] end' > "$RUNNER_TEMP/monitor-incident.json"
           jq -e 'type == "array"' "$RUNNER_TEMP/monitor-incident.json" >/dev/null
 
       - name: Decide whether this run deserves a notification
@@ -149,13 +150,16 @@ jobs:
           body="$RUNNER_TEMP/monitor-issue.md"
           decision="$RUNNER_TEMP/monitor-decision.json"
           {
-            echo "<!-- agent-pulse-monitor:v2 fingerprint=$(jq -r '.fingerprint' "$decision") -->"
+            echo "<!-- agent-pulse-monitor:v3 fingerprint=$(jq -r '.fingerprint' "$decision") -->"
             echo '# Agent Pulse 自动监控告警'
             echo
             echo "- 时间：$(jq -r '.timestamp' "$report")"
             echo "- 系统分：$(jq -r '.systemScore' "$report") / 100"
             echo "- 状态：$(jq -r '.status' "$report")"
             echo "- 告警门禁：$(jq -r '.decisionSource' "$decision") · $(jq -r '.reasonCode' "$decision")"
+            echo "- 评测水位：$(jq -r '.checks.freshness.detail.evaluationAsOf // "unknown"' "$report")"
+            echo "- 水位年龄（分钟）：$(jq -r '.checks.freshness.detail.ageMinutes // "unknown"' "$report")"
+            echo "- 新鲜度原因：$(jq -r '.checks.freshness.detail.reasonCode // "none"' "$report")"
             echo
             echo '## 问题'
             jq -r '.issues[]? | "- " + .' "$report"
@@ -169,7 +173,8 @@ jobs:
             echo "[查看本次 Actions 运行](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           } > "$body"
           gh label create "monitor:critical" --color d73a4a --description "AI-gated critical monitor incident" --force
-          issue="$(gh issue list --state open --label 'monitor:critical' --limit 1 --json number --jq '.[0].number // empty')"
+          issue="$(gh issue list --state open --label 'monitor:critical' --limit 100 --json number,body \
+            --jq 'sort_by(.number) | (map(select(.body | contains("agent-pulse-monitor:v")))[0] // .[0]) | .number // empty')"
           if [[ -n "$issue" ]]; then
             gh issue edit "$issue" --body-file "$body"
           else

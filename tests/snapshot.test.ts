@@ -41,6 +41,8 @@ describe("repository data snapshot", () => {
         dimensions_json: JSON.stringify([{ slug: "coverage", score: 51, tokenCount: 42 }]),
         capability_snapshot_json: JSON.stringify([{ slug: "snapshot", status: "operational" }]),
         notes: "Measured evidence only.",
+        evaluation_as_of: "2026-07-11T07:58:00.000Z",
+        gate_mode: "change",
         started_at: "2026-07-11T07:59:00.000Z",
         finished_at: "2026-07-11T08:00:00.000Z",
       })
@@ -569,13 +571,21 @@ describe("repository data snapshot", () => {
     expect(
       await targetDb
         .selectFrom("evaluation_runs")
-        .select(["overall_score", "dimensions_json", "capability_snapshot_json"])
+        .select([
+          "overall_score",
+          "dimensions_json",
+          "capability_snapshot_json",
+          "evaluation_as_of",
+          "gate_mode",
+        ])
         .where("id", "=", "snapshot-evaluation-run")
         .executeTakeFirst(),
     ).toEqual({
       overall_score: 51,
       dimensions_json: JSON.stringify([{ slug: "coverage", score: 51, tokenCount: 42 }]),
       capability_snapshot_json: JSON.stringify([{ slug: "snapshot", status: "operational" }]),
+      evaluation_as_of: "2026-07-11T07:58:00.000Z",
+      gate_mode: "change",
     });
     await restoreRepositorySnapshot(targetDb, root);
     expect(

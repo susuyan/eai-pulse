@@ -4,6 +4,7 @@ import {
   calibrateDimension,
   type EvaluationDimension,
 } from "../src/pipeline/evaluate.js";
+import { isWithinPastWindow } from "../src/pipeline/evaluation-context.js";
 
 function dimension(overrides: Partial<EvaluationDimension> = {}): EvaluationDimension {
   return {
@@ -25,6 +26,13 @@ function dimension(overrides: Partial<EvaluationDimension> = {}): EvaluationDime
 }
 
 describe("evaluation calibration", () => {
+  it("never treats a future timestamp as recent", () => {
+    const asOf = new Date("2026-08-26T12:00:00.000Z");
+    expect(isWithinPastWindow("2026-08-26T12:00:00.000Z", asOf, 7 * 86_400_000)).toBe(true);
+    expect(isWithinPastWindow("2026-08-26T12:00:00.001Z", asOf, 7 * 86_400_000)).toBe(false);
+    expect(isWithinPastWindow("invalid", asOf, 7 * 86_400_000)).toBe(false);
+  });
+
   it("hard caps an insufficient-data dimension at 60 if some samples exist", () => {
     const result = calibrateDimension({
       slug: "confidence",

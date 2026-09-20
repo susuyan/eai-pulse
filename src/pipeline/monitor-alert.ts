@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import type { JsonModelClient } from "../ai/deepseek.js";
+import { operationalEvaluationReasonCodes, operationalFingerprint } from "./evaluation-policy.js";
 
 const statusSchema = z.enum(["ok", "warning", "critical"]);
 const checkSchema = z
@@ -70,6 +71,36 @@ export interface MonitorAlertDecision {
     confidence: number | null;
     errorCode: string | null;
   };
+}
+
+const EVALUATION_SECTION_START = "<!-- agent-pulse-evaluation:start -->";
+const EVALUATION_SECTION_END = "<!-- agent-pulse-evaluation:end -->";
+
+export function mergeEvaluationIncidentBody(
+  existingBody: string,
+  evaluationSection: string,
+  evaluationFingerprint: string,
+): string {
+  if (!/^[a-f0-9]{16}$/.test(evaluationFingerprint)) {
+    throw new Error("Invalid evaluation incident fingerprint");
+  }
+  if (
+    !evaluationSection.includes(EVALUATION_SECTION_START) ||
+    !evaluationSection.includes(EVALUATION_SECTION_END)
+  ) {
+    throw new Error("Evaluation incident section markers are required");
+  }
+  const preserved = existingBody
+    .replace(/<!-- agent-pulse-monitor:v\d+ fingerprint=[a-f0-9]{16} -->\n?/g, "")
+    .replace(
+      /\n?<!-- agent-pulse-evaluation:start -->[\s\S]*?<!-- agent-pulse-evaluation:end -->\n?/g,
+      "",
+    )
+    .trim();
+  const monitorSection = preserved.includes("# Agent Pulse 自动监控告警") ? preserved : "";
+  const heading = monitorSection || "# Agent Pulse 运营评测告警";
+  const marker = `<!-- agent-pulse-monitor:v3 fingerprint=${evaluationFingerprint} -->`;
+  return `${marker}\n${heading}\n\n${evaluationSection.trim()}\n`;
 }
 
 export interface DecideMonitorAlertOptions {
@@ -238,12 +269,32 @@ export async function decideMonitorAlert(
 
 export function monitorFingerprint(reportInput: MonitorReportInput): string {
   const report = monitorReportSchema.parse(reportInput);
+  const freshness = report.checks.freshness;
+  const evaluationReasons = z
+    .array(z.enum(operationalEvaluationReasonCodes))
+    .safeParse(
+      freshness.detail.reasonCodes ??
+        (freshness.detail.reasonCode ? [freshness.detail.reasonCode] : []),
+    );
+  const evaluationFingerprint =
+    freshness.status === "critical" &&
+    evaluationReasons.success &&
+    evaluationReasons.data.length > 0
+      ? operationalFingerprint(evaluationReasons.data)
+      : null;
   const signals = Object.entries(report.checks)
-    .filter(([, check]) => check.status === "critical")
+    .filter(
+      ([name, check]) =>
+        check.status === "critical" && !(name === "freshness" && evaluationFingerprint),
+    )
     .map(([name]) => name)
     .sort();
   if (report.issues.some((issue) => issue.startsWith("Monitor script crashed:"))) {
     signals.push("monitor-crash");
+  }
+  if (evaluationFingerprint) {
+    if (signals.length === 0) return evaluationFingerprint;
+    signals.push(`evaluation:${evaluationFingerprint}`);
   }
   return createHash("sha256")
     .update(signals.join("|") || report.status)
@@ -267,13 +318,24 @@ function classifyHardFailure(
     };
   }
   const ageMinutes = Number(report.checks.freshness.detail.ageMinutes);
+  const freshnessReason = String(report.checks.freshness.detail.reasonCode ?? "");
+  if (freshnessReason === "evaluation_report_invalid") {
+    return {
+      reasonCode: "evaluation_report_invalid",
+      rationale: "The operational evaluation report is invalid and cannot authorize recovery.",
+    };
+  }
   if (
     report.checks.freshness.status === "critical" &&
-    (ageMinutes >= HARD_STALE_MINUTES || report.checks.freshness.message.startsWith("Cannot read"))
+    (freshnessReason === "evaluation_persistently_stale" ||
+      freshnessReason === "snapshot_persistently_stale" ||
+      ageMinutes >= HARD_STALE_MINUTES ||
+      report.checks.freshness.message.startsWith("Cannot read"))
   ) {
     return {
-      reasonCode: "snapshot_persistently_stale",
-      rationale: "The public snapshot is missing or has remained stale for more than 72 hours.",
+      reasonCode: "evaluation_persistently_stale",
+      rationale:
+        "The versioned evaluation watermark is missing or has remained stale for at least 72 hours.",
     };
   }
   return null;
@@ -300,7 +362,7 @@ function activeCooldown(
 }
 
 function incidentFingerprint(body?: string): string | null {
-  return body?.match(/agent-pulse-monitor:v2 fingerprint=([a-f0-9]{16})/)?.[1] ?? null;
+  return body?.match(/agent-pulse-monitor:v(?:2|3) fingerprint=([a-f0-9]{16})/)?.[1] ?? null;
 }
 
 function normalizeIncident(

@@ -26,6 +26,7 @@ import {
   isSensitiveParameterName,
   sha256,
 } from "../domain/url.js";
+import { type EvaluationGateMode, parseEvaluationInstant } from "./evaluation-context.js";
 
 export const SNAPSHOT_SCHEMA_VERSION = 1;
 export const DEFAULT_SNAPSHOT_PATH = join("data", "snapshot", "v1.json");
@@ -678,6 +679,11 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
       dimensions: parseJson(evaluation.dimensions_json, []),
       capabilities: parseJson(evaluation.capability_snapshot_json, []),
       notes: evaluation.notes,
+      evaluationAsOf: normalizeEvaluationHistoryTimestamp(
+        evaluation.evaluation_as_of,
+        evaluation.finished_at,
+      ),
+      gateMode: normalizeEvaluationHistoryGateMode(evaluation.gate_mode),
       startedAt: evaluation.started_at,
       finishedAt: evaluation.finished_at,
     })),
@@ -1644,6 +1650,12 @@ async function restoreSnapshot(
   }
 
   for (const value of snapshot.evaluationRuns ?? []) {
+    const finishedAt = requiredString(value, "finishedAt");
+    const evaluationAsOf = normalizeEvaluationHistoryTimestamp(
+      optionalString(value.evaluationAsOf),
+      finishedAt,
+    );
+    const gateMode = normalizeEvaluationHistoryGateMode(optionalString(value.gateMode));
     await db
       .insertInto("evaluation_runs")
       .values({
@@ -1656,12 +1668,30 @@ async function restoreSnapshot(
           Array.isArray(value.capabilities) ? value.capabilities : [],
         ),
         notes: requiredString(value, "notes"),
+        evaluation_as_of: evaluationAsOf,
+        gate_mode: gateMode,
         started_at: requiredString(value, "startedAt"),
-        finished_at: requiredString(value, "finishedAt"),
+        finished_at: finishedAt,
       })
       .onConflict((conflict) => conflict.column("id").doNothing())
       .execute();
   }
+}
+
+function normalizeEvaluationHistoryTimestamp(
+  value: string | null,
+  legacyFinishedAt: string,
+): string {
+  return parseEvaluationInstant(
+    value ?? legacyFinishedAt,
+    "evaluation history timestamp",
+  ).toISOString();
+}
+
+function normalizeEvaluationHistoryGateMode(value: string | null): EvaluationGateMode {
+  if (value === null) return "operational";
+  if (value === "change" || value === "operational") return value;
+  throw new Error(`Snapshot field gateMode is invalid: ${value}`);
 }
 
 function safeSourceState(value: unknown): Record<string, string> {

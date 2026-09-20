@@ -2,6 +2,7 @@ import type { Kysely } from "kysely";
 import { parseJson } from "../db/repository.js";
 import type { DatabaseSchema, EventRow } from "../db/types.js";
 import type { ScoreFactors } from "../domain/types.js";
+import { isAtOrBefore } from "./evaluation-context.js";
 
 export type ReadinessBlocker =
   | "event_not_found"
@@ -114,7 +115,7 @@ export async function evaluateEventReadiness(
   };
 }
 
-export async function eventReadinessSummary(db: Kysely<DatabaseSchema>) {
+export async function eventReadinessSummary(db: Kysely<DatabaseSchema>, asOf?: Date) {
   const [events, evidence, tracks] = await Promise.all([
     db.selectFrom("events").selectAll().execute(),
     db
@@ -127,22 +128,38 @@ export async function eventReadinessSummary(db: Kysely<DatabaseSchema>) {
         "sources.tier as tier",
         "sources.role as role",
         "sources.source_category as sourceCategory",
+        "event_signals.created_at as evidenceCreatedAt",
+        "signals.created_at as signalCreatedAt",
       ])
       .execute(),
     db
       .selectFrom("event_tracks")
-      .select(["event_id as eventId", ({ fn }) => fn.countAll<number>().as("count")])
-      .groupBy("event_id")
+      .select(["event_id as eventId", "created_at as trackCreatedAt"])
       .execute(),
   ]);
+  const visibleEvents = asOf
+    ? events.filter((event) => isAtOrBefore(event.created_at, asOf))
+    : events;
+  const visibleEvidence = asOf
+    ? evidence.filter(
+        (row) =>
+          isAtOrBefore(row.evidenceCreatedAt, asOf) && isAtOrBefore(row.signalCreatedAt, asOf),
+      )
+    : evidence;
+  const visibleTracks = asOf
+    ? tracks.filter((row) => isAtOrBefore(row.trackCreatedAt, asOf))
+    : tracks;
   const evidenceByEvent = new Map<string, typeof evidence>();
-  for (const row of evidence) {
+  for (const row of visibleEvidence) {
     const rows = evidenceByEvent.get(row.eventId) ?? [];
     rows.push(row);
     evidenceByEvent.set(row.eventId, rows);
   }
-  const tracksByEvent = new Map(tracks.map((row) => [row.eventId, Number(row.count)]));
-  const readiness = events.map((event) =>
+  const tracksByEvent = new Map<string, number>();
+  for (const row of visibleTracks) {
+    tracksByEvent.set(row.eventId, (tracksByEvent.get(row.eventId) ?? 0) + 1);
+  }
+  const readiness = visibleEvents.map((event) =>
     evaluateReadinessRow(
       event,
       evidenceByEvent.get(event.id) ?? [],

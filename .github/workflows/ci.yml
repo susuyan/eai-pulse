@@ -46,6 +46,7 @@ jobs:
           set -euo pipefail
           npm run --silent evaluate:system -- \
             --skip-bootstrap \
+            --gate=change \
             --baseline="$RUNNER_TEMP/evaluation-baseline.json" \
             --output="$RUNNER_TEMP/evaluation-current.json" \
             --summary="$GITHUB_STEP_SUMMARY" \

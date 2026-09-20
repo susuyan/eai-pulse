@@ -526,7 +526,10 @@ export async function buildApp(db: Kysely<DatabaseSchema>, config: AppConfig) {
       .parse(request.body ?? {});
     return runScout(db, body.limit);
   });
-  app.post("/api/admin/pipeline/evaluate", async () => evaluateSystem(db));
+  app.post("/api/admin/pipeline/evaluate", async () => {
+    const asOf = new Date();
+    return evaluateSystem(db, { asOf, gateMode: "operational", persist: true });
+  });
   app.post("/api/admin/pipeline/export", async () => exportStaticSite(db, config));
   app.post("/api/admin/pipeline/auto-publish", async () => autoPublishReadyEvents(db));
   app.post("/api/admin/pipeline/auto-advance-scout", async () => autoAdvanceScout(db));

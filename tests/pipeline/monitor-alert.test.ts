@@ -1,8 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import type { JsonModelClient } from "../../src/ai/deepseek.js";
 import {
+  decideOperationalEvaluation,
+  evaluateVersionedFreshness,
+} from "../../src/pipeline/evaluation-policy.js";
+import {
   decideMonitorAlert,
   type MonitorReportInput,
+  mergeEvaluationIncidentBody,
   monitorFingerprint,
 } from "../../src/pipeline/monitor-alert.js";
 
@@ -48,6 +53,103 @@ function client(value: unknown): JsonModelClient {
 }
 
 describe("monitor alert decision", () => {
+  it("preserves unresolved Monitor details while replacing the evaluation section", () => {
+    const existing = [
+      "<!-- agent-pulse-monitor:v3 fingerprint=0123456789abcdef -->",
+      "# Agent Pulse 自动监控告警",
+      "",
+      "## 问题",
+      "- Site is unreachable.",
+      "",
+      "<!-- agent-pulse-evaluation:start -->",
+      "## 运营评测",
+      "- Old score: 62",
+      "<!-- agent-pulse-evaluation:end -->",
+    ].join("\n");
+    const section = [
+      "<!-- agent-pulse-evaluation:start -->",
+      "## 运营评测",
+      "- Current score: 56",
+      "<!-- agent-pulse-evaluation:end -->",
+    ].join("\n");
+
+    const merged = mergeEvaluationIncidentBody(existing, section, "fedcba9876543210");
+
+    expect(merged).toContain("# Agent Pulse 自动监控告警");
+    expect(merged).toContain("Site is unreachable.");
+    expect(merged).toContain("Current score: 56");
+    expect(merged).not.toContain("Old score: 62");
+    expect(merged.match(/agent-pulse-evaluation:start/g)).toHaveLength(1);
+    expect(merged).toMatch(/^<!-- agent-pulse-monitor:v3 fingerprint=fedcba9876543210 -->/);
+  });
+
+  it.each([
+    60, 59,
+  ])("recognizes a Quality Guard evaluation incident at score %s during Monitor cooldown", async (currentScore) => {
+    const guard = decideOperationalEvaluation({
+      currentScore,
+      persistedEvaluationAsOf: "2026-07-13T07:00:00Z",
+      reportValid: true,
+      now: NOW,
+    });
+    const input = report({
+      checks: {
+        ...report().checks,
+        freshness: evaluateVersionedFreshness({
+          evaluationAsOf: "2026-07-13T07:00:00Z",
+          fileMtime: NOW.toISOString(),
+          currentScore,
+          now: NOW,
+        }),
+        sourceHealth: { ...report().checks.sourceHealth, status: "ok" },
+      },
+    });
+    const decision = await decideMonitorAlert({
+      report: input,
+      now: NOW,
+      incident: {
+        updatedAt: "2026-07-14T07:30:00Z",
+        body: `<!-- agent-pulse-monitor:v3 fingerprint=${guard.fingerprint} -->`,
+      },
+    });
+    expect(decision).toMatchObject({
+      decision: "suppress",
+      decisionSource: "cooldown",
+      fingerprint: guard.fingerprint,
+    });
+  });
+
+  it("does not let a matching evaluation incident suppress a site outage", async () => {
+    const freshness = evaluateVersionedFreshness({
+      evaluationAsOf: "2026-07-13T07:00:00Z",
+      fileMtime: NOW.toISOString(),
+      now: NOW,
+    });
+    const guard = decideOperationalEvaluation({
+      currentScore: 60,
+      persistedEvaluationAsOf: "2026-07-13T07:00:00Z",
+      reportValid: true,
+      now: NOW,
+    });
+    const input = report({
+      checks: {
+        ...report().checks,
+        freshness,
+        site: { status: "critical", message: "Site unreachable", detail: {} },
+      },
+    });
+    const decision = await decideMonitorAlert({
+      report: input,
+      now: NOW,
+      incident: {
+        updatedAt: "2026-07-14T07:30:00Z",
+        body: `<!-- agent-pulse-monitor:v3 fingerprint=${guard.fingerprint} -->`,
+      },
+    });
+    expect(decision).toMatchObject({ notify: true, reasonCode: "site_unreachable" });
+    expect(decision.fingerprint).not.toBe(guard.fingerprint);
+  });
+
   it("never lets the model suppress a public site outage", async () => {
     const model = client({
       decision: "suppress",
@@ -74,14 +176,14 @@ describe("monitor alert decision", () => {
     expect(model.completeJson).not.toHaveBeenCalled();
   });
 
-  it("treats a snapshot older than 72 hours as a hard failure", async () => {
+  it("treats an evaluation watermark older than 72 hours as a hard failure", async () => {
     const input = report({
       checks: {
         ...report().checks,
         freshness: {
           status: "critical",
-          message: "Snapshot is critically stale",
-          detail: { ageMinutes: 4_500 },
+          message: "Evaluation watermark is critically stale",
+          detail: { ageMinutes: 4_500, reasonCode: "evaluation_persistently_stale" },
         },
         sourceHealth: { ...report().checks.sourceHealth, status: "ok" },
       },
@@ -89,8 +191,26 @@ describe("monitor alert decision", () => {
 
     const decision = await decideMonitorAlert({ report: input, now: NOW });
 
-    expect(decision.reasonCode).toBe("snapshot_persistently_stale");
+    expect(decision.reasonCode).toBe("evaluation_persistently_stale");
     expect(decision.notify).toBe(true);
+  });
+
+  it("normalizes the legacy persistent snapshot reason", async () => {
+    const input = report({
+      checks: {
+        ...report().checks,
+        freshness: {
+          status: "critical",
+          message: "Legacy snapshot freshness signal",
+          detail: { ageMinutes: 4_500, reasonCode: "snapshot_persistently_stale" },
+        },
+        sourceHealth: { ...report().checks.sourceHealth, status: "ok" },
+      },
+    });
+
+    const decision = await decideMonitorAlert({ report: input, now: NOW });
+
+    expect(decision.reasonCode).toBe("evaluation_persistently_stale");
   });
 
   it("suppresses the legacy source-health incident during the cooldown", async () => {
@@ -115,6 +235,25 @@ describe("monitor alert decision", () => {
     });
     expect(decision.cooldownUntil).toBe("2026-07-21T03:35:15.000Z");
     expect(model.completeJson).not.toHaveBeenCalled();
+  });
+
+  it("uses the shared v3 incident fingerprint during cooldown", async () => {
+    const input = report();
+    const fingerprint = monitorFingerprint(input);
+    const decision = await decideMonitorAlert({
+      report: input,
+      now: NOW,
+      incident: {
+        updatedAt: "2026-07-14T03:35:15.000Z",
+        body: `<!-- agent-pulse-monitor:v3 fingerprint=${fingerprint} -->`,
+      },
+    });
+
+    expect(decision).toMatchObject({
+      decision: "suppress",
+      decisionSource: "cooldown",
+      reasonCode: "duplicate_within_cooldown",
+    });
   });
 
   it("accepts a validated AI suppression for healthy shadow catalog mix", async () => {

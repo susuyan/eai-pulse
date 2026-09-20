@@ -19,6 +19,11 @@ on:
         required: false
         default: false
         type: boolean
+      recovery:
+        description: Run bounded recovery without weekly publishing
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   actions: write
@@ -38,6 +43,7 @@ jobs:
       PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL || format('https://{0}.github.io/{1}/', github.repository_owner, github.event.repository.name) }}
       REFRESH_MODE: ${{ inputs.mode || 'incremental' }}
       PUBLISH_WEEKLY: ${{ inputs.publish_weekly || false }}
+      RECOVERY: ${{ inputs.recovery || false }}
     steps:
       - name: Check out main
         uses: actions/checkout@v7
@@ -154,6 +160,8 @@ jobs:
           set -euo pipefail
           npm run --silent evaluate:system -- \
             --skip-bootstrap \
+            --gate=operational \
+            --persist \
             --baseline=data/reports/system-evaluation.json \
             --output=data/reports/system-evaluation.json \
             --summary="$GITHUB_STEP_SUMMARY" | tee "$RUNNER_TEMP/evaluation.json"
@@ -344,7 +352,7 @@ jobs:
           weekly_status=not_requested
           weekly_attempted=false
           weekly_error=""
-          if [[ "$PUBLISH_WEEKLY" == "true" || ( "$weekday" == "7" && "$hour" -ge 20 ) ]]; then
+          if [[ "$RECOVERY" != "true" && ( "$PUBLISH_WEEKLY" == "true" || ( "$weekday" == "7" && "$hour" -ge 20 ) ) ]]; then
             weekly_attempted=true
             set +e
             npm run --silent weekly:issue -- \

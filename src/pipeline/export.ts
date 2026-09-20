@@ -88,7 +88,14 @@ function clarifyLegacyScoutCopy(insight: PublicScoutInsight): PublicScoutInsight
 
 export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppConfig) {
   const repository = new Repository(db);
-  const evaluation = (await latestEvaluation(db)) ?? (await evaluateSystem(db));
+  const latest = await latestEvaluation(db);
+  const evaluation =
+    latest ??
+    (await evaluateSystem(db, {
+      asOf: new Date(),
+      gateMode: "operational",
+      persist: true,
+    }));
   const narratives = await loadMergedIndustryNarratives(config.rootDir);
   const [events, tracks, actors, resources, view, scout, latestSourceChecks, signals] =
     await Promise.all([

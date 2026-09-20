@@ -9,10 +9,11 @@ on:
 permissions:
   actions: write
   contents: read
+  issues: write
 
 concurrency:
-  group: agent-pulse-quality-guard-main
-  cancel-in-progress: true
+  group: agent-pulse-monitor-incident-main
+  cancel-in-progress: false
 
 jobs:
   guard:
@@ -47,59 +48,119 @@ jobs:
           set -euo pipefail
           npm run --silent evaluate:system -- \
             --skip-bootstrap \
+            --gate=operational \
             --baseline=data/reports/system-evaluation.json \
             --output="$RUNNER_TEMP/evaluation.json" \
             --summary="$GITHUB_STEP_SUMMARY" > "$RUNNER_TEMP/evaluation-output.json"
-          jq -e . "$RUNNER_TEMP/evaluation.json" >/dev/null
+          jq -e '.operationalDecision.status and .operationalDecision.fingerprint' "$RUNNER_TEMP/evaluation.json" >/dev/null
           score="$(jq -r '.overallScore' "$RUNNER_TEMP/evaluation.json")"
           test "$score" -ge 0
           echo "score=$score" >> "$GITHUB_OUTPUT"
-          if [[ "$score" -lt "$QUALITY_FLOOR" ]]; then
-            echo "below_floor=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "below_floor=false" >> "$GITHUB_OUTPUT"
-          fi
-          jq '{overallScore, rawWeightedScore, evidenceCoverage, target, targetReached}' "$RUNNER_TEMP/evaluation.json"
+          echo "status=$(jq -r '.operationalDecision.status' "$RUNNER_TEMP/evaluation.json")" >> "$GITHUB_OUTPUT"
+          echo "reason_codes=$(jq -c '.operationalDecision.reasonCodes' "$RUNNER_TEMP/evaluation.json")" >> "$GITHUB_OUTPUT"
+          echo "fingerprint=$(jq -r '.operationalDecision.fingerprint' "$RUNNER_TEMP/evaluation.json")" >> "$GITHUB_OUTPUT"
+          echo "refresh_eligible=$(jq -r '.operationalDecision.refreshEligible' "$RUNNER_TEMP/evaluation.json")" >> "$GITHUB_OUTPUT"
+          jq '{overallScore, rawWeightedScore, evidenceCoverage, evaluationAsOf, operationalDecision}' "$RUNNER_TEMP/evaluation.json"
 
-      - name: Check refresh cooldown
-        if: steps.evaluation.outputs.below_floor == 'true'
-        id: cooldown
+      - name: Record guard summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Quality Guard"
+            echo "- Score: ${{ steps.evaluation.outputs.score || 'unavailable' }} / 100"
+            echo "- Floor: $QUALITY_FLOOR"
+            echo "- Status: ${{ steps.evaluation.outputs.status || 'unknown' }}"
+            echo '- Reasons: `${{ steps.evaluation.outputs.reason_codes || '[]' }}`'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload evaluation evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: quality-guard-${{ github.run_id }}
+          path: ${{ runner.temp }}/evaluation.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Update the single monitor incident
+        if: steps.evaluation.outputs.status == 'critical'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          latest="$(gh run list --workflow data-refresh.yml --limit 1 --json createdAt,status,conclusion --jq '.[0] // {}')"
-          LATEST_REFRESH="$latest" node --input-type=module <<'NODE' >> "$GITHUB_OUTPUT"
-          const latest = JSON.parse(process.env.LATEST_REFRESH || "{}");
+          report="$RUNNER_TEMP/evaluation.json"
+          body="$RUNNER_TEMP/monitor-issue.md"
+          section="$RUNNER_TEMP/evaluation-section.md"
+          {
+            echo '<!-- agent-pulse-evaluation:start -->'
+            echo '## 运营评测'
+            echo "- 当前评测时间：$(jq -r '.evaluationAsOf' "$report")"
+            echo "- 已持久化水位：$(jq -r '.operationalDecision.persistedEvaluationAsOf // "missing"' "$report")"
+            echo "- 水位年龄（分钟）：$(jq -r '.operationalDecision.ageMinutes // "unknown"' "$report")"
+            echo "- 当前分数：$(jq -r '.operationalDecision.currentScore // "unknown"' "$report") / 100"
+            echo "- 原因：$(jq -r '.operationalDecision.reasonCodes | join(", ")' "$report")"
+            echo
+            echo '## 建议动作'
+            echo '- 检查本次证据；满足冷却期与并发门禁时，仅触发一次 incremental Data Refresh。'
+            echo
+            echo "[查看本次 Actions 运行](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo '<!-- agent-pulse-evaluation:end -->'
+          } > "$section"
+          gh label create "monitor:critical" --color d73a4a --description "Operational health incident" --force
+          gh issue list --state open --label 'monitor:critical' --limit 100 --json number,body \
+            --jq 'sort_by(.number) | (map(select(.body | contains("agent-pulse-monitor:v")))[0] // .[0]) | if . == null then [] else [.] end' \
+            > "$RUNNER_TEMP/monitor-incident.json"
+          npm run --silent monitor:incident -- \
+            --incident="$RUNNER_TEMP/monitor-incident.json" \
+            --section="$section" \
+            --output="$body" \
+            --fingerprint="$(jq -r '.operationalDecision.fingerprint' "$report")"
+          issue="$(jq -r '.[0].number // empty' "$RUNNER_TEMP/monitor-incident.json")"
+          if [[ -n "$issue" ]]; then
+            gh issue edit "$issue" --body-file "$body"
+          else
+            gh issue create --title "[Monitor] Agent Pulse critical health incident" --label "monitor:critical" --body-file "$body"
+          fi
+
+      - name: Check refresh cooldown and active runs
+        if: steps.evaluation.outputs.status == 'critical'
+        id: cooldown
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REFRESH_ELIGIBLE: ${{ steps.evaluation.outputs.refresh_eligible }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/workflows/data-refresh.yml/runs?branch=main&per_page=100" \
+            --jq '[.[].workflow_runs[] | {status, conclusion, createdAt: .created_at}]' > "$RUNNER_TEMP/refresh-runs.json"
+          REFRESH_RUNS_PATH="$RUNNER_TEMP/refresh-runs.json" node --input-type=module <<'NODE' >> "$GITHUB_OUTPUT"
+          import { readFileSync } from "node:fs";
+          const runs = JSON.parse(readFileSync(process.env.REFRESH_RUNS_PATH, "utf8"));
+          const latest = runs.filter(run => run.status === "completed")
+            .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt))[0] || {};
+          const refreshEligible = process.env.REFRESH_ELIGIBLE === "true";
+          const active = runs.some(run => run.status !== "completed");
           const ageMs = Date.now() - Date.parse(latest.createdAt || "");
-          const cooldownMs = Number(process.env.REFRESH_COOLDOWN_HOURS || 2) * 60 * 60 * 1000;
+          const cooldownMs = Number(process.env.REFRESH_COOLDOWN_HOURS || 120) * 60 * 60 * 1000;
           const stale = !Number.isFinite(ageMs) || ageMs >= cooldownMs;
           const failed = latest.status === "completed" && latest.conclusion !== "success";
-          process.stdout.write(`dispatch=${stale || failed}\n`);
+          if (!refreshEligible || active) {
+            process.stdout.write("dispatch=false\n");
+          } else {
+            process.stdout.write(`dispatch=${stale || failed}\n`);
+          }
+          process.stdout.write(`active=${active}\n`);
           process.stdout.write(`latest_status=${latest.status || "missing"}\n`);
           NODE
 
       - name: Trigger one bounded system update
-        if: steps.evaluation.outputs.below_floor == 'true' && steps.cooldown.outputs.dispatch == 'true'
+        if: steps.evaluation.outputs.status == 'critical' && steps.cooldown.outputs.dispatch == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run data-refresh.yml --ref main --field mode=incremental
+        run: gh workflow run data-refresh.yml --ref main --field mode=incremental --field recovery=true
 
-      - name: Record guard summary
-        shell: bash
-        run: |
-          {
-            echo "## Quality Guard"
-            echo "- Score: ${{ steps.evaluation.outputs.score }} / 100"
-            echo "- Floor: $QUALITY_FLOOR"
-            echo "- Below floor: ${{ steps.evaluation.outputs.below_floor }}"
-            echo "- Refresh dispatched: ${{ steps.cooldown.outputs.dispatch || 'false' }}"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload evaluation evidence
-        uses: actions/upload-artifact@v7
-        with:
-          name: quality-guard-${{ github.run_id }}
-          path: ${{ runner.temp }}/evaluation.json
-          retention-days: 14
+      - name: Fail the operational gate
+        if: always() && steps.evaluation.outputs.status == 'critical'
+        run: exit 1

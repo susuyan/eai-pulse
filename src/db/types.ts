@@ -178,6 +178,8 @@ export interface EvaluationRunTable {
   dimensions_json: string;
   capability_snapshot_json: string;
   notes: string;
+  evaluation_as_of: Generated<string | null>;
+  gate_mode: Generated<string | null>;
   started_at: string;
   finished_at: string;
 }

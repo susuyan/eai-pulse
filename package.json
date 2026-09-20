@@ -50,6 +50,7 @@
     "monitor": "tsx src/cli/monitor-cli.ts",
     "monitor:check": "tsx src/cli/monitor-check.ts",
     "monitor:decide": "tsx src/cli/monitor-alert-decision.ts",
+    "monitor:incident": "tsx src/cli/merge-monitor-incident.ts",
     "research:impact": "tsx src/cli/research-impact.ts",
     "release:check": "tsx src/cli/release-notes.ts --check",
     "release:notes": "tsx src/cli/release-notes.ts",

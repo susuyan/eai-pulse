@@ -267,13 +267,18 @@ function classifyHardFailure(
     };
   }
   const ageMinutes = Number(report.checks.freshness.detail.ageMinutes);
+  const freshnessReason = String(report.checks.freshness.detail.reasonCode ?? "");
   if (
     report.checks.freshness.status === "critical" &&
-    (ageMinutes >= HARD_STALE_MINUTES || report.checks.freshness.message.startsWith("Cannot read"))
+    (freshnessReason === "evaluation_persistently_stale" ||
+      freshnessReason === "snapshot_persistently_stale" ||
+      ageMinutes >= HARD_STALE_MINUTES ||
+      report.checks.freshness.message.startsWith("Cannot read"))
   ) {
     return {
-      reasonCode: "snapshot_persistently_stale",
-      rationale: "The public snapshot is missing or has remained stale for more than 72 hours.",
+      reasonCode: "evaluation_persistently_stale",
+      rationale:
+        "The versioned evaluation watermark is missing or has remained stale for at least 72 hours.",
     };
   }
   return null;

@@ -3,7 +3,7 @@
  *
  * Checks:
  *   1. Site availability (HTTP GET PUBLIC_SITE_URL)
- *   2. Data freshness (age of data/snapshot/v1.json)
+ *   2. Data freshness (versioned evaluation watermark)
  *   3. Source health (DB query via generateMonitorReport)
  *
  * Exit codes:
@@ -17,11 +17,13 @@
  *   MONITOR_SKIP_SITE=1 npm run monitor:check   # skip site check
  */
 
-import { stat } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { loadConfig } from "../config/env.js";
 import { createDatabase } from "../db/database.js";
 import { migrateToLatest } from "../db/migrate.js";
 import { seedDatabase } from "../db/seed.js";
+import { evaluateVersionedFreshness } from "../pipeline/evaluation-policy.js";
+import { normalizeSystemEvaluationReport } from "../pipeline/evaluation-progress.js";
 import {
   generateMonitorReport,
   getSeverityLevel,
@@ -61,8 +63,7 @@ export interface MonitorCheckResult {
 // ─── Snapshot path ────────────────────────────────────────────────────────
 
 const SNAPSHOT_PATH = "data/snapshot/v1.json";
-const FRESHNESS_WARNING_MIN = 6 * 60; // 6 hours
-const FRESHNESS_CRITICAL_MIN = 24 * 60; // 24 hours
+const EVALUATION_REPORT_PATH = "data/reports/system-evaluation.json";
 
 // ─── Checks ───────────────────────────────────────────────────────────────
 
@@ -98,36 +99,23 @@ async function checkSite(config: ReturnType<typeof loadConfig>): Promise<CheckDe
 
 async function checkFreshness(rootDir: string): Promise<CheckDetail> {
   try {
-    const filePath = new URL(SNAPSHOT_PATH, `file://${rootDir}/`).pathname;
-    const fileStat = await stat(filePath);
-    const now = Date.now();
-    const ageMs = now - fileStat.mtimeMs;
-    const ageMinutes = Math.round(ageMs / 60_000);
-
-    if (ageMinutes < FRESHNESS_WARNING_MIN) {
-      return {
-        status: "ok",
-        message: `Snapshot is ${ageMinutes} minutes old (threshold: ${FRESHNESS_WARNING_MIN} min)`,
-        detail: { ageMinutes, lastModified: fileStat.mtime.toISOString() },
-      };
-    }
-    if (ageMinutes < FRESHNESS_CRITICAL_MIN) {
-      return {
-        status: "warning",
-        message: `Snapshot is ${ageMinutes} minutes old — data may be stale`,
-        detail: { ageMinutes, lastModified: fileStat.mtime.toISOString() },
-      };
-    }
-    return {
-      status: "critical",
-      message: `Snapshot is ${ageMinutes} minutes old — data is critically stale`,
-      detail: { ageMinutes, lastModified: fileStat.mtime.toISOString() },
-    };
+    const snapshotPath = new URL(SNAPSHOT_PATH, `file://${rootDir}/`).pathname;
+    const reportPath = new URL(EVALUATION_REPORT_PATH, `file://${rootDir}/`).pathname;
+    const [fileStat, serializedReport] = await Promise.all([
+      stat(snapshotPath),
+      readFile(reportPath, "utf8"),
+    ]);
+    const report = normalizeSystemEvaluationReport(JSON.parse(serializedReport));
+    return evaluateVersionedFreshness({
+      evaluationAsOf: report.evaluationAsOf,
+      fileMtime: fileStat.mtime.toISOString(),
+      now: new Date(),
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return {
       status: "critical",
-      message: `Cannot read snapshot: ${message}`,
+      message: `Cannot read versioned evaluation state: ${message}`,
       detail: { error: message },
     };
   }
@@ -232,8 +220,8 @@ async function main(): Promise<never> {
 
   if (freshness.status !== "ok") {
     const level = freshness.status === "critical" ? "Critical" : "Warning";
-    issues.push(`${level}: data snapshot is stale.`);
-    recommendations.push("Trigger the data-refresh workflow to update the snapshot.");
+    issues.push(`${level}: versioned evaluation watermark is stale.`);
+    recommendations.push("Trigger the incremental data-refresh workflow to update the watermark.");
   }
 
   if (sourceHealth.status !== "ok") {

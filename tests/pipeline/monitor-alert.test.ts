@@ -74,14 +74,14 @@ describe("monitor alert decision", () => {
     expect(model.completeJson).not.toHaveBeenCalled();
   });
 
-  it("treats a snapshot older than 72 hours as a hard failure", async () => {
+  it("treats an evaluation watermark older than 72 hours as a hard failure", async () => {
     const input = report({
       checks: {
         ...report().checks,
         freshness: {
           status: "critical",
-          message: "Snapshot is critically stale",
-          detail: { ageMinutes: 4_500 },
+          message: "Evaluation watermark is critically stale",
+          detail: { ageMinutes: 4_500, reasonCode: "evaluation_persistently_stale" },
         },
         sourceHealth: { ...report().checks.sourceHealth, status: "ok" },
       },
@@ -89,8 +89,26 @@ describe("monitor alert decision", () => {
 
     const decision = await decideMonitorAlert({ report: input, now: NOW });
 
-    expect(decision.reasonCode).toBe("snapshot_persistently_stale");
+    expect(decision.reasonCode).toBe("evaluation_persistently_stale");
     expect(decision.notify).toBe(true);
+  });
+
+  it("normalizes the legacy persistent snapshot reason", async () => {
+    const input = report({
+      checks: {
+        ...report().checks,
+        freshness: {
+          status: "critical",
+          message: "Legacy snapshot freshness signal",
+          detail: { ageMinutes: 4_500, reasonCode: "snapshot_persistently_stale" },
+        },
+        sourceHealth: { ...report().checks.sourceHealth, status: "ok" },
+      },
+    });
+
+    const decision = await decideMonitorAlert({ report: input, now: NOW });
+
+    expect(decision.reasonCode).toBe("evaluation_persistently_stale");
   });
 
   it("suppresses the legacy source-health incident during the cooldown", async () => {

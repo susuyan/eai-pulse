@@ -11,6 +11,7 @@ import {
   type EvaluationGateMode,
   parseEvaluationInstant,
 } from "../pipeline/evaluation-context.js";
+import { decideOperationalEvaluation } from "../pipeline/evaluation-policy.js";
 import {
   buildSystemEvaluationReport,
   compareSystemEvaluations,
@@ -54,7 +55,20 @@ export async function runEvaluateCli(): Promise<void> {
       invocation.gateMode === "change" && baselineResult.report
         ? compareSystemEvaluations(report, baselineResult.report)
         : null;
-    const payload = comparison ? { ...report, comparison } : report;
+    const operationalDecision =
+      invocation.gateMode === "operational"
+        ? decideOperationalEvaluation({
+            currentScore: report.overallScore,
+            persistedEvaluationAsOf: baselineResult.report?.evaluationAsOf ?? null,
+            reportValid: baselineResult.report !== null && baselineResult.error === null,
+            now: runStartedAt,
+          })
+        : null;
+    const payload = comparison
+      ? { ...report, comparison }
+      : operationalDecision
+        ? { ...report, operationalDecision }
+        : report;
     if (outputPath) await atomicWriteJson(outputPath, payload);
     if (summaryPath) {
       const migrationWarning = invocation.legacyFlagUsed

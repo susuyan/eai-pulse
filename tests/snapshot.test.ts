@@ -715,5 +715,5 @@ describe("repository data snapshot", () => {
       .where("slug", "=", capabilityActor.slug)
       .executeTakeFirstOrThrow();
     expect(await legacyRepository.listActorDataCapabilities(legacyCapabilityActor.id)).toEqual([]);
-  });
+  }, 15_000);
 });

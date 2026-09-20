@@ -353,6 +353,8 @@ The body summarizes Phase 3–5, verification evidence, source-shadow boundary, 
 
 Use `gh pr checks --watch --repo susuyan/eai-pulse`. Resolve failures with new commits. Merge only after all required checks pass:
 
+The generic-AI and embodied-data operational scores are not directly comparable because the approved migration retires the old production source set. If the regression gate detects this expected scope reset, authorize it only once when the checked base commit and its snapshot hash match `data/migrations/embodied-data-public-switch-baseline.json`, the current snapshot hash matches `data/reports/embodied-data-public-switch.json`, and a separate current-time evaluation passes every embodied quality gate with zero generic-AI leakage. Do not persist that transition evaluation; the post-merge Data Refresh owns the new operational baseline.
+
 ```bash
 gh pr merge --repo susuyan/eai-pulse --merge --delete-branch=false
 ```

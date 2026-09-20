@@ -205,6 +205,58 @@ describe("system evaluation progress", () => {
     });
   });
 
+  it("authorizes one scoped baseline transition only with matching snapshots and passing embodied quality", () => {
+    const baseline = buildSystemEvaluationReport(
+      evaluation([dimension({ slug: "coverage", score: 80 })]),
+      { asOf: new Date("2026-07-14T00:00:01.000Z"), gateMode: "operational", persist: false },
+    );
+    const current = buildSystemEvaluationReport(
+      {
+        ...evaluation([dimension({ slug: "coverage", score: 30 })]),
+        overallScore: 30,
+        rawWeightedScore: 30,
+        evidenceCoverage: 20,
+      },
+      { asOf: new Date("2026-07-14T00:00:01.000Z"), gateMode: "change", persist: false },
+    );
+    const transitionEvaluation = buildSystemEvaluationReport(
+      { ...evaluation([dimension()]), embodiedQuality: embodiedQuality(0) },
+      { asOf: new Date("2026-09-20T12:00:00.000Z"), gateMode: "operational", persist: false },
+    );
+    const scopeTransition = {
+      candidateBaseGitSha: "8ce4b02",
+      manifestBaseGitSha: "8ce4b02",
+      candidateBaseSnapshotSha256: "old-snapshot",
+      manifestBaseSnapshotSha256: "old-snapshot",
+      currentSnapshotSha256: "new-snapshot",
+      switchSnapshotSha256: "new-snapshot",
+      transitionEvaluation,
+    };
+
+    expect(compareSystemEvaluations(current, baseline, scopeTransition)).toMatchObject({
+      passed: true,
+      scopeTransition: {
+        authorized: true,
+        baseGitSha: "8ce4b02",
+        reasonCodes: [],
+      },
+      regressions: expect.arrayContaining(["overall score regressed from 60 to 30"]),
+    });
+
+    expect(
+      compareSystemEvaluations(current, baseline, {
+        ...scopeTransition,
+        candidateBaseGitSha: "future-base",
+      }),
+    ).toMatchObject({
+      passed: false,
+      scopeTransition: {
+        authorized: false,
+        reasonCodes: expect.arrayContaining(["base_git_sha_mismatch"]),
+      },
+    });
+  });
+
   it("fails the comparison absolutely when one generic AI item leaks", () => {
     const baseline = buildSystemEvaluationReport(
       { ...evaluation([dimension()]), embodiedQuality: embodiedQuality(0) },

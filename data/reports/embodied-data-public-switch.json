@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "switch": "embodied-data-production",
+  "version": "0.11.1",
+  "verifiedAt": "2026-09-20T11:06:50.071Z",
+  "publicSiteUrl": "https://susuyan.github.io/eai-pulse/",
+  "snapshot": {
+    "path": "data/snapshot/v1.json",
+    "sha256": "e71bf0cfef071855bb057664d9439c91dd8e9c98721e26a849b810302dacac06"
+  },
+  "publicContent": {
+    "fingerprint": "19fae253c278d81bbc4d09da78633d9043ea7389a1a3d96d82a6f82209331708",
+    "validationIssues": 0,
+    "legacyLeakFiles": 0,
+    "counts": {
+      "events": 36,
+      "pipelineStages": 6,
+      "datasets": 12,
+      "standards": 4,
+      "collectionMethods": 6,
+      "peers": 15,
+      "sources": 36,
+      "scout": 7,
+      "sitemapUrls": 90,
+      "timelineCards": 36
+    }
+  },
+  "pipelineCoverage": [
+    {
+      "stage": "demand-definition",
+      "eventCount": 6
+    },
+    {
+      "stage": "acquisition-route",
+      "eventCount": 6
+    },
+    {
+      "stage": "multimodal-capture",
+      "eventCount": 6
+    },
+    {
+      "stage": "production-operations",
+      "eventCount": 6
+    },
+    {
+      "stage": "data-engineering-standards",
+      "eventCount": 6
+    },
+    {
+      "stage": "quality-training-feedback",
+      "eventCount": 6
+    }
+  ],
+  "evidenceRatios": {
+    "eventsWithEvidence": 1,
+    "eventsWithPrimaryEvidence": 1,
+    "verifiedDataProfiles": 1,
+    "assetsWithCanonicalUrl": 1,
+    "peerClaimsWithEvidence": 1,
+    "sourcesWithHomepage": 1,
+    "scoutWithEvidence": 1
+  },
+  "sourceLifecycle": {
+    "shadow": 36,
+    "active": 0
+  },
+  "browserSmoke": {
+    "routes": [
+      "/",
+      "/pipeline/",
+      "/assets/",
+      "/peers/",
+      "/sources/",
+      "/scout/",
+      "/events/ario-unified-robot-data-representation/",
+      "/en/",
+      "/404.html"
+    ],
+    "viewports": [
+      "390x844",
+      "1280x900"
+    ],
+    "horizontalOverflowRoutes": 0,
+    "primaryNavigationLinks": 6,
+    "pipelineAnchorLinks": 6,
+    "keyboardSkipLink": true,
+    "reducedMotionRule": true,
+    "sourceLinksPresent": true,
+    "currentRepositoryLinksPresent": true,
+    "upstreamRepositoryLinksPresent": false
+  },
+  "verification": [
+    {
+      "command": "npm run check",
+      "result": "77 test files and 516 tests passed; export and public validation passed"
+    },
+    {
+      "command": "npm run build",
+      "result": "passed"
+    },
+    {
+      "command": "npm run db:snapshot -- restore",
+      "result": "restored 36 Event data profiles, 12 datasets, 4 standards, 6 collection methods, and 15 actor data capabilities"
+    },
+    {
+      "command": "npm run public:validate",
+      "result": "passed with zero issues"
+    },
+    {
+      "command": "npm run public:fingerprint",
+      "result": "19fae253c278d81bbc4d09da78633d9043ea7389a1a3d96d82a6f82209331708"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ]
+}

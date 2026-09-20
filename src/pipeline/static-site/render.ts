@@ -208,7 +208,7 @@ export function pageLayout(input: PageChrome): string {
   ${eventDrawerShell(locale, assetPrefix, prefix)}
   <footer class="site-footer">
     <div class="shell footer-grid">
-      <div class="footer-brand"><strong>AGENT PULSE</strong><p>${escapeHtml(t("footer.tagline", locale))}</p>${footerAiAccess(assetPrefix, locale)}${footerSubscriptions(input.github, locale)}${footerContacts(locale)}</div>
+      <div class="footer-brand"><strong>AGENT PULSE</strong><p>${escapeHtml(t("footer.tagline", locale))}</p>${footerAiAccess(assetPrefix, locale)}${footerSubscriptions(input.github, locale)}${footerContacts(input.github, locale)}</div>
       <div class="footer-links">
         <nav aria-label="${locale === "en" ? "Explore" : "探索"}"><span>${locale === "en" ? "EXPLORE" : "探索"}</span><a href="${prefix}pipeline/">${escapeHtml(t("nav.pipeline", locale))}</a><a href="${prefix}assets/">${escapeHtml(t("nav.assets", locale))}</a><a href="${prefix}peers/">${escapeHtml(t("nav.peers", locale))}</a><a href="${prefix}timeline/">${escapeHtml(t("nav.timeline", locale))}</a></nav>
         <nav aria-label="${locale === "en" ? "More" : "更多"}"><span>${locale === "en" ? "MORE" : "更多"}</span><a href="${prefix}sources/">${escapeHtml(t("nav.sources", locale))}</a><a href="${prefix}scout/">${escapeHtml(t("nav.scout", locale))}</a><a href="${prefix}legal/">${escapeHtml(t("footer.legal", locale))}</a><a href="${prefix}changelog/">${escapeHtml(t("footer.changelog", locale))}</a></nav>
@@ -245,12 +245,9 @@ function footerSubscriptions(github: GithubData, locale: Locale): string {
   return `<nav class="footer-subscriptions" aria-label="${locale === "en" ? "Agent Pulse subscriptions" : "Agent Pulse 订阅入口"}"><a href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener noreferrer">${icon("github")} Watch</a><a href="${escapeHtml(weeklyUrl)}" target="_blank" rel="noopener noreferrer">${icon("route")} ${locale === "en" ? "Weekly brief" : "AI 周报"}</a></nav>`;
 }
 
-function footerContacts(locale: Locale): string {
+function footerContacts(github: GithubData, locale: Locale): string {
   const contacts = [
-    { name: "X", iconName: "x-social", href: "https://x.com/Barret_China" },
-    { name: "Weibo", iconName: "weibo", href: "https://www.weibo.com/u/1812166904" },
-    { name: "GitHub", iconName: "github", href: "https://github.com/barretlee" },
-    { name: "Email", iconName: "mail", href: "mailto:barret.china@gmail.com" },
+    { name: "GitHub", iconName: "github", href: github.repositoryUrl.replace(/\/$/, "") },
   ];
   return `<nav class="footer-contacts" aria-label="${escapeHtml(t("footer.contacts", locale))}"><span>${escapeHtml(t("footer.contacts", locale))}</span>${contacts
     .map(

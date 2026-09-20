@@ -149,7 +149,7 @@ export function renderWeeklyBrief(
   const sourceCount = new Set(
     events.flatMap((event) => event.evidence?.map((item) => item.source).filter(Boolean) ?? []),
   ).size;
-  const siteUrl = input.siteUrl ?? "https://barretlee.github.io/agent-pulse/";
+  const siteUrl = input.siteUrl ?? "https://susuyan.github.io/eai-pulse/";
   const leadingEvents = events.slice(0, 3);
   const actions = selectActionableScouts(scout, 3);
   const affectedTracks = new Set(events.flatMap(eventTrackNames));
@@ -507,7 +507,7 @@ function renderAiWeeklyMarkdown(
   events: WeeklyEvent[],
   brief: AiWeeklyBrief,
 ): string {
-  const siteUrl = input.siteUrl ?? "https://barretlee.github.io/agent-pulse/";
+  const siteUrl = input.siteUrl ?? "https://susuyan.github.io/eai-pulse/";
   const eventsBySlug = new Map(events.map((event) => [event.slug, event]));
   const sourceCount = new Set(
     events.flatMap((event) => event.evidence?.map((item) => item.source).filter(Boolean) ?? []),

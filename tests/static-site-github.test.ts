@@ -49,7 +49,7 @@ describe("build-time GitHub metadata", () => {
       fetchedAt: "2026-07-12T12:00:00.000Z",
     });
     expect(fetchImpl).toHaveBeenCalledWith(
-      "https://api.github.com/repos/barretlee/agent-pulse",
+      "https://api.github.com/repos/susuyan/eai-pulse",
       expect.objectContaining({ headers: expect.objectContaining({ Accept: expect.any(String) }) }),
     );
   });

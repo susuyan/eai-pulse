@@ -8,7 +8,7 @@ import type { EnrichedEvent, IndustryNarratives, TrackNarrative } from "./static
 
 export const STAGE_PROMOTION_PATH = "data/narratives/stage-promotions.json";
 export const STAGE_PROMOTION_MODEL = "deepseek-v4-pro";
-export const STAGE_PROMOTION_ISSUE_REPOSITORY = "barretlee/agent-pulse";
+export const STAGE_PROMOTION_ISSUE_REPOSITORY = "susuyan/eai-pulse";
 const OPEN_STAGE_END = "9999-12-31";
 const PLACEHOLDER = /待编辑|待补充|待确认|\bTBD\b|\bTODO\b|placeholder/i;
 const TRUSTED_ROLES = new Set(["primary", "research", "policy"]);

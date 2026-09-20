@@ -166,8 +166,7 @@ async function fetchWithRetry(url: URL): Promise<Response> {
       const response = await fetch(url, {
         headers: {
           accept: "application/json",
-          "user-agent":
-            "agent-pulse-research-impact/0.10 (+https://github.com/barretlee/agent-pulse)",
+          "user-agent": "agent-pulse-research-impact/0.10 (+https://github.com/susuyan/eai-pulse)",
         },
         signal: AbortSignal.timeout(20_000),
       });

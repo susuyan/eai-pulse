@@ -144,14 +144,14 @@ describe("major narrative stage promotion", () => {
     const applied = applyStagePromotion(
       EMPTY_FILE,
       candidate,
-      { number: 42, url: "https://github.com/barretlee/agent-pulse/issues/42" },
+      { number: 42, url: "https://github.com/susuyan/eai-pulse/issues/42" },
       "2026-07-14T12:00:00.000Z",
     );
     expect(applied.changed).toBe(true);
     const repeated = applyStagePromotion(
       applied.file,
       candidate,
-      { number: 42, url: "https://github.com/barretlee/agent-pulse/issues/42" },
+      { number: 42, url: "https://github.com/susuyan/eai-pulse/issues/42" },
       "2026-07-14T12:01:00.000Z",
     );
     expect(repeated.changed).toBe(false);
@@ -209,7 +209,7 @@ describe("major narrative stage promotion", () => {
     if (!candidate) throw new Error("candidate fixture missing");
     const issue = renderStagePromotionIssue(
       { ...candidate, anchorEventTitle: "Major [Agent] shift" },
-      "https://github.com/barretlee/agent-pulse/actions/runs/123",
+      "https://github.com/susuyan/eai-pulse/actions/runs/123",
     );
 
     expect(issue.title).toContain("[Stage]");

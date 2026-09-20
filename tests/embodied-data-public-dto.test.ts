@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DomainObjectRecord } from "../src/db/repository.js";
-import type {
-  DatasetProfile,
-  PeerCompanyProfile,
-} from "../src/domain/embodied-data-objects.js";
+import type { DatasetProfile, PeerCompanyProfile } from "../src/domain/embodied-data-objects.js";
 import type { PublicEvent } from "../src/domain/types.js";
 import {
   projectPublicDataset,
@@ -214,13 +211,17 @@ describe("embodied public DTOs", () => {
 
   it("rejects malformed event profiles before projection", () => {
     expect(() =>
-      projectPublicEmbodiedEvent(event, { ...profile, pipelineStages: [] }, {
-        tracks: [],
-        datasets: [],
-        standards: [],
-        collectionMethods: [],
-        peers: [],
-      }),
+      projectPublicEmbodiedEvent(
+        event,
+        { ...profile, pipelineStages: [] },
+        {
+          tracks: [],
+          datasets: [],
+          standards: [],
+          collectionMethods: [],
+          peers: [],
+        },
+      ),
     ).toThrow();
   });
 });

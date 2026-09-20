@@ -160,9 +160,7 @@ describe("SQLite application", () => {
     expect(publicAssets.collectionMethods).toHaveLength(6);
     expect(publicAssets.datasets[0]).not.toHaveProperty("id");
     expect(publicAssets.datasets[0]).not.toHaveProperty("profile_json");
-    const publicPeers = JSON.parse(
-      await readFile(join(config.distDir, "data/peers.json"), "utf8"),
-    );
+    const publicPeers = JSON.parse(await readFile(join(config.distDir, "data/peers.json"), "utf8"));
     expect(publicPeers.peers).toHaveLength(embodiedPeers.length);
     expect(publicPeers.peers[0]).not.toHaveProperty("actorId");
     expect(publicPeers.peers[0].capabilities[0]).toMatchObject({
@@ -186,34 +184,14 @@ describe("SQLite application", () => {
       true,
     );
     const product = JSON.parse(await readFile(join(config.distDir, "data/product.json"), "utf8"));
-    expect(product.roadmap).toHaveLength(5);
+    expect(product.roadmap).toEqual([]);
+    expect(product.releases).toHaveLength(1);
     expect(product.releases[0]).toMatchObject({ version: "unreleased", status: "unreleased" });
-    expect(product.releases[1]).toMatchObject({ version: "0.11.1", status: "released" });
-    expect(product.releases[2]).toMatchObject({ version: "0.11.0", status: "released" });
-    expect(product.releases[3]).toMatchObject({ version: "0.10.0", status: "released" });
-    expect(product.releases[4]).toMatchObject({ version: "0.9.0", status: "released" });
+    expect(product.releases[0].capabilities.join(" ")).not.toMatch(/模型价格|六个领域/);
+    expect(product.releases[0].changes.join(" ")).not.toMatch(/模型价格|六个领域/);
     expect(product.sourceCoverage.total).toBeGreaterThanOrEqual(30);
     expect(product.sourceCoverage.observing).toBe(0);
-    expect(product.evaluation).toMatchObject({
-      rawWeightedScore: expect.any(Number),
-      evidenceCoverage: expect.any(Number),
-    });
-    expect(product.evaluation.dimensions).toHaveLength(10);
-    expect(product.evaluation.status).toBe("partial");
-    expect(product.evaluation.overallScore).toBeLessThan(50);
-    expect(
-      product.evaluation.dimensions.every(
-        (item: { sampleTarget: number }) => item.sampleTarget > 0,
-      ),
-    ).toBe(true);
-    expect(
-      product.evaluation.dimensions
-        .filter((item: { status: string }) => item.status === "insufficient_data")
-        .every(
-          (item: { score: number; scoreCap: number }) =>
-            item.score <= 45 && item.score <= item.scoreCap,
-        ),
-    ).toBe(true);
+    expect(product.evaluation).toBeNull();
     const publicSources = JSON.parse(
       await readFile(join(config.distDir, "data/sources.json"), "utf8"),
     );
@@ -253,8 +231,9 @@ describe("SQLite application", () => {
     expect(englishPeers).toContain('data-timeline-src="../../data/events.json"');
     expect(englishPeers).toContain('aria-label="Back to top"');
     const changelog = await readFile(join(config.distDir, "changelog/index.html"), "utf8");
-    expect(changelog).toContain("The Autonomous Intelligence Loop");
-    expect(changelog).toContain("Living Evidence Interface");
+    expect(changelog).toContain(product.releases[0].name);
+    expect(changelog).not.toContain("The Autonomous Intelligence Loop");
+    expect(changelog).not.toContain("Living Evidence Interface");
     expect(changelog).toContain("产品更新");
     const englishChangelog = await readFile(
       join(config.distDir, "en/changelog/index.html"),
@@ -269,12 +248,17 @@ describe("SQLite application", () => {
     expect(llms).toContain("## Core Machine-Readable Data");
     expect(llms).toContain("published Events");
     expect(llms).toContain("not as verified facts");
-    expect(llms).toContain("analysis or hypotheses");
-    expect(llms).toContain("https://barretlee.github.io/agent-pulse/data/timeline.json");
-    expect(llms).toContain("https://barretlee.github.io/agent-pulse/data/signals.json");
-    expect(llms).toContain(`${result.events} published events`);
-    expect(llms).toContain(`${result.sources} catalogued sources`);
-    expect(llms).toContain(`${result.signals} source observations`);
+    expect(llms).toContain("analysis and forecasts remain separate fields");
+    expect(llms).toContain("https://susuyan.github.io/eai-pulse/data/pipeline.json");
+    expect(llms).toContain("https://susuyan.github.io/eai-pulse/data/assets.json");
+    expect(llms).not.toContain("https://susuyan.github.io/eai-pulse/data/timeline.json");
+    expect(llms).not.toContain("https://susuyan.github.io/eai-pulse/data/signals.json");
+    expect(home).toContain("https://github.com/susuyan/eai-pulse");
+    expect(home).not.toContain("barretlee");
+    expect(llms).not.toContain("barretlee");
+    expect(llms).toContain(`${result.events} published Events`);
+    expect(llms).toContain(`${result.sources} sources`);
+    expect(llms).toContain("6 pipeline stages");
     expect(home.indexOf('src="./assets/core.js"')).toBeLessThan(home.indexOf("</head>"));
     expect(home.match(/src="\.\/assets\/core\.js"/g)).toHaveLength(1);
     const rendersLegacyUiContract = home.includes("GPT-5.6");
@@ -311,7 +295,6 @@ describe("SQLite application", () => {
       expect(home).toContain("供 AI 阅读");
       expect(home).toContain("事实边界、证据与公开数据入口");
       expect(home).toContain("<code>llms.txt</code>");
-      expect(home).toContain('href="mailto:barret.china@gmail.com"');
       expect(home).toContain('class="footer-snapshot"');
       expect(home).toContain("/commits/main/");
       expect(home).toContain('class="shell footer-meta"');

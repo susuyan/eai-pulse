@@ -7,6 +7,7 @@ import { embodiedEventEvidence } from "../catalog/embodied-data/event-evidence.j
 import { embodiedLaunchEvents } from "../catalog/embodied-data/events.js";
 import { embodiedPeers } from "../catalog/embodied-data/peers.js";
 import { embodiedStandards } from "../catalog/embodied-data/standards.js";
+import { embodiedTracks } from "../catalog/embodied-data/tracks.js";
 import { type CuratedEventSeed, historicalEvents } from "../catalog/history.js";
 import { recentDensityEvents } from "../catalog/recent-density.js";
 import { type CatalogSource, legacySourceCatalog, sourceCatalog } from "../catalog/sources.js";
@@ -20,7 +21,7 @@ const stableId = (namespace: string, slug: string) => {
   return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-4${hash.slice(13, 16)}-a${hash.slice(17, 20)}-${hash.slice(20, 32)}`;
 };
 
-const tracks = [
+const legacyTracks = [
   [
     "tech-evolution",
     "模型能力与研究",
@@ -803,7 +804,7 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
       .execute();
   }
 
-  for (const [slug, name, description, kind, perspective, color, icon, order] of tracks) {
+  for (const [slug, name, description, kind, perspective, color, icon, order] of legacyTracks) {
     const existing = await db
       .selectFrom("tracks")
       .select("id")
@@ -830,6 +831,45 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
         .where("id", "=", existing.id)
         .execute();
     else await db.insertInto("tracks").values(value).execute();
+  }
+  await db
+    .updateTable("tracks")
+    .set({ enabled: 0, updated_at: timestamp })
+    .where(
+      "slug",
+      "not in",
+      embodiedTracks.map((track) => track.slug),
+    )
+    .execute();
+  for (const track of embodiedTracks) {
+    const existing = await db
+      .selectFrom("tracks")
+      .select("id")
+      .where("slug", "=", track.slug)
+      .executeTakeFirst();
+    const value = {
+      id: stableId("track", track.slug),
+      slug: track.slug,
+      name: track.name,
+      description: track.description,
+      kind: "main",
+      perspective: "pipeline",
+      color: track.color,
+      icon: track.icon,
+      order_index: track.order,
+      enabled: 1,
+      created_at: timestamp,
+      updated_at: timestamp,
+    };
+    if (existing) {
+      await db
+        .updateTable("tracks")
+        .set({ ...value, id: existing.id })
+        .where("id", "=", existing.id)
+        .execute();
+    } else {
+      await db.insertInto("tracks").values(value).execute();
+    }
   }
 
   for (const [slug, name, actorType, region, scale, domains, tableScore, website] of actors) {
@@ -860,6 +900,11 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
         .execute();
     else await db.insertInto("actors").values(value).execute();
   }
+  await db
+    .updateTable("actors")
+    .set({ enabled: 0, content_scope: "legacy-ai", updated_at: timestamp })
+    .where("content_scope", "=", "legacy-ai")
+    .execute();
 
   for (const [
     slug,
@@ -907,6 +952,7 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
         .execute();
     else await db.insertInto("model_resources").values(value).execute();
   }
+  await db.updateTable("model_resources").set({ enabled: 0, updated_at: timestamp }).execute();
 
   const viewId = stableId("view", "executive-briefing");
   const viewValue = {
@@ -921,8 +967,8 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
       defaultTrack: "tech-evolution",
     }),
     theme_json: JSON.stringify({ theme: "midnight", accent: "#8b5cf6", radius: 20 }),
-    is_default: 1,
-    status: "published",
+    is_default: 0,
+    status: "archived",
     created_at: timestamp,
     updated_at: timestamp,
   };
@@ -938,6 +984,38 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
       .where("id", "=", existingView.id)
       .execute();
   else await db.insertInto("views").values(viewValue).execute();
+
+  const embodiedViewValue = {
+    id: stableId("view", "embodied-data-operations"),
+    slug: "embodied-data-operations",
+    name: "具身数据情报与生产洞察",
+    description: "从关键变化进入六段数据管线，并下钻证据、数据资产、同行、来源与行动。",
+    filters_json: JSON.stringify({ statuses: ["published"], contentScope: "embodied-data" }),
+    layout_json: JSON.stringify({
+      blocks: ["pipeline", "key-changes", "evidence", "assets", "peers", "sources", "actions"],
+      density: "comfortable",
+      defaultTrack: "demand-definition",
+    }),
+    theme_json: JSON.stringify({ theme: "field-notes", accent: "#d95d39", radius: 16 }),
+    is_default: 1,
+    status: "published",
+    created_at: timestamp,
+    updated_at: timestamp,
+  };
+  const existingEmbodiedView = await db
+    .selectFrom("views")
+    .select("id")
+    .where("slug", "=", embodiedViewValue.slug)
+    .executeTakeFirst();
+  if (existingEmbodiedView) {
+    await db
+      .updateTable("views")
+      .set({ ...embodiedViewValue, id: existingEmbodiedView.id })
+      .where("id", "=", existingEmbodiedView.id)
+      .execute();
+  } else {
+    await db.insertInto("views").values(embodiedViewValue).execute();
+  }
 
   for (const event of allEvents) await seedEvent(db, repository, event, timestamp);
   await seedEmbodiedLaunchCatalog(db, repository, timestamp);
@@ -989,11 +1067,11 @@ async function seedEmbodiedLaunchCatalog(
         freshness: 70,
         crossRegion: false,
       }),
-      status: "review",
+      status: "published",
       featured: 0,
       manual_override: 1,
       happened_at: event.date,
-      published_at: null,
+      published_at: event.date,
       content_scope: "embodied-data" as const,
       created_at: timestamp,
       updated_at: timestamp,
@@ -1004,6 +1082,26 @@ async function seedEmbodiedLaunchCatalog(
       await db.insertInto("events").values(value).execute();
     }
     await repository.upsertEventDataProfile(id, event.dataProfile);
+    await db.deleteFrom("event_tracks").where("event_id", "=", id).execute();
+    for (const [index, stage] of event.dataProfile.pipelineStages.entries()) {
+      const track = await db
+        .selectFrom("tracks")
+        .select("id")
+        .where("slug", "=", stage)
+        .executeTakeFirstOrThrow();
+      await db
+        .insertInto("event_tracks")
+        .values({
+          event_id: id,
+          track_id: track.id,
+          node_role: index === 0 ? "milestone" : "supporting",
+          narrative: event.interpretation,
+          stage: "evidence-baseline",
+          order_index: index * 10,
+          created_at: timestamp,
+        })
+        .execute();
+    }
 
     for (const evidenceSlug of event.evidenceSlugs) {
       const evidence = evidenceBySlug.get(evidenceSlug);
@@ -1033,7 +1131,7 @@ async function seedEmbodiedLaunchCatalog(
         ).id;
       await db
         .updateTable("signals")
-        .set({ content_scope: "embodied-data", updated_at: timestamp })
+        .set({ source_id: source.id, content_scope: "embodied-data", updated_at: timestamp })
         .where("id", "=", signalId)
         .execute();
       await repository.attachSignal(
@@ -1054,6 +1152,15 @@ async function seedEmbodiedObjects(
   const eventId = async (slug: string) =>
     (await db.selectFrom("events").select("id").where("slug", "=", slug).executeTakeFirstOrThrow())
       .id;
+
+  await db
+    .deleteFrom("event_actors")
+    .where(
+      "event_id",
+      "in",
+      embodiedLaunchEvents.map((event) => stableId("event", event.slug)),
+    )
+    .execute();
 
   for (const item of embodiedDatasets) {
     const id = await repository.upsertDataset(item.slug, item.profile);
@@ -1106,17 +1213,43 @@ async function seedEmbodiedObjects(
     }
     for (const capability of peer.capabilities) {
       const capabilityId = await repository.upsertActorDataCapability(id, capability.profile);
+      const capabilityEventId = await eventId(capability.eventSlug);
       await repository.linkActorCapabilityEvidence(
         capabilityId,
-        await eventId(capability.eventSlug),
+        capabilityEventId,
         capability.evidenceRole,
       );
+      const existingRelation = await db
+        .selectFrom("event_actors")
+        .select("event_id")
+        .where("event_id", "=", capabilityEventId)
+        .where("actor_id", "=", id)
+        .executeTakeFirst();
+      if (!existingRelation) {
+        await db
+          .insertInto("event_actors")
+          .values({
+            event_id: capabilityEventId,
+            actor_id: id,
+            actor_role: "peer",
+            progress_stage: capability.profile.verificationStatus,
+            relevance_score: capability.profile.confidence,
+            created_at: timestamp,
+          })
+          .execute();
+      }
     }
   }
 }
 
 async function seedScout(db: Kysely<DatabaseSchema>, timestamp: string) {
-  const slug = "scout-lingbot-cross-embodiment-opportunity";
+  await db
+    .updateTable("scout_insights")
+    .set({ status: "archived", published_at: null, updated_at: timestamp })
+    .where("slug", "=", "scout-lingbot-cross-embodiment-opportunity")
+    .execute();
+
+  const slug = "scout-embodied-data-production-audit";
   const existing = await db
     .selectFrom("scout_insights")
     .select("id")
@@ -1126,27 +1259,27 @@ async function seedScout(db: Kysely<DatabaseSchema>, timestamp: string) {
   const value = {
     id,
     slug,
-    kind: "venture",
+    kind: "artifact",
     status: "published",
-    title: "精灵发现：跨本体 VLA 正在打开一批“机器人能力迁移”工具机会",
+    title: "星探建议：把分布式具身数据生产做成可审计交付能力",
     observation:
-      "LingBot-VLA 2.0 把跨本体与多视角执行作为核心能力，说明行业开始从单机型 demo 转向可迁移能力。",
+      "DROID 公开了跨机构、跨场地采集的组织方式，行业竞争正在从单次样例转向持续生产、质量复核和版本交付。",
     hypothesis:
-      "模型本身之外，数据适配、能力评测、部署诊断和任务迁移会成为机器人团队的高摩擦环节，适合从窄工具切入。",
-    why_now: "模型和开源实现刚进入开发者验证期，团队尚未形成稳定工具链，窗口早于大规模商业采购。",
-    target_audience: "具身智能创业团队、机器人算法与平台工程师",
+      "将采集站点、设备版本、任务成功率、返工原因和数据版本统一成审计包，可以成为具身数据交付方的差异化产品。",
+    why_now: "公开数据集已经证明多站点生产可行，但客户仍缺少可比较的产能、质量和可追溯交付口径。",
+    target_audience: "具身数据生产团队、机器人数据负责人和采购验收负责人",
     suggested_action:
-      "用 48 小时访谈 5 个不同本体团队，验证迁移中最耗时的步骤；选一个问题做只读诊断 demo。",
-    artifact_idea: "跨本体迁移检查清单、公开 benchmark 和一个诊断 CLI 原型",
+      "选择一个现有采集项目，整理站点、设备、任务、质检和返工的最小审计字段，并用一周验证客户是否愿意据此验收。",
+    artifact_idea: "具身数据生产审计模板、交付评分卡和可追溯验收包",
     counter_signals:
-      "如果实际迁移仍高度依赖专有硬件数据、开源模型复现率低或团队更愿意内部建设，工具机会将明显收窄。",
-    horizon: "30-90d",
-    confidence_score: 74,
-    evidence_score: 78,
-    novelty_score: 86,
+      "如果采购方只按数据量结算、拒绝为过程证据付费，或审计字段无法预测训练有效性，则产品价值需要下调。",
+    horizon: "14-30d",
+    confidence_score: 76,
+    evidence_score: 82,
+    novelty_score: 80,
     leverage_score: 88,
     total_score: 82,
-    cooldown_key: "venture:lingbot-vla-2-cross-embodiment",
+    cooldown_key: "artifact:embodied-data-production-audit",
     generated_at: timestamp,
     expires_at: null,
     published_at: timestamp,
@@ -1158,7 +1291,7 @@ async function seedScout(db: Kysely<DatabaseSchema>, timestamp: string) {
   } else {
     await db.insertInto("scout_insights").values(value).execute();
   }
-  const eventId = stableId("event", "lingbot-vla-2-cross-embodiment");
+  const eventId = stableId("event", "droid-consortium-site-operations");
   const evidence = await db
     .selectFrom("scout_evidence")
     .select("insight_id")

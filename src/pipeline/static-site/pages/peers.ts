@@ -7,7 +7,8 @@ export function renderPeersPage(model: StaticSiteModel, locale: Locale): string 
   const rows = model.peers
     .flatMap((peer) =>
       peer.capabilities.map(
-        (capability) => `<tr><th scope="row"><a href="${escapeHtml(peer.websiteUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(peer.name)}</a><small>${escapeHtml(peer.region)}</small></th><td>${escapeHtml(capability.pipelineStages.join(" · "))}</td><td>${escapeHtml(capability.claimText)}</td><td>${statusChip(capability.verificationStatus, locale)}</td><td><a href="${escapeHtml(capability.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(localize(locale, "查看证据", "View evidence"))}</a></td></tr>`,
+        (capability) =>
+          `<tr><th scope="row"><a href="${escapeHtml(peer.websiteUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(peer.name)}</a><small>${escapeHtml(peer.region)}</small></th><td>${escapeHtml(capability.pipelineStages.join(" · "))}</td><td>${escapeHtml(capability.claimText)}</td><td>${statusChip(capability.verificationStatus, locale)}</td><td><a href="${escapeHtml(capability.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(localize(locale, "查看证据", "View evidence"))}</a></td></tr>`,
       ),
     )
     .join("");

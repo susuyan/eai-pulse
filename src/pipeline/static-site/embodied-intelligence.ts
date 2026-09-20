@@ -81,8 +81,8 @@ export async function buildEmbodiedPublicData(
   input: PublicDataInput,
 ): Promise<EmbodiedPublicData> {
   const eventIds = input.events.map((event) => event.id);
-  const [profileRows, datasetRecords, standardRecords, collectionMethodRecords] =
-    await Promise.all([
+  const [profileRows, datasetRecords, standardRecords, collectionMethodRecords] = await Promise.all(
+    [
       db
         .selectFrom("event_data_profiles")
         .select(["event_id", "profile_json"])
@@ -91,7 +91,8 @@ export async function buildEmbodiedPublicData(
       repository.listDatasets(),
       repository.listStandards(),
       repository.listCollectionMethods(),
-    ]);
+    ],
+  );
 
   const [datasetLinks, standardLinks, collectionMethodLinks, capabilityEvidence] =
     await Promise.all([
@@ -127,7 +128,10 @@ export async function buildEmbodiedPublicData(
     ]);
 
   const profiles = new Map(
-    profileRows.map((row) => [row.event_id, EventDataProfileSchema.parse(JSON.parse(row.profile_json))]),
+    profileRows.map((row) => [
+      row.event_id,
+      EventDataProfileSchema.parse(JSON.parse(row.profile_json)),
+    ]),
   );
   const eventById = new Map(input.events.map((event) => [event.id, event]));
   const datasetById = new Map(datasetRecords.map((record) => [record.id, record]));
@@ -138,10 +142,7 @@ export async function buildEmbodiedPublicData(
 
   const datasetRelations = relationsByEvent(datasetLinks, datasetById);
   const standardRelations = relationsByEvent(standardLinks, standardById);
-  const collectionMethodRelations = relationsByEvent(
-    collectionMethodLinks,
-    collectionMethodById,
-  );
+  const collectionMethodRelations = relationsByEvent(collectionMethodLinks, collectionMethodById);
   const peerRelations = new Map<string, PublicEventRelation[]>();
   const evidenceByActorAndCapability = new Map<string, PublicEventRelation[]>();
   for (const evidence of capabilityEvidence) {
@@ -184,7 +185,8 @@ export async function buildEmbodiedPublicData(
   return {
     events: input.events.map((event) => {
       const profile = profiles.get(event.id);
-      if (!profile) throw new Error(`Published event is missing an embodied data profile: ${event.slug}`);
+      if (!profile)
+        throw new Error(`Published event is missing an embodied data profile: ${event.slug}`);
       return projectPublicEmbodiedEvent(event, profile, {
         tracks: input.eventTracks.get(event.id) ?? [],
         datasets: datasetRelations.get(event.id) ?? [],
@@ -336,33 +338,21 @@ async function publicObjectEventLinks(
   if (table === "dataset_events" && objectIdColumn === "dataset_id") {
     return db
       .selectFrom("dataset_events")
-      .select([
-        "dataset_id as objectId",
-        "event_id as eventId",
-        "relation_role as role",
-      ])
+      .select(["dataset_id as objectId", "event_id as eventId", "relation_role as role"])
       .where("event_id", "in", eventIds)
       .execute();
   }
   if (table === "standard_events" && objectIdColumn === "standard_id") {
     return db
       .selectFrom("standard_events")
-      .select([
-        "standard_id as objectId",
-        "event_id as eventId",
-        "relation_role as role",
-      ])
+      .select(["standard_id as objectId", "event_id as eventId", "relation_role as role"])
       .where("event_id", "in", eventIds)
       .execute();
   }
   if (table === "collection_method_events" && objectIdColumn === "collection_method_id") {
     return db
       .selectFrom("collection_method_events")
-      .select([
-        "collection_method_id as objectId",
-        "event_id as eventId",
-        "relation_role as role",
-      ])
+      .select(["collection_method_id as objectId", "event_id as eventId", "relation_role as role"])
       .where("event_id", "in", eventIds)
       .execute();
   }

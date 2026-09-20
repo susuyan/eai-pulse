@@ -1,14 +1,11 @@
-import type { PublicEvent } from "../../domain/types.js";
+import type { EmbodiedPipelineStage, EventDataProfile } from "../../domain/embodied-data.js";
 import type {
   ActorDataCapability,
   CollectionMethodProfile,
   DatasetProfile,
   StandardProfile,
 } from "../../domain/embodied-data-objects.js";
-import type {
-  EmbodiedPipelineStage,
-  EventDataProfile,
-} from "../../domain/embodied-data.js";
+import type { PublicEvent } from "../../domain/types.js";
 import type { ResearchImpactAssessment } from "../research-impact.js";
 
 export interface PublicEventRelation {

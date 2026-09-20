@@ -60,7 +60,7 @@ source audit
 Actions 分工：
 
 - CI：代码、测试、静态安全和 workflow 校验；
-- Source audit：审计、生命周期协调、观察模式和健康 issue；
+- Source audit：审计、生命周期协调、观察模式、评测基线同步和健康 issue；
 - Data refresh：采集、聚类、雷达推进、星探生成、评测、导出和快照；
 - Monitor：只读健康检查与告警，不修改业务数据。
 
@@ -80,6 +80,7 @@ repository snapshot
 
 - `evaluation_runs` 使用运行 ID 作为稳定键进入 `data/snapshot/v1.json`，恢复时 append/upsert，旧快照缺字段仍兼容；
 - `data/reports/system-evaluation.json` 保存最新总分、原始加权分、证据覆盖、完整维度和按加权缺口排序的改进动作；
+- Source Audit 修改来源生命周期后必须重新生成评测报告，并与来源健康报告和 snapshot 在同一提交中写入，禁止产生新来源状态与旧评测基线的组合；
 - CI 基线来自上一提交，而不是 PR 自己修改后的报告，防止通过下调版本化分数绕过回退门禁；
 - 回退门禁覆盖 overall score、evidence coverage 和各维度 score；维度新增允许进入基线，维度删除视为回退；
 - 来源覆盖的基础样本使用 healthy 且处于 observation 或 active 的去重集合，active 仅作为额外成熟度证据；来源从 observation 晋级 active 不得导致分数下降；

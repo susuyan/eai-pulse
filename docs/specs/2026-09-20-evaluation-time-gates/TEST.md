@@ -62,7 +62,13 @@
 - JSON 校验、隐私扫描或 snapshot 写入失败时，不产生部分提交。
 - incremental refresh 不隐式启用 weekly publish。
 
-### 2.3 Monitor
+### 2.3 Source Audit
+
+- remote merge 和 lifecycle reconciliation 完成后生成 operational report。
+- 来源健康报告、评测报告和 snapshot 在同一提交中写入。
+- JSON 校验、隐私扫描、评测或 snapshot 写入失败时，不产生部分提交。
+
+### 2.4 Monitor
 
 - snapshot 文件 mtime 为当前时间、版本化 `evaluationAsOf` 超过 72 小时时仍判定持续过期。
 - 文件 mtime 很旧、版本化 `evaluationAsOf` 新鲜时不因 mtime 失败。
@@ -81,6 +87,7 @@
 - 最近 refresh 失败且没有运行中任务时允许一次重试。
 - dispatch 不包含 `publish_weekly=true`。
 - 两个 Issue 写入者共享非取消串行边界，按稳定 marker 和标签查找同一 Issue。
+- Source Audit 在 snapshot 写入前持久化评测，并将 source health、system evaluation 与 snapshot 一起暂存。
 - 恢复刷新显式传入 `recovery=true`；周日夜间也不生成或发布周报。
 - 所有已暂停 schedule 仍保持注释。
 

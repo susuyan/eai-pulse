@@ -31,6 +31,21 @@ describe("GitHub source governance workflows", () => {
     expect(audit.lastIndexOf("npm run ops:reconcile")).toBeLessThan(
       audit.lastIndexOf("npm run export"),
     );
+    expect(audit.indexOf("git show origin/main:data/reports/system-evaluation.json")).toBeLessThan(
+      audit.indexOf("--output=data/reports/system-evaluation.json"),
+    );
+    expect(audit.indexOf("npm run db:snapshot -- merge")).toBeLessThan(
+      audit.indexOf("--output=data/reports/system-evaluation.json"),
+    );
+    expect(audit.lastIndexOf("npm run ops:reconcile")).toBeLessThan(
+      audit.indexOf("--output=data/reports/system-evaluation.json"),
+    );
+    expect(audit.indexOf("--output=data/reports/system-evaluation.json")).toBeLessThan(
+      audit.indexOf("npm run db:snapshot -- write"),
+    );
+    expect(audit).toContain(
+      "git add -- data/reports/source-health.json data/reports/system-evaluation.json data/snapshot/v1.json",
+    );
     expect(refresh.indexOf("git fetch origin main")).toBeLessThan(
       refresh.indexOf("npm run db:snapshot -- merge"),
     );

@@ -27,6 +27,14 @@ export interface CollectionSummary {
 
 export type CollectionScope = "eligible" | "all";
 
+export function parseCollectionScopeArgument(argument: string | undefined): CollectionScope {
+  if (argument === undefined || argument === "eligible" || argument === "embodied-data") {
+    return "eligible";
+  }
+  if (argument === "all") return "all";
+  throw new Error("--scope must be eligible, embodied-data, or all");
+}
+
 export interface CollectionSelection {
   scope: CollectionScope;
   total: number;

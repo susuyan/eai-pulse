@@ -376,6 +376,8 @@ Wait for each real run to complete before starting the next state-dependent vali
 
 If the first post-switch Quality Guard reports `system_score_below_floor` while all embodied quality gates pass, do not lower or hide the legacy maturity score. Add the approved domain-aware public readiness decision, keep the maturity Incident open, and rerun the workflow chain from the corrected main commit.
 
+If Data Refresh cannot create that baseline because the shipped domain scope is rejected before collection, fix the scope contract first. The recovery PR may use one additional manifest-bound handoff only when the target base Git SHA, base snapshot hash, and old evaluation report hash all match; the next successful Data Refresh must replace the old operational baseline.
+
 - [ ] **Step 6: Apply the rollback rule if any hard gate fails**
 
 Stop further workflows and create a normal revert PR against the atomic switch PR. Restore from the baseline Git revision and snapshot, run local checks, merge the revert after CI, wait for Pages, and verify the baseline public fingerprint. Never use reset, history rewrite, or force push.

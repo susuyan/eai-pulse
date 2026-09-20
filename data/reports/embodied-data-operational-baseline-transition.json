@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-20T12:11:52.000Z",
+  "baseGitSha": "579f5a9799722085c2df2ce2b0c8a48df187d3b2",
+  "snapshot": {
+    "sha256": "eefc06be0764bbed44af9ebaf330af69bcc6d7dde6c2cd51e7e53940dea33c8f"
+  },
+  "constraints": {
+    "requiresCurrentOperationalEvaluation": true,
+    "requiresEmbodiedQualityPass": true,
+    "requiresZeroGenericAILeak": true,
+    "expiresAfterBaseAdvances": true
+  }
+}

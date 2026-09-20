@@ -38,11 +38,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          base_sha="$(git rev-parse HEAD^)"
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base_sha="${{ github.event.pull_request.base.sha }}"
+          else
+            base_sha="$(git rev-parse HEAD^)"
+          fi
+          git cat-file -e "$base_sha^{commit}" 2>/dev/null || git fetch --no-tags origin "$base_sha" --depth=1
           echo "base_sha=$base_sha" >> "$GITHUB_OUTPUT"
-          git show HEAD^:data/snapshot/v1.json > "$RUNNER_TEMP/evaluation-base-snapshot.json"
-          if git show HEAD^:data/reports/system-evaluation.json > "$RUNNER_TEMP/evaluation-baseline.json" 2>/dev/null; then
-            echo "Using the previous commit evaluation as the CI baseline."
+          git show "$base_sha:data/snapshot/v1.json" > "$RUNNER_TEMP/evaluation-base-snapshot.json"
+          if git show "$base_sha:data/reports/system-evaluation.json" > "$RUNNER_TEMP/evaluation-baseline.json" 2>/dev/null; then
+            echo "Using the target base evaluation as the CI baseline."
           elif [[ -s data/reports/system-evaluation.json ]]; then
             cp data/reports/system-evaluation.json "$RUNNER_TEMP/evaluation-baseline.json"
           fi
@@ -51,15 +56,30 @@ jobs:
         run: |
           set -euo pipefail
           scope_transition_args=()
+          transition_manifest=""
+          transition_report=""
           manifest_base_sha="$(jq -r '.baseGitSha' data/migrations/embodied-data-public-switch-baseline.json)"
           if [[ "${{ steps.evaluation-baseline.outputs.base_sha }}" == "$manifest_base_sha" ]]; then
+            transition_manifest="data/migrations/embodied-data-public-switch-baseline.json"
+            transition_report="data/reports/embodied-data-public-switch.json"
+          else
+            closure_manifest="data/migrations/embodied-data-operational-baseline-transition.json"
+            closure_base_sha="$(jq -r '.baseGitSha' "$closure_manifest")"
+            closure_evaluation_sha="$(jq -r '.evaluationReportSha256' "$closure_manifest")"
+            base_evaluation_sha="$(sha256sum "$RUNNER_TEMP/evaluation-baseline.json" | cut -d' ' -f1)"
+            if [[ "${{ steps.evaluation-baseline.outputs.base_sha }}" == "$closure_base_sha" && "$base_evaluation_sha" == "$closure_evaluation_sha" ]]; then
+              transition_manifest="$closure_manifest"
+              transition_report="data/reports/embodied-data-operational-baseline-transition.json"
+            fi
+          fi
+          if [[ -n "$transition_manifest" ]]; then
             npm run --silent evaluate:system -- \
               --skip-bootstrap \
               --gate=operational \
               --output="$RUNNER_TEMP/evaluation-scope-transition.json" > /dev/null
             scope_transition_args=(
-              --scope-transition-manifest=data/migrations/embodied-data-public-switch-baseline.json
-              --scope-transition-report=data/reports/embodied-data-public-switch.json
+              --scope-transition-manifest="$transition_manifest"
+              --scope-transition-report="$transition_report"
               --scope-transition-evaluation="$RUNNER_TEMP/evaluation-scope-transition.json"
               --scope-transition-base-sha="${{ steps.evaluation-baseline.outputs.base_sha }}"
               --scope-transition-base-snapshot="$RUNNER_TEMP/evaluation-base-snapshot.json"

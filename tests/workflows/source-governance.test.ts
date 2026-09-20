@@ -238,7 +238,10 @@ describe("GitHub source governance workflows", () => {
     }
     expect(ci).not.toContain("run: npm run check");
     expect(ci).toContain("--gate=change");
-    expect(ci).toContain("git show HEAD^:data/reports/system-evaluation.json");
+    expect(ci).toContain("github.event.pull_request.base.sha");
+    expect(ci).toContain('git show "$base_sha:data/reports/system-evaluation.json"');
+    expect(ci).toContain("embodied-data-operational-baseline-transition.json");
+    expect(ci).toContain("evaluationReportSha256");
     expect(ci.indexOf("run: npm ci")).toBeLessThan(ci.indexOf("run: npm audit --omit=dev"));
     expect(ci.indexOf("run: npm audit --omit=dev")).toBeLessThan(ci.indexOf("run: npm run lint"));
     expect(ci.indexOf("run: npm run db:seed")).toBeLessThan(ci.indexOf("--fail-on-regression"));

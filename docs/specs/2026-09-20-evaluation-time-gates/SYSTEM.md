@@ -121,6 +121,8 @@ Operational gate 不用旧分数做相对比较。其目标是恢复当前运营
 
 该分离不声明 collector 已达到生产级，也不把 `shadow` 来源视为 `active`。它只避免使用旧通用 AI 领域的绝对成熟度分数，否决已经通过独立领域硬门禁的具身静态内容。
 
+若公开切换后的首次 Data Refresh 因工作流契约错误未能写入新领域 baseline，可使用一次独立的运营 baseline 收口 manifest。该 manifest 必须同时绑定目标 base Git SHA、base snapshot SHA-256 和旧 evaluation report SHA-256，并继续要求当前时刻具身质量门禁全部通过、零通用 AI 泄漏。目标 base 或旧报告任一变化后授权自动失效。
+
 ### 5.2 结构化策略结果
 
 ```ts

@@ -268,7 +268,7 @@ const rows: SourceSeed[] = [
     1,
     "primary",
     "rss",
-    "https://www.databricks.com/blog/feed",
+    "https://www.databricks.com/feed",
     "data,enterprise,open-model",
   ],
   [

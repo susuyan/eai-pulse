@@ -97,14 +97,62 @@ describe("web-scraper adapter", () => {
       <div class="post-card">
         <h2><a href="/news/1">Breaking News</a></h2>
         <p>A detailed summary of breaking news that has enough content to be meaningful for the extraction system.</p>
+        <time datetime="2026-07-01T10:00:00Z">July 1, 2026</time>
       </div>
       <div class="post-card">
         <h3><a href="/news/2">Update Released</a></h3>
         <p>Details about the update release with sufficient text for the web scraper to extract meaningful information from the page.</p>
+        <time datetime="2026-07-02T10:00:00Z">July 2, 2026</time>
       </div>
     </body></html>`;
     const result = await adapter.collect(makeSource(), makeContext(html));
     expect(result.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("extracts dated article links regardless of attribute order or abbreviated month format", async () => {
+    const html = `<!DOCTYPE html><html><body>
+      <a href="/news/dated-link" class="FeaturedGrid__gridItem">
+        <div class="meta"><time>Sep 17 2026</time></div>
+        <span class="article-title">A verified product announcement</span>
+      </a>
+    </body></html>`;
+
+    const result = await adapter.collect(makeSource(), makeContext(html));
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        title: "A verified product announcement",
+        url: "https://example.com/news/dated-link",
+        publishedAt: "2026-09-17T00:00:00.000Z",
+        rawMeta: expect.objectContaining({ dateInferred: false }),
+      }),
+    ]);
+  });
+
+  it("does not emit cards that have no trusted publication date", async () => {
+    const html = `<!DOCTYPE html><html><body>
+      <article class="post-card">
+        <h2><a href="/news/undated">Undated product announcement</a></h2>
+        <p>A navigation card must not be normalized with the collection timestamp.</p>
+      </article>
+    </body></html>`;
+
+    const result = await adapter.collect(makeSource(), makeContext(html));
+
+    expect(result).toEqual([]);
+  });
+
+  it("does not treat an off-site dated link as first-party source content", async () => {
+    const html = `<!DOCTYPE html><html><body>
+      <a href="https://vendor.example.org/whitepaper.pdf" class="resource-card">
+        <time>March 9, 2020</time>
+        <span class="resource-title">Vendor whitepaper</span>
+      </a>
+    </body></html>`;
+
+    const result = await adapter.collect(makeSource(), makeContext(html));
+
+    expect(result).toEqual([]);
   });
 
   it("extracts explicit human-readable dates from article cards", async () => {
@@ -149,8 +197,8 @@ describe("web-scraper adapter", () => {
       {
         "@context": "https://schema.org",
         "@graph": [
-          { "@type": "NewsArticle", "headline": "Graph Article 1", "url": "https://example.com/g1", "description": "First graph article description with details." },
-          { "@type": "NewsArticle", "headline": "Graph Article 2", "url": "https://example.com/g2", "description": "Second graph article description with details." }
+          { "@type": "NewsArticle", "headline": "Graph Article 1", "url": "https://example.com/g1", "description": "First graph article description with details.", "datePublished": "2026-07-05T08:00:00Z" },
+          { "@type": "NewsArticle", "headline": "Graph Article 2", "url": "https://example.com/g2", "description": "Second graph article description with details.", "datePublished": "2026-07-06T08:00:00Z" }
         ]
       }
       </script>
@@ -266,10 +314,10 @@ describe("web-scraper adapter", () => {
   it("deduplicates by URL", async () => {
     const html = `<!DOCTYPE html><html><head>
       <script type="application/ld+json">
-      { "@type": "BlogPosting", "headline": "Same Article", "url": "https://example.com/same", "description": "Duplicate." }
+      { "@type": "BlogPosting", "headline": "Same Article", "url": "https://example.com/same", "description": "Duplicate.", "datePublished": "2026-07-05T08:00:00Z" }
       </script>
     </head><body>
-      <article><h2><a href="https://example.com/same">Same Article</a></h2><p>Duplicate.</p></article>
+      <article><h2><a href="https://example.com/same">Same Article</a></h2><p>Duplicate.</p><time datetime="2026-07-05T08:00:00Z">July 5, 2026</time></article>
     </body></html>`;
     const result = await adapter.collect(makeSource(), makeContext(html));
     const urls = result.map((r) => r.url);

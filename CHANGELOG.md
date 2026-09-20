@@ -14,6 +14,7 @@
 
 ### 开发中
 
+- 修复通用网页来源对链接属性顺序、英文月份缩写和无日期卡片的识别：adapter 只输出具备标题、同站公开 URL 与可信发布日期的对象，并将 Databricks 切换到可用的一方 Feed；来源恢复仍需经过连续健康检查与既有生命周期门禁。
 - 新增具身数据方向的实验性领域基础：受控词表、Event DataProfile、可审计 content scope 和只读迁移预览。公开站、现有数据和发布规则尚未切换。
 - 具身数据实验性领域基础新增 Dataset、Standard、CollectionMethod 与同行能力声明对象，支持严格校验、Event 证据关联和事务性快照恢复；危险证据 URL、缺失引用、未知 schema 版本与事件合并证据丢失会被阻断，对象 fixture 尚未进入当前数据或公开站。
 - GitHub Pages、每日数据刷新与健康监控根据当前仓库动态生成公开站 URL，并支持通过 Actions Variable 覆盖；健康监控按来源健康标签与审计 marker 查找 Issue，不再依赖上游仓库固定编号，使 fork 可独立建立生产发布闭环。

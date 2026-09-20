@@ -9,6 +9,14 @@ import { Repository } from "../src/db/repository.js";
 import { seedDatabase } from "../src/db/seed.js";
 import { restoreRepositorySnapshot, writeRepositorySnapshot } from "../src/pipeline/snapshot.js";
 import profiles from "./fixtures/embodied-data/data-profiles.json" with { type: "json" };
+import actorCapabilities from "./fixtures/embodied-data/objects/actor-capabilities.json" with {
+  type: "json",
+};
+import collectionMethods from "./fixtures/embodied-data/objects/collection-methods.json" with {
+  type: "json",
+};
+import datasets from "./fixtures/embodied-data/objects/datasets.json" with { type: "json" };
+import standards from "./fixtures/embodied-data/objects/standards.json" with { type: "json" };
 
 const databases: ReturnType<typeof createDatabase>[] = [];
 
@@ -48,6 +56,35 @@ describe("repository data snapshot", () => {
       .executeTakeFirstOrThrow();
     await repository.updateEvent(profiledEvent.id, { content_scope: "embodied-data" });
     await repository.upsertEventDataProfile(profiledEvent.id, profiles.valid[0]);
+    const datasetFixture = datasets[0];
+    const standardFixture = standards[0];
+    const methodFixture = collectionMethods[0];
+    const capabilityFixture = actorCapabilities[0];
+    if (!datasetFixture || !standardFixture || !methodFixture || !capabilityFixture) {
+      throw new Error("Missing embodied object fixture");
+    }
+    const datasetId = await repository.upsertDataset(datasetFixture.slug, datasetFixture.profile);
+    const standardId = await repository.upsertStandard(
+      standardFixture.slug,
+      standardFixture.profile,
+    );
+    const methodId = await repository.upsertCollectionMethod(
+      methodFixture.slug,
+      methodFixture.profile,
+    );
+    await repository.linkDatasetEvent(datasetId, profiledEvent.id, "release");
+    await repository.linkStandardEvent(standardId, profiledEvent.id, "publication");
+    await repository.linkCollectionMethodEvent(methodId, profiledEvent.id, "demonstration");
+    const capabilityActor = await sourceDb
+      .selectFrom("actors")
+      .select(["id", "slug"])
+      .where("slug", "=", "openai")
+      .executeTakeFirstOrThrow();
+    const capabilityId = await repository.upsertActorDataCapability(
+      capabilityActor.id,
+      capabilityFixture,
+    );
+    await repository.linkActorCapabilityEvidence(capabilityId, profiledEvent.id, "claim");
     const jobId = await repository.startJob("collect", openai?.id ?? null);
     const runId = await repository.startSourceRun(openai?.id ?? "", jobId);
     await repository.finishSourceRun(runId, {
@@ -178,6 +215,37 @@ describe("repository data snapshot", () => {
     ).toBe("embodied-data");
     expect(snapshot.eventDataProfiles).toEqual([
       expect.objectContaining({ eventSlug: profiledEvent.slug, profile: profiles.valid[0] }),
+    ]);
+    expect(snapshot.datasets).toEqual([
+      expect.objectContaining({ slug: datasetFixture.slug, profile: datasetFixture.profile }),
+    ]);
+    expect(snapshot.datasetEvents).toEqual([
+      expect.objectContaining({
+        datasetSlug: datasetFixture.slug,
+        eventSlug: profiledEvent.slug,
+        relationRole: "release",
+      }),
+    ]);
+    expect(snapshot.standards).toEqual([
+      expect.objectContaining({ slug: standardFixture.slug, profile: standardFixture.profile }),
+    ]);
+    expect(snapshot.collectionMethods).toEqual([
+      expect.objectContaining({ slug: methodFixture.slug, profile: methodFixture.profile }),
+    ]);
+    expect(snapshot.actorDataCapabilities).toEqual([
+      expect.objectContaining({
+        actorSlug: capabilityActor.slug,
+        capabilityKey: capabilityFixture.capabilityKey,
+        profile: capabilityFixture,
+      }),
+    ]);
+    expect(snapshot.actorCapabilityEvidence).toEqual([
+      expect.objectContaining({
+        actorSlug: capabilityActor.slug,
+        capabilityKey: capabilityFixture.capabilityKey,
+        eventSlug: profiledEvent.slug,
+        evidenceRole: "claim",
+      }),
     ]);
     expect(first.counts.signalTriage).toBe(1);
     expect(first.counts.sourceChecks).toBe(1);
@@ -359,6 +427,40 @@ describe("repository data snapshot", () => {
     expect(await targetRepository.getEventDataProfile(restoredProfileEvent.id)).toEqual(
       profiles.valid[0],
     );
+    expect((await targetRepository.getDatasetBySlug(datasetFixture.slug))?.profile).toEqual(
+      datasetFixture.profile,
+    );
+    expect((await targetRepository.getStandardBySlug(standardFixture.slug))?.profile).toEqual(
+      standardFixture.profile,
+    );
+    expect((await targetRepository.getCollectionMethodBySlug(methodFixture.slug))?.profile).toEqual(
+      methodFixture.profile,
+    );
+    const restoredCapabilityActor = await targetDb
+      .selectFrom("actors")
+      .select("id")
+      .where("slug", "=", capabilityActor.slug)
+      .executeTakeFirstOrThrow();
+    expect(await targetRepository.listActorDataCapabilities(restoredCapabilityActor.id)).toEqual([
+      capabilityFixture,
+    ]);
+    for (const table of [
+      "dataset_events",
+      "standard_events",
+      "collection_method_events",
+      "actor_capability_evidence",
+    ] as const) {
+      expect(
+        Number(
+          (
+            await targetDb
+              .selectFrom(table)
+              .select(({ fn }) => fn.countAll<number>().as("count"))
+              .executeTakeFirstOrThrow()
+          ).count,
+        ),
+      ).toBe(1);
+    }
 
     const legacyRoot = await mkdtemp(join(tmpdir(), "agent-pulse-legacy-snapshot-"));
     const legacySnapshot = structuredClone(snapshot);
@@ -370,6 +472,18 @@ describe("repository data snapshot", () => {
       for (const row of collection) delete row.contentScope;
     }
     delete legacySnapshot.eventDataProfiles;
+    for (const key of [
+      "datasets",
+      "datasetEvents",
+      "standards",
+      "standardEvents",
+      "collectionMethods",
+      "collectionMethodEvents",
+      "actorDataCapabilities",
+      "actorCapabilityEvidence",
+    ]) {
+      delete legacySnapshot[key];
+    }
     await writeFile(
       join(legacyRoot, "legacy.json"),
       `${JSON.stringify(legacySnapshot, null, 2)}\n`,
@@ -388,5 +502,11 @@ describe("repository data snapshot", () => {
       .executeTakeFirstOrThrow();
     expect(legacyProfileEvent.content_scope).toBe("legacy-ai");
     expect(await legacyRepository.getEventDataProfile(legacyProfileEvent.id)).toBeUndefined();
+    expect(await legacyRepository.listDatasets()).toEqual([]);
+    expect(await legacyRepository.listStandards()).toEqual([]);
+    expect(await legacyRepository.listCollectionMethods()).toEqual([]);
+    expect(await legacyRepository.listActorDataCapabilities(restoredCapabilityActor.id)).toEqual(
+      [],
+    );
   });
 });

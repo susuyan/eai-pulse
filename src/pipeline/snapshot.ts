@@ -8,6 +8,16 @@ import {
   ContentScopeSchema,
   EventDataProfileSchema,
 } from "../domain/embodied-data.js";
+import {
+  ActorCapabilityEvidenceRoleSchema,
+  ActorDataCapabilitySchema,
+  CollectionMethodEventRoleSchema,
+  CollectionMethodProfileSchema,
+  DatasetEventRoleSchema,
+  DatasetProfileSchema,
+  StandardEventRoleSchema,
+  StandardProfileSchema,
+} from "../domain/embodied-data-objects.js";
 import { canonicalizeUrl, sha256 } from "../domain/url.js";
 
 export const SNAPSHOT_SCHEMA_VERSION = 1;
@@ -25,6 +35,14 @@ interface RepositorySnapshot {
   discoveries: Array<Record<string, unknown>>;
   events: Array<Record<string, unknown>>;
   eventDataProfiles?: Array<Record<string, unknown>>;
+  datasets?: Array<Record<string, unknown>>;
+  datasetEvents?: Array<Record<string, unknown>>;
+  standards?: Array<Record<string, unknown>>;
+  standardEvents?: Array<Record<string, unknown>>;
+  collectionMethods?: Array<Record<string, unknown>>;
+  collectionMethodEvents?: Array<Record<string, unknown>>;
+  actorDataCapabilities?: Array<Record<string, unknown>>;
+  actorCapabilityEvidence?: Array<Record<string, unknown>>;
   eventSignals: Array<Record<string, unknown>>;
   eventTracks?: Array<Record<string, unknown>>;
   eventActors?: Array<Record<string, unknown>>;
@@ -153,7 +171,20 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
       .execute(),
   ]);
   const sourceSlugById = new Map(sourceRows.map((source) => [source.id, source.slug]));
-  const [sourceRunRows, scoutRows, scoutEvidenceRows, evaluationRows] = await Promise.all([
+  const [
+    sourceRunRows,
+    scoutRows,
+    scoutEvidenceRows,
+    evaluationRows,
+    datasetRows,
+    datasetEventRows,
+    standardRows,
+    standardEventRows,
+    collectionMethodRows,
+    collectionMethodEventRows,
+    actorCapabilityRows,
+    actorCapabilityEvidenceRows,
+  ] = await Promise.all([
     db
       .selectFrom("source_runs")
       .innerJoin("sources", "sources.id", "source_runs.source_id")
@@ -176,6 +207,69 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
       .where("scout_insights.status", "=", "published")
       .execute(),
     db.selectFrom("evaluation_runs").selectAll().orderBy("finished_at", "asc").execute(),
+    db.selectFrom("datasets").selectAll().execute(),
+    db
+      .selectFrom("dataset_events")
+      .innerJoin("datasets", "datasets.id", "dataset_events.dataset_id")
+      .innerJoin("events", "events.id", "dataset_events.event_id")
+      .select([
+        "datasets.slug as datasetSlug",
+        "events.slug as eventSlug",
+        "dataset_events.relation_role as relationRole",
+        "dataset_events.created_at as createdAt",
+      ])
+      .execute(),
+    db.selectFrom("standards").selectAll().execute(),
+    db
+      .selectFrom("standard_events")
+      .innerJoin("standards", "standards.id", "standard_events.standard_id")
+      .innerJoin("events", "events.id", "standard_events.event_id")
+      .select([
+        "standards.slug as standardSlug",
+        "events.slug as eventSlug",
+        "standard_events.relation_role as relationRole",
+        "standard_events.created_at as createdAt",
+      ])
+      .execute(),
+    db.selectFrom("collection_methods").selectAll().execute(),
+    db
+      .selectFrom("collection_method_events")
+      .innerJoin(
+        "collection_methods",
+        "collection_methods.id",
+        "collection_method_events.collection_method_id",
+      )
+      .innerJoin("events", "events.id", "collection_method_events.event_id")
+      .select([
+        "collection_methods.slug as collectionMethodSlug",
+        "events.slug as eventSlug",
+        "collection_method_events.relation_role as relationRole",
+        "collection_method_events.created_at as createdAt",
+      ])
+      .execute(),
+    db
+      .selectFrom("actor_data_capabilities")
+      .innerJoin("actors", "actors.id", "actor_data_capabilities.actor_id")
+      .selectAll("actor_data_capabilities")
+      .select("actors.slug as actorSlug")
+      .execute(),
+    db
+      .selectFrom("actor_capability_evidence")
+      .innerJoin(
+        "actor_data_capabilities",
+        "actor_data_capabilities.id",
+        "actor_capability_evidence.capability_id",
+      )
+      .innerJoin("actors", "actors.id", "actor_data_capabilities.actor_id")
+      .innerJoin("events", "events.id", "actor_capability_evidence.event_id")
+      .select([
+        "actors.slug as actorSlug",
+        "actor_data_capabilities.capability_key as capabilityKey",
+        "events.slug as eventSlug",
+        "actor_capability_evidence.evidence_role as evidenceRole",
+        "actor_capability_evidence.created_at as createdAt",
+      ])
+      .execute(),
   ]);
   const snapshot: RepositorySnapshot = {
     schemaVersion: SNAPSHOT_SCHEMA_VERSION,
@@ -394,6 +488,100 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
         updatedAt: profile.updated_at,
       }))
       .sort(byString("eventSlug")),
+    datasets: datasetRows
+      .map((dataset) => ({
+        id: dataset.id,
+        slug: dataset.slug,
+        profile: DatasetProfileSchema.parse(JSON.parse(dataset.profile_json)),
+        schemaVersion: dataset.schema_version,
+        createdAt: dataset.created_at,
+        updatedAt: dataset.updated_at,
+      }))
+      .sort(byString("slug")),
+    datasetEvents: datasetEventRows
+      .map((link) => ({
+        datasetSlug: link.datasetSlug,
+        eventSlug: link.eventSlug,
+        relationRole: link.relationRole,
+        createdAt: link.createdAt,
+      }))
+      .sort((left, right) =>
+        `${left.datasetSlug}:${left.eventSlug}:${left.relationRole}`.localeCompare(
+          `${right.datasetSlug}:${right.eventSlug}:${right.relationRole}`,
+        ),
+      ),
+    standards: standardRows
+      .map((standard) => ({
+        id: standard.id,
+        slug: standard.slug,
+        profile: StandardProfileSchema.parse(JSON.parse(standard.profile_json)),
+        schemaVersion: standard.schema_version,
+        createdAt: standard.created_at,
+        updatedAt: standard.updated_at,
+      }))
+      .sort(byString("slug")),
+    standardEvents: standardEventRows
+      .map((link) => ({
+        standardSlug: link.standardSlug,
+        eventSlug: link.eventSlug,
+        relationRole: link.relationRole,
+        createdAt: link.createdAt,
+      }))
+      .sort((left, right) =>
+        `${left.standardSlug}:${left.eventSlug}:${left.relationRole}`.localeCompare(
+          `${right.standardSlug}:${right.eventSlug}:${right.relationRole}`,
+        ),
+      ),
+    collectionMethods: collectionMethodRows
+      .map((method) => ({
+        id: method.id,
+        slug: method.slug,
+        profile: CollectionMethodProfileSchema.parse(JSON.parse(method.profile_json)),
+        schemaVersion: method.schema_version,
+        createdAt: method.created_at,
+        updatedAt: method.updated_at,
+      }))
+      .sort(byString("slug")),
+    collectionMethodEvents: collectionMethodEventRows
+      .map((link) => ({
+        collectionMethodSlug: link.collectionMethodSlug,
+        eventSlug: link.eventSlug,
+        relationRole: link.relationRole,
+        createdAt: link.createdAt,
+      }))
+      .sort((left, right) =>
+        `${left.collectionMethodSlug}:${left.eventSlug}:${left.relationRole}`.localeCompare(
+          `${right.collectionMethodSlug}:${right.eventSlug}:${right.relationRole}`,
+        ),
+      ),
+    actorDataCapabilities: actorCapabilityRows
+      .map((capability) => ({
+        id: capability.id,
+        actorSlug: capability.actorSlug,
+        capabilityKey: capability.capability_key,
+        profile: ActorDataCapabilitySchema.parse(JSON.parse(capability.profile_json)),
+        schemaVersion: capability.schema_version,
+        createdAt: capability.created_at,
+        updatedAt: capability.updated_at,
+      }))
+      .sort((left, right) =>
+        `${left.actorSlug}:${left.capabilityKey}`.localeCompare(
+          `${right.actorSlug}:${right.capabilityKey}`,
+        ),
+      ),
+    actorCapabilityEvidence: actorCapabilityEvidenceRows
+      .map((link) => ({
+        actorSlug: link.actorSlug,
+        capabilityKey: link.capabilityKey,
+        eventSlug: link.eventSlug,
+        evidenceRole: link.evidenceRole,
+        createdAt: link.createdAt,
+      }))
+      .sort((left, right) =>
+        `${left.actorSlug}:${left.capabilityKey}:${left.eventSlug}:${left.evidenceRole}`.localeCompare(
+          `${right.actorSlug}:${right.capabilityKey}:${right.eventSlug}:${right.evidenceRole}`,
+        ),
+      ),
     eventSignals: eventSignalRows
       .map((link) => ({
         eventId: link.event_id,
@@ -914,6 +1102,212 @@ async function restoreSnapshot(
       .execute();
   }
 
+  const datasetIdBySlug = new Map<string, string>();
+  for (const value of snapshot.datasets ?? []) {
+    const slug = requiredString(value, "slug");
+    const profile = DatasetProfileSchema.parse(value.profile);
+    const existing = await db
+      .selectFrom("datasets")
+      .select(["id", "updated_at"])
+      .where("slug", "=", slug)
+      .executeTakeFirst();
+    const id = existing?.id ?? requiredString(value, "id");
+    const updatedAt = requiredString(value, "updatedAt");
+    const row = {
+      slug,
+      profile_json: JSON.stringify(profile),
+      schema_version: requiredNumber(value, "schemaVersion"),
+      created_at: requiredString(value, "createdAt"),
+      updated_at: updatedAt,
+    };
+    if (existing) {
+      if (compareTimestamp(updatedAt, existing.updated_at) >= 0) {
+        await db.updateTable("datasets").set(row).where("id", "=", id).execute();
+      }
+    } else {
+      await db
+        .insertInto("datasets")
+        .values({ id, ...row })
+        .execute();
+    }
+    datasetIdBySlug.set(slug, id);
+  }
+  for (const value of snapshot.datasetEvents ?? []) {
+    const datasetId = datasetIdBySlug.get(requiredString(value, "datasetSlug"));
+    const eventId = eventIdMap.get(requiredString(value, "eventSlug"));
+    if (!datasetId || !eventId) continue;
+    await db
+      .insertInto("dataset_events")
+      .values({
+        dataset_id: datasetId,
+        event_id: eventId,
+        relation_role: DatasetEventRoleSchema.parse(value.relationRole),
+        created_at: requiredString(value, "createdAt"),
+      })
+      .onConflict((conflict) =>
+        conflict.columns(["dataset_id", "event_id", "relation_role"]).doNothing(),
+      )
+      .execute();
+  }
+
+  const standardIdBySlug = new Map<string, string>();
+  for (const value of snapshot.standards ?? []) {
+    const slug = requiredString(value, "slug");
+    const profile = StandardProfileSchema.parse(value.profile);
+    const existing = await db
+      .selectFrom("standards")
+      .select(["id", "updated_at"])
+      .where("slug", "=", slug)
+      .executeTakeFirst();
+    const id = existing?.id ?? requiredString(value, "id");
+    const updatedAt = requiredString(value, "updatedAt");
+    const row = {
+      slug,
+      profile_json: JSON.stringify(profile),
+      schema_version: requiredNumber(value, "schemaVersion"),
+      created_at: requiredString(value, "createdAt"),
+      updated_at: updatedAt,
+    };
+    if (existing) {
+      if (compareTimestamp(updatedAt, existing.updated_at) >= 0) {
+        await db.updateTable("standards").set(row).where("id", "=", id).execute();
+      }
+    } else {
+      await db
+        .insertInto("standards")
+        .values({ id, ...row })
+        .execute();
+    }
+    standardIdBySlug.set(slug, id);
+  }
+  for (const value of snapshot.standardEvents ?? []) {
+    const standardId = standardIdBySlug.get(requiredString(value, "standardSlug"));
+    const eventId = eventIdMap.get(requiredString(value, "eventSlug"));
+    if (!standardId || !eventId) continue;
+    await db
+      .insertInto("standard_events")
+      .values({
+        standard_id: standardId,
+        event_id: eventId,
+        relation_role: StandardEventRoleSchema.parse(value.relationRole),
+        created_at: requiredString(value, "createdAt"),
+      })
+      .onConflict((conflict) =>
+        conflict.columns(["standard_id", "event_id", "relation_role"]).doNothing(),
+      )
+      .execute();
+  }
+
+  const collectionMethodIdBySlug = new Map<string, string>();
+  for (const value of snapshot.collectionMethods ?? []) {
+    const slug = requiredString(value, "slug");
+    const profile = CollectionMethodProfileSchema.parse(value.profile);
+    const existing = await db
+      .selectFrom("collection_methods")
+      .select(["id", "updated_at"])
+      .where("slug", "=", slug)
+      .executeTakeFirst();
+    const id = existing?.id ?? requiredString(value, "id");
+    const updatedAt = requiredString(value, "updatedAt");
+    const row = {
+      slug,
+      profile_json: JSON.stringify(profile),
+      schema_version: requiredNumber(value, "schemaVersion"),
+      created_at: requiredString(value, "createdAt"),
+      updated_at: updatedAt,
+    };
+    if (existing) {
+      if (compareTimestamp(updatedAt, existing.updated_at) >= 0) {
+        await db.updateTable("collection_methods").set(row).where("id", "=", id).execute();
+      }
+    } else {
+      await db
+        .insertInto("collection_methods")
+        .values({ id, ...row })
+        .execute();
+    }
+    collectionMethodIdBySlug.set(slug, id);
+  }
+  for (const value of snapshot.collectionMethodEvents ?? []) {
+    const collectionMethodId = collectionMethodIdBySlug.get(
+      requiredString(value, "collectionMethodSlug"),
+    );
+    const eventId = eventIdMap.get(requiredString(value, "eventSlug"));
+    if (!collectionMethodId || !eventId) continue;
+    await db
+      .insertInto("collection_method_events")
+      .values({
+        collection_method_id: collectionMethodId,
+        event_id: eventId,
+        relation_role: CollectionMethodEventRoleSchema.parse(value.relationRole),
+        created_at: requiredString(value, "createdAt"),
+      })
+      .onConflict((conflict) =>
+        conflict.columns(["collection_method_id", "event_id", "relation_role"]).doNothing(),
+      )
+      .execute();
+  }
+
+  const actors = await db.selectFrom("actors").select(["id", "slug"]).execute();
+  const actorIdBySlug = new Map(actors.map((actor) => [actor.slug, actor.id]));
+  const capabilityIdByActorAndKey = new Map<string, string>();
+  for (const value of snapshot.actorDataCapabilities ?? []) {
+    const actorSlug = requiredString(value, "actorSlug");
+    const actorId = actorIdBySlug.get(actorSlug);
+    if (!actorId) continue;
+    const capabilityKey = requiredString(value, "capabilityKey");
+    const profile = ActorDataCapabilitySchema.parse(value.profile);
+    if (profile.capabilityKey !== capabilityKey) {
+      throw new Error(`Snapshot capability key mismatch: ${actorSlug}:${capabilityKey}`);
+    }
+    const existing = await db
+      .selectFrom("actor_data_capabilities")
+      .select(["id", "updated_at"])
+      .where("actor_id", "=", actorId)
+      .where("capability_key", "=", capabilityKey)
+      .executeTakeFirst();
+    const id = existing?.id ?? requiredString(value, "id");
+    const updatedAt = requiredString(value, "updatedAt");
+    const row = {
+      actor_id: actorId,
+      capability_key: capabilityKey,
+      profile_json: JSON.stringify(profile),
+      schema_version: requiredNumber(value, "schemaVersion"),
+      created_at: requiredString(value, "createdAt"),
+      updated_at: updatedAt,
+    };
+    if (existing) {
+      if (compareTimestamp(updatedAt, existing.updated_at) >= 0) {
+        await db.updateTable("actor_data_capabilities").set(row).where("id", "=", id).execute();
+      }
+    } else {
+      await db
+        .insertInto("actor_data_capabilities")
+        .values({ id, ...row })
+        .execute();
+    }
+    capabilityIdByActorAndKey.set(`${actorSlug}:${capabilityKey}`, id);
+  }
+  for (const value of snapshot.actorCapabilityEvidence ?? []) {
+    const actorSlug = requiredString(value, "actorSlug");
+    const capabilityKey = requiredString(value, "capabilityKey");
+    const capabilityId = capabilityIdByActorAndKey.get(`${actorSlug}:${capabilityKey}`);
+    const eventId = eventIdMap.get(requiredString(value, "eventSlug"));
+    if (!capabilityId || !eventId) continue;
+    await db
+      .insertInto("actor_capability_evidence")
+      .values({
+        capability_id: capabilityId,
+        event_id: eventId,
+        evidence_role: ActorCapabilityEvidenceRoleSchema.parse(value.evidenceRole),
+        created_at: requiredString(value, "createdAt"),
+      })
+      .onConflict((conflict) =>
+        conflict.columns(["capability_id", "event_id", "evidence_role"]).doNothing(),
+      )
+      .execute();
+  }
+
   for (const value of snapshot.signalTriage ?? []) {
     const signalId = signalIdMap.get(requiredString(value, "signalId"));
     if (!signalId) continue;
@@ -1065,8 +1459,6 @@ async function restoreSnapshot(
       .execute();
   }
 
-  const actors = await db.selectFrom("actors").select(["id", "slug"]).execute();
-  const actorIdBySlug = new Map(actors.map((actor) => [actor.slug, actor.id]));
   for (const value of snapshot.eventActors ?? []) {
     const eventId = eventIdMap.get(requiredString(value, "eventId"));
     const actorId = actorIdBySlug.get(requiredString(value, "actorSlug"));
@@ -1271,8 +1663,20 @@ function validateSnapshot(value: RepositorySnapshot): void {
   for (const key of ["sources", "signals", "discoveries", "events", "eventSignals"] as const) {
     if (!Array.isArray(value[key])) throw new Error(`Invalid repository snapshot field: ${key}`);
   }
-  if (value.eventDataProfiles !== undefined && !Array.isArray(value.eventDataProfiles)) {
-    throw new Error("Invalid repository snapshot field: eventDataProfiles");
+  for (const key of [
+    "eventDataProfiles",
+    "datasets",
+    "datasetEvents",
+    "standards",
+    "standardEvents",
+    "collectionMethods",
+    "collectionMethodEvents",
+    "actorDataCapabilities",
+    "actorCapabilityEvidence",
+  ] as const) {
+    if (value[key] !== undefined && !Array.isArray(value[key])) {
+      throw new Error(`Invalid repository snapshot field: ${key}`);
+    }
   }
 }
 
@@ -1359,6 +1763,14 @@ function snapshotCounts(snapshot: RepositorySnapshot) {
     discoveries: snapshot.discoveries.length,
     events: snapshot.events.length,
     eventDataProfiles: snapshot.eventDataProfiles?.length ?? 0,
+    datasets: snapshot.datasets?.length ?? 0,
+    datasetEvents: snapshot.datasetEvents?.length ?? 0,
+    standards: snapshot.standards?.length ?? 0,
+    standardEvents: snapshot.standardEvents?.length ?? 0,
+    collectionMethods: snapshot.collectionMethods?.length ?? 0,
+    collectionMethodEvents: snapshot.collectionMethodEvents?.length ?? 0,
+    actorDataCapabilities: snapshot.actorDataCapabilities?.length ?? 0,
+    actorCapabilityEvidence: snapshot.actorCapabilityEvidence?.length ?? 0,
     eventSignals: snapshot.eventSignals.length,
     eventTracks: snapshot.eventTracks?.length ?? 0,
     eventActors: snapshot.eventActors?.length ?? 0,
@@ -1381,6 +1793,14 @@ function emptyCounts() {
     discoveries: 0,
     events: 0,
     eventDataProfiles: 0,
+    datasets: 0,
+    datasetEvents: 0,
+    standards: 0,
+    standardEvents: 0,
+    collectionMethods: 0,
+    collectionMethodEvents: 0,
+    actorDataCapabilities: 0,
+    actorCapabilityEvidence: 0,
     eventSignals: 0,
     eventTracks: 0,
     eventActors: 0,

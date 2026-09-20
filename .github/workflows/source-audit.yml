@@ -57,31 +57,26 @@ jobs:
       - name: Reconcile eligible shadow observation
         run: npm run observe:sources -- --confirm
 
-      - name: Activate only qualified observation sources
-        run: npm run activate:auto
-
       - name: Merge latest remote repository snapshot
         shell: bash
         run: |
           set -euo pipefail
           git fetch origin main
           git show origin/main:data/snapshot/v1.json > "$RUNNER_TEMP/remote-snapshot.json"
-          git show origin/main:data/reports/system-evaluation.json > data/reports/system-evaluation.json
           npm run db:snapshot -- merge --file="$RUNNER_TEMP/remote-snapshot.json"
 
       - name: Re-apply source reconciliation after remote merge
         run: npm run ops:reconcile
 
-      - name: Persist measured system quality after source lifecycle changes
+      - name: Evaluate source lifecycle changes without advancing the operational watermark
         shell: bash
         run: |
           set -euo pipefail
           npm run --silent evaluate:system -- \
             --skip-bootstrap \
             --gate=operational \
-            --persist \
             --baseline=data/reports/system-evaluation.json \
-            --output=data/reports/system-evaluation.json \
+            --output="$RUNNER_TEMP/source-audit-evaluation.json" \
             --summary="$GITHUB_STEP_SUMMARY" | tee "$RUNNER_TEMP/evaluation.json"
           node -e 'JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"))' "$RUNNER_TEMP/evaluation.json"
 
@@ -118,11 +113,10 @@ jobs:
         run: |
           set -euo pipefail
           test -s data/reports/source-health.json
-          test -s data/reports/system-evaluation.json
           test -s data/snapshot/v1.json
-          node -e 'JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"))' data/reports/system-evaluation.json
-          git diff --check -- data/reports/source-health.json data/reports/system-evaluation.json data/snapshot/v1.json
-          if grep -E 'gh[opsu]_[A-Za-z0-9_]{20,}|-----BEGIN .*PRIVATE KEY-----|/Users/[^/]+/|/home/runner/|"(token|secret|password|cookie|authorization|api[_-]?key)"[[:space:]]*:' data/reports/source-health.json data/reports/system-evaluation.json data/snapshot/v1.json; then
+          node -e 'JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"))' "$RUNNER_TEMP/source-audit-evaluation.json"
+          git diff --check -- data/reports/source-health.json data/snapshot/v1.json
+          if grep -E 'gh[opsu]_[A-Za-z0-9_]{20,}|-----BEGIN .*PRIVATE KEY-----|/Users/[^/]+/|/home/runner/|"(token|secret|password|cookie|authorization|api[_-]?key)"[[:space:]]*:' data/reports/source-health.json data/snapshot/v1.json; then
             echo "Private material detected in source health output" >&2
             exit 1
           fi
@@ -173,7 +167,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git add -- data/reports/source-health.json data/reports/system-evaluation.json data/snapshot/v1.json
+          git add -- data/reports/source-health.json data/snapshot/v1.json
           if git diff --cached --quiet; then
             echo "No report changes."
             echo "changed=false" >> "$GITHUB_OUTPUT"

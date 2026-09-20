@@ -47,6 +47,9 @@ jobs:
       - name: Restore auditable repository snapshot
         run: npm run db:snapshot -- restore
 
+      - name: Validate versioned evaluation freshness fields
+        run: jq -e '.evaluationAsOf and .gateMode and .embodiedQuality' data/reports/system-evaluation.json >/dev/null
+
       - name: Check source audit and health issue liveness
         env:
           GH_TOKEN: ${{ github.token }}

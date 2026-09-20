@@ -1,6 +1,6 @@
 # Agent Pulse 具身数据公开切换设计
 
-状态：已完成交互设计确认，待书面规格审阅
+状态：已批准，进入实施计划
 
 日期：2026-09-20
 
@@ -364,3 +364,9 @@ data-refresh 只调度具身目录中的 active 来源和已批准的 shadow obs
 - 根目录 `CHANGELOG.md` 与 `src/catalog/product.ts` 已同步；
 - 回滚 manifest 和普通 revert 路径已经验证；
 - 没有 `.env`、token、cookie、原始 payload、本机路径、私有 feed 或个人数据进入仓库和 Pages。
+
+## 15. 实施计划
+
+- [Phase 3：来源、launch corpus 与迁移](../plans/2026-09-20-embodied-data-public-switch-phase-3.md)
+- [Phase 4：门禁、评测、Scout 与运营工作流](../plans/2026-09-20-embodied-data-public-switch-phase-4.md)
+- [Phase 5：公开产品、发布与线上验收](../plans/2026-09-20-embodied-data-public-switch-phase-5.md)

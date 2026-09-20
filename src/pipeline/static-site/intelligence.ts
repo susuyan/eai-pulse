@@ -1,6 +1,13 @@
 import type { PublicEvidence } from "../../domain/types.js";
 import { RESEARCH_MONTH_LIMIT } from "../research-impact.js";
-import type { EnrichedEvent, NarrativeStage, PublicSource, TechnologyCoverage } from "./dto.js";
+import type {
+  EnrichedEvent,
+  NarrativeStage,
+  PublicPipelineStage,
+  PublicSource,
+  SourceCoverageGap,
+  TechnologyCoverage,
+} from "./dto.js";
 
 export interface EventDevelopment {
   kind: "origin" | "official" | "discussion" | "response";
@@ -181,6 +188,27 @@ export function summarizeSourcePortfolio(sources: PublicSource[]): SourcePortfol
     acquisitions: groupSourcePortfolio(sources, (source) => source.acquisition),
     health: groupSourcePortfolio(sources, (source) => source.healthStatus),
   };
+}
+
+export function summarizeSourceCoverageGaps(
+  sources: PublicSource[],
+  pipelineStages: PublicPipelineStage[],
+): SourceCoverageGap[] {
+  const categories = [...new Set(sources.map((source) => source.category).filter(Boolean))].sort(
+    (left, right) => left.localeCompare(right),
+  );
+  const availableSources = sources.filter((source) => source.mapStatus !== "restricted");
+
+  return pipelineStages.flatMap((stage) =>
+    categories
+      .filter(
+        (category) =>
+          !availableSources.some(
+            (source) => source.category === category && source.pipelineStages.includes(stage.slug),
+          ),
+      )
+      .map((category) => ({ stage: stage.slug, category })),
+  );
 }
 
 function groupSourcePortfolio(

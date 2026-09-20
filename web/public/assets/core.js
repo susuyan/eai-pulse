@@ -930,32 +930,36 @@ function setupCardFilters() {
 }
 
 function setupSourceFilters() {
-  const grid = document.querySelector("[data-source-grid]");
+  const root = document.querySelector("[data-source-map]");
+  const grid = root?.querySelector("[data-source-grid]");
   if (!grid) return;
-  const search = document.querySelector("[data-source-search]");
-  let filter = "all";
+  const filters = { region: "all", stage: "all", map: "all" };
   const apply = () => {
-    const query = String(search?.value || "")
-      .trim()
-      .toLowerCase();
-    grid.querySelectorAll("[data-source-value]").forEach((row) => {
-      const filterMatch =
-        filter === "all" || String(row.dataset.sourceValue || "").includes(filter);
-      const queryMatch = !query || String(row.dataset.sourceSearchValue || "").includes(query);
-      row.hidden = !(filterMatch && queryMatch);
+    grid.querySelectorAll("[data-source-map-status]").forEach((card) => {
+      const regionMatch = filters.region === "all" || card.dataset.sourceRegion === filters.region;
+      const stageMatch =
+        filters.stage === "all" ||
+        String(card.dataset.sourceStages || "")
+          .split(" ")
+          .includes(filters.stage);
+      const mapMatch = filters.map === "all" || card.dataset.sourceMapStatus === filters.map;
+      card.hidden = !(regionMatch && stageMatch && mapMatch);
     });
     grid.dispatchEvent(new Event("mobile-list:refresh"));
   };
-  document.querySelectorAll("[data-source-filter]").forEach((button) => {
-    button.addEventListener("click", () => {
-      filter = button.dataset.sourceFilter || "all";
-      document.querySelectorAll("[data-source-filter]").forEach((item) => {
-        item.classList.toggle("active", item === button);
+  ["region", "stage", "map"].forEach((kind) => {
+    root.querySelectorAll(`[data-source-filter-${kind}]`).forEach((button) => {
+      button.addEventListener("click", () => {
+        filters[kind] =
+          button.dataset[`sourceFilter${kind[0].toUpperCase()}${kind.slice(1)}`] || "all";
+        root.querySelectorAll(`[data-source-filter-${kind}]`).forEach((item) => {
+          item.setAttribute("aria-pressed", String(item === button));
+          item.classList.toggle("active", item === button);
+        });
+        apply();
       });
-      apply();
     });
   });
-  search?.addEventListener("input", apply);
 }
 
 function setupMobileListPagination() {

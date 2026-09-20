@@ -171,6 +171,49 @@ describe("static-site intelligence consumption model", () => {
     expect(assets).toContain('href="../events/embodied-event/"');
   });
 
+  it("renders every governed source with map states and computed coverage gaps", () => {
+    const model = embodiedSiteModel();
+    const exampleSource = model.sources[0];
+    if (!exampleSource) throw new Error("Missing public source fixture");
+    model.sources = [
+      {
+        ...exampleSource,
+        mapStatus: "integrated",
+        pipelineStages: ["acquisition-route"],
+        substituteFor: [],
+        restrictionNote: "",
+      },
+      {
+        ...exampleSource,
+        slug: "restricted-manual-source",
+        name: "Restricted Manual Source",
+        acquisition: "manual",
+        mapStatus: "restricted",
+        pipelineStages: ["demand-definition"],
+        restrictionNote: "Manual review only.",
+        healthStatus: "unchecked",
+      },
+    ];
+
+    const sourcesPage =
+      renderStaticPages(model).find((page) => page.path === "sources/index.html")?.content ?? "";
+
+    expect(sourcesPage).toContain("已接入");
+    expect(sourcesPage).toContain("待接入");
+    expect(sourcesPage).toContain("受限");
+    expect(sourcesPage).toContain("替代来源");
+    expect(sourcesPage).toContain("覆盖缺口");
+    expect(sourcesPage).toContain("需求与任务定义 · official");
+    expect(sourcesPage.match(/class="source-card"/g)).toHaveLength(2);
+    expect(sourcesPage).toContain("Restricted Manual Source");
+    expect(sourcesPage).toContain('data-status="restricted"');
+    expect(sourcesPage).toContain('data-status="unchecked"');
+    const restrictedCard = sourcesPage.match(
+      /<article class="source-card"[^>]*data-source-map-status="restricted"[\s\S]*?<\/article>/,
+    )?.[0];
+    expect(restrictedCard).not.toContain('data-status="healthy"');
+  });
+
   it("sorts one event per card by its latest evidence update", () => {
     const olderEventWithNewUpdate = event("older", "2026-01-01T00:00:00Z", [
       evidence("Official update", "primary", "2026-07-10T00:00:00Z"),
@@ -678,6 +721,10 @@ function embodiedSiteModel(): StaticSiteModel {
         role: "official",
         acquisition: "rss",
         topics: ["embodied-data"],
+        mapStatus: "pending",
+        pipelineStages: ["acquisition-route"],
+        substituteFor: [],
+        restrictionNote: "",
         maintenanceStatus: "maintained",
         lifecycle: "shadow",
         observationEnabled: false,
@@ -772,6 +819,7 @@ function embodiedSiteModel(): StaticSiteModel {
         ],
       },
     ],
+    sourceCoverageGaps: [],
   } as StaticSiteModel;
 }
 
@@ -853,6 +901,10 @@ function source(
     role: "primary",
     acquisition,
     topics,
+    mapStatus: "pending",
+    pipelineStages: [],
+    substituteFor: [],
+    restrictionNote: "",
     maintenanceStatus: "candidate",
     lifecycle: "shadow",
     observationEnabled: false,

@@ -169,6 +169,10 @@ export interface PublicSource {
   role: string;
   acquisition: string;
   topics: string[];
+  mapStatus: "integrated" | "pending" | "restricted" | "substitute";
+  pipelineStages: EmbodiedPipelineStage[];
+  substituteFor: string[];
+  restrictionNote: string;
   maintenanceStatus: string;
   lifecycle: string;
   observationEnabled: boolean;
@@ -178,6 +182,11 @@ export interface PublicSource {
   lastCheckedAt: string | null;
   latestItemAt: string | null;
   healthErrorCode: string | null;
+}
+
+export interface SourceCoverageGap {
+  stage: EmbodiedPipelineStage;
+  category: string;
 }
 
 export interface PublicSignal {
@@ -396,4 +405,5 @@ export interface StaticSiteModel {
   standards: PublicStandard[];
   collectionMethods: PublicCollectionMethod[];
   peers: PublicPeer[];
+  sourceCoverageGaps: SourceCoverageGap[];
 }

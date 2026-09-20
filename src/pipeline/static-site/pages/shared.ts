@@ -24,9 +24,15 @@ export function statusChip(status: string, locale: Locale): string {
     conflicting: ["证据冲突", "Conflicting evidence"],
     unknown: ["状态未知", "Unknown"],
     shadow: ["影子观察", "Shadow"],
+    draft: ["草稿", "Draft"],
     active: ["已启用", "Active"],
     degraded: ["已降级", "Degraded"],
     quarantined: ["已隔离", "Quarantined"],
+    integrated: ["已接入", "Integrated"],
+    pending: ["待接入", "Pending"],
+    restricted: ["受限", "Restricted"],
+    substitute: ["替代来源", "Substitute"],
+    unchecked: ["未检查", "Unchecked"],
   };
   const label = labels[status]?.[locale === "en" ? 1 : 0] ?? status;
   return `<span class="status-chip" data-status="${escapeHtml(status)}">${escapeHtml(label)}</span>`;

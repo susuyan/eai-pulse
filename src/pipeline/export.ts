@@ -25,6 +25,7 @@ import type {
 } from "./static-site/dto.js";
 import { buildEmbodiedPublicData } from "./static-site/embodied-intelligence.js";
 import { githubDataAtBuildTime } from "./static-site/github.js";
+import { summarizeSourceCoverageGaps } from "./static-site/intelligence.js";
 import { renderLlmsTxt } from "./static-site/llms.js";
 import type { StaticPage } from "./static-site/pages.js";
 import { renderStaticPages } from "./static-site/pages.js";
@@ -141,26 +142,37 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
     icon: track.icon,
   }));
   const checksBySourceId = new Map(latestSourceChecks.map((check) => [check.source_id, check]));
-  const publicSources: PublicSource[] = sources.map((source) => ({
-    slug: source.slug,
-    name: source.name,
-    homepageUrl: source.homepage_url,
-    category: source.source_category,
-    region: source.region,
-    tier: source.tier,
-    role: source.role,
-    acquisition: source.acquisition,
-    topics: parseJson(source.topics_json, []),
-    maintenanceStatus: source.maintenance_status,
-    lifecycle: source.lifecycle_status,
-    observationEnabled: source.observation_enabled === 1,
-    qualityScore: source.quality_score,
-    cadence: source.cadence,
-    healthStatus: normalizePublicHealth(checksBySourceId.get(source.id)?.status),
-    lastCheckedAt: checksBySourceId.get(source.id)?.finished_at ?? null,
-    latestItemAt: checksBySourceId.get(source.id)?.latest_item_at ?? null,
-    healthErrorCode: checksBySourceId.get(source.id)?.error_code ?? null,
-  }));
+  const publicSources: PublicSource[] = sources.map((source) => {
+    const restricted =
+      source.map_status === "restricted" ||
+      source.acquisition === "manual" ||
+      source.adapter === "manual";
+    const check = checksBySourceId.get(source.id);
+    return {
+      slug: source.slug,
+      name: source.name,
+      homepageUrl: source.homepage_url,
+      category: source.source_category,
+      region: source.region,
+      tier: source.tier,
+      role: source.role,
+      acquisition: source.acquisition,
+      topics: parsePublicStringArray(source.topics_json),
+      mapStatus: restricted ? "restricted" : source.map_status,
+      pipelineStages: parsePublicPipelineStages(source.pipeline_stages_json),
+      substituteFor: parsePublicStringArray(source.substitute_for_json),
+      restrictionNote: source.restriction_note,
+      maintenanceStatus: source.maintenance_status,
+      lifecycle: source.lifecycle_status,
+      observationEnabled: source.observation_enabled === 1,
+      qualityScore: source.quality_score,
+      cadence: source.cadence,
+      healthStatus: restricted ? "unchecked" : normalizePublicHealth(check?.status),
+      lastCheckedAt: check?.finished_at ?? null,
+      latestItemAt: check?.latest_item_at ?? null,
+      healthErrorCode: check?.error_code ?? null,
+    };
+  });
   const publicActors: PublicActor[] = actors.map((actor) => ({
     slug: actor.slug,
     name: actor.name,
@@ -326,6 +338,7 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
     standards: embodiedData.standards,
     collectionMethods: embodiedData.collectionMethods,
     peers: embodiedData.peers,
+    sourceCoverageGaps: summarizeSourceCoverageGaps(publicSources, embodiedData.pipelineStages),
   };
 
   const allPages = renderStaticPages(model);
@@ -549,6 +562,30 @@ function normalizePublicHealth(value: string | undefined): PublicSource["healthS
   if (value === "healthy" || value === "degraded" || value === "failed" || value === "skipped")
     return value;
   return "unchecked";
+}
+
+function parsePublicStringArray(value: string): string[] {
+  const parsed = parseJson<unknown>(value, []);
+  return Array.isArray(parsed)
+    ? parsed.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+type PublicPipelineStageSlug = PublicSource["pipelineStages"][number];
+
+const publicPipelineStageSlugs = new Set<PublicPipelineStageSlug>([
+  "demand-definition",
+  "acquisition-route",
+  "multimodal-capture",
+  "production-operations",
+  "data-engineering-standards",
+  "quality-training-feedback",
+]);
+
+function parsePublicPipelineStages(value: string): PublicPipelineStageSlug[] {
+  return parsePublicStringArray(value).filter((stage): stage is PublicPipelineStageSlug =>
+    publicPipelineStageSlugs.has(stage as PublicPipelineStageSlug),
+  );
 }
 
 async function writeJson(path: string, value: unknown): Promise<void> {

@@ -1,7 +1,15 @@
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { loadConfig } from "../src/config/env.js";
+import { createDatabase } from "../src/db/database.js";
+import { migrateToLatest } from "../src/db/migrate.js";
 import type { DomainObjectRecord } from "../src/db/repository.js";
+import { seedDatabase } from "../src/db/seed.js";
 import type { DatasetProfile, PeerCompanyProfile } from "../src/domain/embodied-data-objects.js";
 import type { PublicEvent } from "../src/domain/types.js";
+import { exportStaticSite } from "../src/pipeline/export.js";
 import {
   projectPublicDataset,
   projectPublicEmbodiedEvent,
@@ -223,5 +231,52 @@ describe("embodied public DTOs", () => {
         },
       ),
     ).toThrow();
+  });
+
+  it("projects governed source-map fields and isolates manual sources", async () => {
+    const root = await mkdtemp(join(tmpdir(), "agent-pulse-source-public-dto-"));
+    const base = loadConfig({ NODE_ENV: "test", DATABASE_URL: "sqlite::memory:" });
+    const config = { ...base, distDir: join(root, "dist") };
+    const db = createDatabase(config);
+
+    try {
+      await migrateToLatest(db, config);
+      await seedDatabase(db);
+      const manual = await db
+        .selectFrom("sources")
+        .select(["id", "slug"])
+        .where("content_scope", "=", "embodied-data")
+        .where("acquisition", "=", "manual")
+        .executeTakeFirstOrThrow();
+      await db
+        .updateTable("sources")
+        .set({ map_status: "integrated" })
+        .where("id", "=", manual.id)
+        .execute();
+
+      await exportStaticSite(db, config);
+      const sources = JSON.parse(
+        await readFile(join(config.distDir, "data/sources.json"), "utf8"),
+      ) as Array<Record<string, unknown>>;
+      const governed = sources.find((source) => source.slug === "droid-project");
+      const restrictedManual = sources.find((source) => source.slug === manual.slug);
+
+      expect(governed).toMatchObject({
+        mapStatus: "pending",
+        substituteFor: [],
+      });
+      expect(governed?.pipelineStages).toContain("acquisition-route");
+      expect(restrictedManual).toMatchObject({
+        mapStatus: "restricted",
+        healthStatus: "unchecked",
+      });
+      expect(restrictedManual?.mapStatus).not.toBe("integrated");
+      expect(JSON.stringify(governed)).not.toMatch(
+        /config_json|state_json|restriction_note|source_id|\/Users\//,
+      );
+    } finally {
+      await db.destroy();
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });

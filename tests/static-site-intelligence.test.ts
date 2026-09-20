@@ -29,10 +29,7 @@ import {
   summarizeSourcePortfolio,
   timelineEventsForPresentation,
 } from "../src/pipeline/static-site/intelligence.js";
-import {
-  renderStaticPages,
-  renderTimeline,
-} from "../src/pipeline/static-site/pages.js";
+import { renderStaticPages, renderTimeline } from "../src/pipeline/static-site/pages.js";
 
 describe("static-site intelligence consumption model", () => {
   it("renders the exact embodied-data route and navigation contract", () => {
@@ -70,7 +67,11 @@ describe("static-site intelligence consumption model", () => {
     }
     expect(
       model.pipelineStages.map((stage) => home.indexOf(`data-pipeline-stage="${stage.slug}"`)),
-    ).toEqual([...model.pipelineStages.map((stage) => home.indexOf(`data-pipeline-stage="${stage.slug}"`))].sort((a, b) => a - b));
+    ).toEqual(
+      [
+        ...model.pipelineStages.map((stage) => home.indexOf(`data-pipeline-stage="${stage.slug}"`)),
+      ].sort((a, b) => a - b),
+    );
     expect(home).toContain("具身数据情报与生产洞察");
     expect(home).toContain("数据资产");
     expect(home).toContain("行业同行");
@@ -477,8 +478,10 @@ function embodiedSiteModel(): StaticSiteModel {
   const legacyEvent = event("embodied-event", "2026-09-20T00:00:00.000Z", [
     evidence("Primary evidence", "primary", "2026-09-20T00:00:00.000Z"),
   ]);
-  legacyEvent.evidence[0]!.url = "https://example.com/evidence";
-  legacyEvent.evidence[0]!.source = "Example Lab";
+  const primaryEvidence = legacyEvent.evidence[0];
+  if (!primaryEvidence) throw new Error("Primary evidence fixture is missing");
+  primaryEvidence.url = "https://example.com/evidence";
+  primaryEvidence.source = "Example Lab";
   const { id: _id, actors: _actors, ...publicEvent } = legacyEvent;
   const pipelineStages = [
     ["demand-definition", "需求与任务定义", "01"],
@@ -587,7 +590,30 @@ function embodiedSiteModel(): StaticSiteModel {
     datasets: [],
     standards: [],
     collectionMethods: [],
-    peers: [],
+    peers: [
+      {
+        slug: "example-lab",
+        name: "Example Lab",
+        actorType: "lab",
+        region: "CN",
+        websiteUrl: "https://example.com/lab",
+        capabilities: [
+          {
+            capabilityKey: "teleoperation-collection",
+            pipelineStages: ["acquisition-route"],
+            claimText: "Publishes a sourced teleoperation collection method.",
+            claimant: "independent",
+            sourceUrl: "https://example.com/lab/evidence",
+            claimedAt: "2026-09-20T00:00:00.000Z",
+            verificationStatus: "independently-verified",
+            verifiedAt: "2026-09-20T00:00:00.000Z",
+            confidence: 90,
+            limitations: [],
+            evidence: [{ slug: "embodied-event", title: "Embodied event", role: "verification" }],
+          },
+        ],
+      },
+    ],
   } as StaticSiteModel;
 }
 

@@ -261,3 +261,32 @@ export function setupTimeline(root) {
     }
   });
 }
+
+export function setupEmbodiedTimeline(root) {
+  const search = root.querySelector("[data-embodied-timeline-search]");
+  const count = root.querySelector("[data-embodied-timeline-count]");
+  const events = [...root.querySelectorAll("[data-event]")];
+  if (!search) return;
+
+  const apply = () => {
+    const query = String(search.value || "")
+      .trim()
+      .toLocaleLowerCase();
+    let visible = 0;
+    events.forEach((event) => {
+      event.hidden = Boolean(query) && !String(event.dataset.search || "").includes(query);
+      if (!event.hidden) visible += 1;
+    });
+    if (count) {
+      count.textContent =
+        document.documentElement.lang === "en" ? `${visible} events` : `${visible} 个事件`;
+    }
+  };
+
+  search.addEventListener("input", apply);
+  search.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    search.value = "";
+    apply();
+  });
+}

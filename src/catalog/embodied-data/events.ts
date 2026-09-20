@@ -34,12 +34,15 @@ type ProfileInput = Partial<
     | "standards"
     | "qualityMetrics"
     | "deliveryImpact"
+    | "pipelineStages"
+    | "scaleClaims"
+    | "evidenceStatus"
   >
 >;
 
 const profile = (stage: EmbodiedPipelineStage, input: ProfileInput = {}): EventDataProfile =>
   EventDataProfileSchema.parse({
-    pipelineStages: [stage],
+    pipelineStages: input.pipelineStages ?? [stage],
     scenarios: input.scenarios ?? ["robot data production"],
     embodiments: input.embodiments ?? ["single-arm"],
     tasks: input.tasks ?? ["manipulation"],
@@ -47,12 +50,12 @@ const profile = (stage: EmbodiedPipelineStage, input: ProfileInput = {}): EventD
     acquisitionMethods: input.acquisitionMethods ?? ["teleoperation"],
     dataFormats: input.dataFormats ?? [],
     standards: input.standards ?? [],
-    scaleClaims: [],
+    scaleClaims: input.scaleClaims ?? [],
     qualityMetrics: input.qualityMetrics ?? ["task success and replay validity"],
     costSignals: [],
     deliveryImpact:
       input.deliveryImpact ?? "为具身数据项目提供可复用的生产边界、验证方法与交付判断依据。",
-    evidenceStatus: "verified",
+    evidenceStatus: input.evidenceStatus ?? "verified",
   });
 
 const launchEvent = (
@@ -754,5 +757,202 @@ export const embodiedLaunchEvents: EmbodiedLaunchEventSeed[] = [
       tasks: ["loco-manipulation"],
     }),
     evidenceSlugs: ["galaxea-official"],
+  }),
+  launchEvent({
+    slug: "pi05-open-world-generalization",
+    title: "π0.5 将异构数据联合训练用于新环境机器人任务",
+    fact: "Physical Intelligence 发布 π0.5，介绍机器人动作示范、视觉语言数据与高层行为标注的联合训练。团队报告了未见家庭环境中的任务实验；泛化效果尚未在本轮独立复测。",
+    interpretation:
+      "数据配比与高层语义标注可能影响跨环境迁移，采集团队需要同时管理动作覆盖和环境差异。",
+    futureWatch: "观察训练数据边界、未见场景划分和第三方复现，避免把新环境演示推断为任意家庭可用。",
+    recommendedAction:
+      "分别记录动作示范、语义标注和环境来源，并用严格隔离的新场景测试评估数据组合。",
+    category: "research",
+    company: "Physical Intelligence",
+    keywords: ["异构数据", "联合训练", "机器人示范", "泛化验证"],
+    date: "2025-04-22T00:00:00.000Z",
+    tracks: ["acquisition-route", "quality-training-feedback"],
+    actors: ["physical-intelligence"],
+    dataProfile: profile("acquisition-route", {
+      pipelineStages: ["acquisition-route", "quality-training-feedback"],
+      scenarios: ["unseen household environments"],
+      embodiments: ["mobile-manipulator", "single-arm"],
+      tasks: ["manipulation"],
+      modalities: ["rgb", "action", "language"],
+      acquisitionMethods: ["hybrid"],
+      qualityMetrics: ["publisher-reported performance in unseen environments"],
+      deliveryImpact:
+        "为动作示范和语义标注分别记录来源、配比与环境，固定未参与训练的新场景和成功条件，再比较数据组合带来的迁移变化；团队泛化实验不能代替交付验收。",
+      evidenceStatus: "claimed",
+    }),
+    evidenceSlugs: ["pi05-official-announcement"],
+  }),
+  launchEvent({
+    slug: "nvidia-groot-dreams-synthetic-data",
+    title: "NVIDIA 宣布 GR00T-Dreams 合成动作数据蓝图",
+    fact: "NVIDIA 宣布 GR00T-Dreams，描述以图像生成机器人任务视频、再提取动作 token 的合成数据路线。公告提供的是厂商方法与效果声明，本轮没有独立验证数据质量或采集成本。",
+    interpretation:
+      "视频生成可以成为动作数据的候选上游，但接触物理、动作可执行性和真实任务收益仍需单独验收。",
+    futureWatch: "观察蓝图实际可获取版本、动作提取误差与真实机器人复测，核对其对人工示范的依赖。",
+    recommendedAction: "为合成轨迹单列来源和过滤规则，用同一真实任务集比较其对训练结果的增量价值。",
+    category: "capture-tool",
+    company: "NVIDIA",
+    keywords: ["合成数据", "任务视频", "动作 token", "真实验证"],
+    date: "2025-05-19T00:00:00.000Z",
+    tracks: ["acquisition-route", "quality-training-feedback"],
+    actors: ["nvidia"],
+    dataProfile: profile("acquisition-route", {
+      pipelineStages: ["acquisition-route", "quality-training-feedback"],
+      scenarios: ["synthetic robot task trajectories"],
+      embodiments: ["humanoid"],
+      tasks: ["manipulation"],
+      modalities: ["rgb", "action"],
+      acquisitionMethods: ["synthetic"],
+      qualityMetrics: ["action validity and real-world task transfer require evaluation"],
+      deliveryImpact:
+        "将视频生成与动作提取纳入独立质量检查，不能使用厂商时间对比替代内部采集成本测量。",
+      evidenceStatus: "claimed",
+    }),
+    evidenceSlugs: ["groot-dreams-official-announcement"],
+  }),
+  launchEvent({
+    slug: "robotwin-2",
+    title: "RoboTwin 2.0 将双臂数据生成与域随机化评测联动",
+    fact: "RoboTwin 团队公开 2.0 论文，提出任务程序生成、仿真反馈修正与域随机化的数据合成框架，并报告覆盖 50 个双臂任务。论文中的策略收益属于作者实验，本轮未独立复现。",
+    interpretation:
+      "任务生成和统一评测可以共用场景定义，但训练与验收场景必须隔离，避免随机化掩盖任务泄漏。",
+    futureWatch: "观察真实机器人任务复现、随机化范围和基线数据配比，核对合成轨迹是否覆盖实际失败。",
+    recommendedAction:
+      "选择内部双臂任务对齐成功条件，记录随机化参数，并保留未用于数据生成的真实验收集。",
+    category: "benchmark",
+    company: "RoboTwin Project",
+    keywords: ["双臂操作", "数据生成", "域随机化", "统一评测"],
+    date: "2025-06-22T00:00:00.000Z",
+    tracks: ["demand-definition", "acquisition-route", "quality-training-feedback"],
+    actors: [],
+    dataProfile: profile("acquisition-route", {
+      pipelineStages: ["demand-definition", "acquisition-route", "quality-training-feedback"],
+      scenarios: ["bimanual manipulation with domain randomization"],
+      embodiments: ["dual-arm"],
+      tasks: ["manipulation"],
+      modalities: ["rgb", "joint-state", "action", "language"],
+      acquisitionMethods: ["simulation", "synthetic"],
+      scaleClaims: [
+        {
+          metric: "publisher-reported benchmark tasks",
+          value: 50,
+          unit: "tasks",
+          sourceUrl: "https://arxiv.org/abs/2506.18088v1",
+        },
+      ],
+      qualityMetrics: ["publisher-reported task success under domain randomization"],
+      deliveryImpact:
+        "把任务程序、随机化配置与生成数据绑定版本，并通过真实留出任务校验合成数据的交付价值。",
+      evidenceStatus: "claimed",
+    }),
+    evidenceSlugs: ["robotwin-2-paper"],
+  }),
+  launchEvent({
+    slug: "intern-data-a1",
+    title: "InternData-A1 论文提出可组合仿真数据预训练路线",
+    fact: "InternRobotics 团队公开 InternData-A1 论文，描述可组合的仿真数据生成流程，并报告超过 630,000 条轨迹。论文比较合成数据预训练与真实任务迁移；规模和效果均为作者报告。",
+    interpretation:
+      "可组合场景与技能有助于管理合成数据覆盖，但仿真规模不能直接换算为真实机器人交付能力。",
+    futureWatch:
+      "观察生成流程实际开放范围、数据版本差异和真实任务复现，区分合成研究集与后续混合数据。",
+    recommendedAction:
+      "按技能、对象和本体建立合成数据覆盖表，用固定真实留出任务评估预训练收益与失败类型。",
+    category: "dataset",
+    company: "Shanghai AI Laboratory / InternRobotics",
+    keywords: ["仿真合成", "数据预训练", "技能组合", "真实迁移"],
+    date: "2025-11-20T00:00:00.000Z",
+    tracks: ["acquisition-route", "quality-training-feedback"],
+    actors: [],
+    dataProfile: profile("acquisition-route", {
+      pipelineStages: ["acquisition-route", "quality-training-feedback"],
+      scenarios: ["compositional manipulation simulation"],
+      embodiments: ["single-arm", "dual-arm"],
+      tasks: ["manipulation"],
+      modalities: ["rgb", "joint-state", "action", "language"],
+      acquisitionMethods: ["simulation", "synthetic"],
+      scaleClaims: [
+        {
+          metric: "publisher-reported trajectory lower bound",
+          value: 630000,
+          unit: "trajectories",
+          sourceUrl: "https://arxiv.org/abs/2511.16651v1",
+        },
+      ],
+      qualityMetrics: ["publisher-reported simulation and real-world task success"],
+      deliveryImpact:
+        "为合成预训练单列数据版本、覆盖边界与真实验证报告，避免把作者实验规模当作已验收产能。",
+      evidenceStatus: "claimed",
+    }),
+    evidenceSlugs: ["intern-data-a1-paper"],
+  }),
+  launchEvent({
+    slug: "holomotion-retargeting",
+    title: "HoloMotion v1.4 连接多源动捕表示与机器人重定向",
+    fact: "Horizon Robotics 在 HoloMotion v1.4 更新中介绍 HoloRetarget 与 HoloSMPL，将多源人体动作表示接入机器人动作重定向和遥操作。仓库记录了方法与使用入口；吞吐量和迁移效果仍属项目声明。",
+    interpretation:
+      "统一人体动作表示能减少多设备接入摩擦，但坐标系、标定和本体约束仍决定重定向数据是否可训练。",
+    futureWatch:
+      "观察不同动捕设备的同步误差、接触约束和跨本体复现，区分离线生成速度与实时遥操作延迟。",
+    recommendedAction:
+      "选取同一动作在多设备上回放，记录原始位姿、映射版本、机器人约束和失败片段再进入训练。",
+    category: "capture-tool",
+    company: "Horizon Robotics",
+    keywords: ["动作捕捉", "动作表示", "重定向", "遥操作"],
+    date: "2026-07-16T00:00:00.000Z",
+    tracks: ["multimodal-capture", "data-engineering-standards", "quality-training-feedback"],
+    actors: [],
+    dataProfile: profile("multimodal-capture", {
+      pipelineStages: [
+        "multimodal-capture",
+        "data-engineering-standards",
+        "quality-training-feedback",
+      ],
+      scenarios: ["human motion retargeting for humanoid control"],
+      embodiments: ["wearable-human", "humanoid"],
+      tasks: ["locomotion", "manipulation"],
+      modalities: ["pose", "joint-state", "action"],
+      acquisitionMethods: ["wearable", "teleoperation"],
+      dataFormats: ["HoloSMPL"],
+      qualityMetrics: ["retargeting validity and capture alignment require evaluation"],
+      deliveryImpact:
+        "将动捕设备、共享动作表示与本体映射分开验收，保留原始动作和映射版本以支持问题回溯。",
+      evidenceStatus: "claimed",
+    }),
+    evidenceSlugs: ["holomotion-v14-repository"],
+  }),
+  launchEvent({
+    slug: "itu-robot-data-factory",
+    title: "ITU 登记机器人数据工厂新工作项目联络函",
+    fact: "ITU 公开元数据记录了 2026-08-28 来自 SG11 的 Q.RDFS-SRA 新工作项目联络函，题为机器人数据工厂信令要求与架构；另有 2026-07-17 草案基线记录。二者不构成已发布标准，受限正文未在本轮读取。",
+    interpretation:
+      "数据工厂的接口与架构开始成为标准研究对象，生产团队可提前梳理互操作需求，但不能宣称已经符合该标准。",
+    futureWatch: "观察正式草案、审批状态和可公开条款，核对其与现有机器人数据格式和平台接口的关系。",
+    recommendedAction:
+      "建立数据工厂接口清单并记录版本与责任主体，待正式可读文件发布后再逐项进行差距审阅。",
+    category: "standard",
+    company: "International Telecommunication Union",
+    keywords: ["机器人数据工厂", "工作项目", "信令接口", "标准草案"],
+    date: "2026-08-28T00:00:00.000Z",
+    tracks: ["production-operations", "data-engineering-standards"],
+    actors: [],
+    dataProfile: profile("data-engineering-standards", {
+      pipelineStages: ["production-operations", "data-engineering-standards"],
+      scenarios: ["robot data factory interface governance"],
+      embodiments: [],
+      tasks: [],
+      modalities: [],
+      acquisitionMethods: [],
+      standards: ["Q.RDFS-SRA (new work item; draft baseline)"],
+      qualityMetrics: [],
+      deliveryImpact:
+        "将项目登记、草案和正式标准分开跟踪，当前只据公开元数据准备接口需求，不形成合规承诺。",
+      evidenceStatus: "verified",
+    }),
+    evidenceSlugs: ["itu-robot-data-factory-liaison", "itu-robot-data-factory-draft-baseline"],
   }),
 ];

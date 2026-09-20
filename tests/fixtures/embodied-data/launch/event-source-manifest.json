@@ -232,5 +232,47 @@
     "eventSlug": "galaxea-open-data-feedback-loop",
     "url": "https://www.galaxea-ai.com/",
     "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "pi05-official-announcement",
+    "eventSlug": "pi05-open-world-generalization",
+    "url": "https://www.pi.website/blog/pi05",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "groot-dreams-official-announcement",
+    "eventSlug": "nvidia-groot-dreams-synthetic-data",
+    "url": "https://investor.nvidia.com/news/press-release-details/2025/NVIDIA-Powers-Humanoid-Robot-Industry-With-Cloud-to-Robot-Computing-Platforms-for-Physical-AI/default.aspx",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "robotwin-2-paper",
+    "eventSlug": "robotwin-2",
+    "url": "https://arxiv.org/abs/2506.18088v1",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "intern-data-a1-paper",
+    "eventSlug": "intern-data-a1",
+    "url": "https://arxiv.org/abs/2511.16651v1",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "holomotion-v14-repository",
+    "eventSlug": "holomotion-retargeting",
+    "url": "https://github.com/HorizonRobotics/HoloMotion",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "itu-robot-data-factory-liaison",
+    "eventSlug": "itu-robot-data-factory",
+    "url": "https://www.itu.int/md/T25-SG13-270223-TD-WP4-0649/en",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "itu-robot-data-factory-draft-baseline",
+    "eventSlug": "itu-robot-data-factory",
+    "url": "https://www.itu.int/md/T25-SG11-260714-TD-GEN-1409",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
   }
 ]

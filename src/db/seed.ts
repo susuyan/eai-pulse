@@ -1038,6 +1038,12 @@ async function seedEmbodiedLaunchCatalog(
     embodiedEventEvidence.map((evidence) => [evidence.slug, evidence]),
   );
   for (const event of embodiedLaunchEvents) {
+    const eventEvidence = event.evidenceSlugs.map((slug) => {
+      const row = evidenceBySlug.get(slug);
+      if (!row) throw new Error(`Missing embodied event evidence: ${slug}`);
+      return row;
+    });
+    const independentSources = new Set(eventEvidence.map((row) => row.sourceIdentity)).size;
     const existing = await db
       .selectFrom("events")
       .select("id")
@@ -1063,10 +1069,10 @@ async function seedEmbodiedLaunchCatalog(
       value_score: 90,
       score_factors_json: JSON.stringify({
         authority: 90,
-        corroboration: event.evidenceSlugs.length > 1 ? 90 : 75,
+        corroboration: independentSources > 1 ? 90 : 75,
         primaryEvidence: 100,
-        uniqueAuthors: event.evidenceSlugs.length,
-        independentSources: event.evidenceSlugs.length,
+        uniqueAuthors: independentSources,
+        independentSources,
         platformBreadth: 1,
         regionBreadth: 1,
         velocity: 0,
@@ -1109,9 +1115,7 @@ async function seedEmbodiedLaunchCatalog(
         .execute();
     }
 
-    for (const evidenceSlug of event.evidenceSlugs) {
-      const evidence = evidenceBySlug.get(evidenceSlug);
-      if (!evidence) throw new Error(`Missing embodied event evidence: ${evidenceSlug}`);
+    for (const evidence of eventEvidence) {
       const source = await repository.getSourceByIdOrSlug(evidence.sourceSlug);
       if (!source) throw new Error(`Missing embodied evidence source: ${evidence.sourceSlug}`);
       const inserted = await repository.insertSignal(source.id, {
@@ -1123,7 +1127,7 @@ async function seedEmbodiedLaunchCatalog(
         publishedAt: evidence.publishedAt,
         category: event.category,
         tags: [...event.keywords],
-        metrics: { independentSources: event.evidenceSlugs.length, platforms: ["official"] },
+        metrics: { independentSources, platforms: ["official"] },
         rawMeta: { seeded: true, evidenceRole: evidence.role },
       });
       const signalId =

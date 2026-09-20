@@ -2,6 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { embodiedLaunchEvents } from "../src/catalog/embodied-data/events.js";
 import { embodiedSourceCatalog } from "../src/catalog/embodied-data/sources.js";
 import { loadConfig } from "../src/config/env.js";
 import { createDatabase } from "../src/db/database.js";
@@ -37,7 +38,7 @@ describe("embodied public-site integrity", () => {
     expect(report).toMatchObject({
       ok: true,
       counts: {
-        events: 36,
+        events: embodiedLaunchEvents.length,
         pipelineStages: 6,
         datasets: 12,
         standards: 4,
@@ -51,7 +52,7 @@ describe("embodied public-site integrity", () => {
 
     const rss = await readFile(join(config.distDir, "feed.xml"), "utf8");
     expect(rss).toContain('<rss version="2.0"');
-    expect(rss.match(/<item>/g)).toHaveLength(36);
+    expect(rss.match(/<item>/g)).toHaveLength(embodiedLaunchEvents.length);
     expect(rss).not.toContain("模型价格");
     expect(rss).not.toContain("/lines/");
 

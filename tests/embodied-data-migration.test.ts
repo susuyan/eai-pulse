@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { embodiedCollectionMethods } from "../src/catalog/embodied-data/collection-methods.js";
 import { embodiedDatasets } from "../src/catalog/embodied-data/datasets.js";
+import { embodiedEventEvidence } from "../src/catalog/embodied-data/event-evidence.js";
 import { embodiedLaunchEvents } from "../src/catalog/embodied-data/events.js";
 import { embodiedPeers } from "../src/catalog/embodied-data/peers.js";
 import { embodiedStandards } from "../src/catalog/embodied-data/standards.js";
@@ -14,6 +15,7 @@ import { loadConfig } from "../src/config/env.js";
 import { createDatabase } from "../src/db/database.js";
 import { migrateToLatest } from "../src/db/migrate.js";
 import { seedDatabase } from "../src/db/seed.js";
+import { canonicalizeUrl } from "../src/domain/url.js";
 import {
   applyEmbodiedDataMigration,
   applyVerifiedEmbodiedDataMigration,
@@ -126,7 +128,7 @@ describe("embodied data public switch migration", () => {
 
     expect(planned.current).toMatchObject({
       sources: sourceCatalog.length,
-      signals: embodiedLaunchEvents.length,
+      signals: new Set(embodiedEventEvidence.map((row) => canonicalizeUrl(row.url))).size,
       events: embodiedLaunchEvents.length,
       actors: embodiedPeers.length,
       eventDataProfiles: embodiedLaunchEvents.length,

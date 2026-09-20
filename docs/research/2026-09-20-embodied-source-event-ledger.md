@@ -1,6 +1,6 @@
 # 具身数据来源与事件证据台账
 
-核验日期：2026-09-20。范围：本次来源地图扩容；事件补齐由后续任务追加。
+核验日期：2026-09-20。范围：来源地图扩容，以及 2025-04-15 至 2026-09-20 事件补齐。
 
 ## 审阅结论与边界
 
@@ -153,4 +153,44 @@
 - 本轮没有下载数据集、标准正文、模型权重或第三方完整文章，没有保存原始 collector payload。
 - 每个新来源只有 map 记录；没有健康成功记录、cursor、自动运行窗口或 active 晋级。
 - 新记录采用 owner 和 identityHosts 提供归并依据；跨合作机构/媒体集团的独立性仍须在 Event Evidence 中核对，域名数组本身不是完整独立性算法。
-- 本轮没有新增公开 Event。后续事件补齐应直接引用原始页面，单独检查发布时间、证据阈值与内容范围，尤其不要把 ITU 研究项目写成已生效标准。
+- 来源地图任务没有新增公开 Event；本文件后续的事件补齐审阅单独检查发布时间、证据阈值与内容范围，尤其不把 ITU 研究项目写成已生效标准。
+
+## 当前窗口事件审阅
+
+本轮逐项检查下列 10 个候选，接受 6 个，拒绝 1 个候选表述，暂缓 3 个。原有 36 个 Event 保留，接受项补至 42 个；最新接受项日期为 2026-08-28。核验的是原始发布及其内容边界，没有运行论文实验、下载训练数据或独立复测厂商性能。
+
+### 证据与状态规则
+
+- 每个接受项至少有一个 Tier 1 原始证据；同一作者团队、机构、厂商或合作 owner 的多个 URL 仍只算一个身份。本轮不使用 Tier 2 数量兜底。
+- `verified` 仅用于已核实的公开文档及其明确状态；`claimed` 保留研究团队/厂商陈述的采集路线、数据规模与效果，不等于独立验证。没有证据支持的数值不入库。
+- `fact` 写原始发布及有归属的声明；`interpretation` 是编辑判断，`futureWatch` 是观察/验证条件，`recommendedAction` 是建议，均不作为新事实。没有将任何预测登记为事实，也没有发现足够证据可标为 `conflicting` 的接受项。
+- 日期取公告或论文初稿的明确发布时间，不取搜索抓取时间、仓库最近提交、核验时间或计划生效时间。ITU 取公开联络函日期，不混用 2027 年会议日期。
+- 所有新增公开 Evidence 使用现有治理目录的 source slug、无凭据/查询参数/fragment 的 HTTPS URL；完整工作项目等不符合该 URL 合同的入口只保留在本台账。
+
+### 接受项
+
+| Event slug / 日期 | 原始证据、治理来源与身份 | 可接受事实及边界 | 结构化状态 / 管线 |
+| --- | --- | --- | --- |
+| `pi05-open-world-generalization` / 2025-04-22 | [Physical Intelligence 原始公告](https://www.pi.website/blog/pi05)；`physical-intelligence`；Physical Intelligence；T1 primary | 公告明确异构数据联合训练，包含机器人动作示范、视觉语言数据与高层行为标注。新环境泛化是团队实验陈述，不能推导成任意家庭已验证部署；未声称数据集已经开放。原 `physicalintelligence.company` 机构入口现指向同品牌 `pi.website`，公告保留同域邮箱及团队署名。 | `claimed`；A、Q |
+| `nvidia-groot-dreams-synthetic-data` / 2025-05-19 | [NVIDIA 原始公告](https://investor.nvidia.com/news/press-release-details/2025/NVIDIA-Powers-Humanoid-Robot-Industry-With-Cloud-to-Robot-Computing-Platforms-for-Physical-AI/default.aspx)；`nvidia-isaac-groot`；NVIDIA；T1 primary | NVIDIA 宣布 GR00T-Dreams 蓝图，描述图像到视频再提取动作 token 的合成路线。没有将宣布等同于当日完整开源交付；不采纳“36 小时替代数月”作为实测成本。 | `claimed`；A、Q |
+| `robotwin-2` / 2025-06-22 | [作者论文 v1](https://arxiv.org/abs/2506.18088v1)，并核对[项目页](https://robotwin-platform.github.io/)；`robotwin`；RoboTwin Project；T1 primary | 作者提出双臂数据生成和统一评测框架，包含任务程序生成与域随机化。论文报告 50 个任务，作为有来源的规模声明；相对成功率提升不作为独立验证结果。论文和项目页为同团队，未重复计算独立来源。 | `claimed`；D、A、Q |
+| `intern-data-a1` / 2025-11-20 | [作者论文 v1](https://arxiv.org/abs/2511.16651v1)；[官方组织数据入口](https://internrobotics.shlab.org.cn/opendataset.html)与[项目页](https://internrobotics.github.io/interndata-a1.github.io/)用于身份交叉核对；`internrobotics`；Shanghai AI Laboratory / InternRobotics；T1 primary | 事件为论文公开，不倒推为数据集首发；数据卡另记 2025-07-26 release。论文描述可组合仿真流程，并报告超过 630,000 条轨迹；结构化数值存“团队报告的轨迹数下界”。现数据卡称虚实混合，本文只限定论文 v1 的合成数据研究，不混合不同版本口径。 | `claimed`；A、Q |
+| `holomotion-retargeting` / 2026-07-16 | [Horizon Robotics 官方仓库](https://github.com/HorizonRobotics/HoloMotion) News v1.4；`horizon-holomotion`；Horizon Robotics；T1 primary | v1.4 记录 HoloRetarget 与 HoloSMPL，连接动捕、共享动作表示、重定向和遥操作。性能与硬件兼容数量属于项目声明，本轮不据此生成已验证吞吐量或跨所有本体的能力结论。 | `claimed`；M、E、Q |
+| `itu-robot-data-factory` / 2026-08-28 | [SG13 649-WP4 联络函元数据](https://www.itu.int/md/T25-SG13-270223-TD-WP4-0649/en)、[SG11 1409-GEN 草案基线元数据](https://www.itu.int/md/T25-SG11-260714-TD-GEN-1409)；`itu-robot-data-factory`；International Telecommunication Union；T1 primary，同一身份 | 2026-08-28 元数据确认来自 SG11 的 Q.RDFS-SRA 新工作项目联络函；2026-07-17 草案基线在 2026-07-20 上传。仅确认项目和草案存在；正文受 TIES 访问限制，未读取，不写具体五层架构或已生效标准。 | `verified`；P、E |
+
+ITU 的[完整工作项目页](https://www.itu.int/ITU-T/workprog/wp_item.aspx?isn=24285)显示首次登记 2026-08-21、状态 `Under study`，计划时间为 Q2-2028。该查询 URL 未加入公开 Evidence，也未用于规模声明。公开 Event 以两条符合 URL 合同的文档元数据为边界。2027-02-23 是 SG13 会议日期，不能替代 2026-08-28 联络函发布日。此替换保留 manifest 的四个字段合同，没有更改 URL schema。
+
+### 未纳入项与原因
+
+| 候选 slug | 已核实入口与观察 | 决定 / 解除条件 |
+| --- | --- | --- |
+| `agibot-world-2026` | [官方仓库](https://github.com/OpenDriveLab/AgiBot-World)列出 Alpha 2024-12-30、Beta 2025-03-01、论文 2025-03-10、GO-1 2025-09-19。标题出现 IEEE TRO 2026，不能据此推断新数据集发布。 | 拒绝“2026 新数据集”表述；没有可核实的新版本日期和变更事实。既有 AgiBot 数据 Event 不重复新建，GO-1 也不改名伪装成 2026 版本。 |
+| `egonet-human-action-data` | [项目页](https://www.egonet.ai/)的官方搜索索引描述第一视角 RGB-D、手部位姿和 SLAM，但直接读取不稳定。没有明确发布日；上一任务未完成 owner、权利链和来源目录收录。 | 暂缓；需要确认真实 owner、发布日期与现有治理来源，再核对数据许可。“最大”属于发布方宣传，未接受为事实；不混入 2016 年同名 EgoNet 论文。 |
+| `china-embodied-data-generation-standard` | [官方 2026 年第 37 号公告](https://std.sacinfo.org.cn/gnoc/queryInfo?id=E231FFF8D545873FF3E60F12FD434C5E)第 12 项确认 GB/Z 220-2026《人工智能 具身智能数据生成平台技术要求》发布于 2026-08-27。[SAMR 起草项目](https://std.samr.gov.cn/gb/search/gbDetailed?id=52DF0802B9FED2E0E06397BE0A0A5574)的 20263053-Z-469 是另一登记项目，不能混为发布编号。 | 暂缓公开；已核实公告，但稳定元数据 URL 需要查询参数。公告的无查询附件原链接为 HTTP；改用 HTTPS 的证书校验失败（curl exit 60），未绕过校验。需合法、可验证且满足公开 URL 合同的入口，或另行审阅 URL 政策。未访问标准正文，未虚构条款、实施日或强制效力。 |
+| `robot-data-factory-reference-architecture` | [The Robot Data Factory 原始论文](https://arxiv.org/abs/2609.16705)明确 2026-09-15 首稿及 Sami Haddadin 等作者；提出持续生成、验证和复用机器人经验的方法。 | 暂缓；现有 83 个治理来源没有该作者团队的已核实渠道，不能借用 ITU、RAI 或 NVIDIA 身份。需要先补真实 owner 和原始来源目录，再审阅论文方法与作者效果声明。不是 ITU 标准，也没有独立复测。 |
+
+### 核验与交付限制
+
+- 6 个接受项增加 7 条原始 Evidence；manifest 每条 Evidence 恰有一行，核验时间固定为 `2026-09-20T00:00:00.000Z`，该时间是本次批次标记，不是精确访问时刻。
+- 当前事件证据审阅不等于来源适配器已接入、获得自动化许可或进入 `active`。来源目录、生命周期与采集适配器均不修改。
+- 稳定性由离线语料、证据归属、URL、字段与日期合同验证；联网读取的观察记录在本台账，自动测试不伪装成联网事实复核。

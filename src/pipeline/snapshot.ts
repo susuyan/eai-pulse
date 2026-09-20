@@ -69,7 +69,7 @@ export async function writeRepositorySnapshot(
     .transaction()
     .execute((transaction) => buildRepositorySnapshot(transaction));
   validateEmbodiedDataObjectReferences(snapshot);
-  const serialized = `${JSON.stringify(snapshot, null, 2)}\n`;
+  const serialized = `${JSON.stringify(snapshot)}\n`;
   assertSnapshotSafe(serialized);
   const path = snapshotPath(rootDir, relativePath);
   const previous = await readFile(path, "utf8").catch(() => "");

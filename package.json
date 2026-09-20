@@ -28,6 +28,7 @@
     "db:migrate": "tsx src/cli/migrate.ts",
     "db:seed": "tsx src/cli/seed.ts",
     "db:snapshot": "tsx src/cli/snapshot.ts",
+    "migrate:embodied": "tsx src/cli/migrate-embodied-data.ts",
     "preview:embodied": "tsx src/cli/preview-embodied-data.ts",
     "collect": "tsx src/cli/collect.ts",
     "sources:audit": "tsx src/cli/audit-sources.ts",

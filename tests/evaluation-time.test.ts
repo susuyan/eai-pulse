@@ -67,6 +67,7 @@ describe("point-in-time system evaluation", () => {
       .executeTakeFirstOrThrow();
     const check = await db.selectFrom("source_checks").selectAll().executeTakeFirstOrThrow();
     const event = await db.selectFrom("events").selectAll().executeTakeFirstOrThrow();
+    const signal = await db.selectFrom("signals").selectAll().executeTakeFirstOrThrow();
 
     await db
       .insertInto("source_runs")
@@ -102,6 +103,23 @@ describe("point-in-time system evaluation", () => {
         created_at: EXCLUDED,
         updated_at: EXCLUDED,
       })
+      .execute();
+    await db
+      .insertInto("signals")
+      .values(
+        Array.from({ length: 500 }, (_, index) => ({
+          ...signal,
+          id: `future-evaluation-signal-${index}`,
+          external_id: `future-evaluation-signal-${index}`,
+          canonical_url: `https://example.com/future-evaluation-signal-${index}`,
+          url_hash: `future-evaluation-url-${index}`,
+          content_hash: `future-evaluation-content-${index}`,
+          published_at: EXCLUDED,
+          collected_at: EXCLUDED,
+          created_at: EXCLUDED,
+          updated_at: EXCLUDED,
+        })),
+      )
       .execute();
 
     const after = await evaluateSystem(db, {

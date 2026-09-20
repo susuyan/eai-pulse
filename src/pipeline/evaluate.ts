@@ -279,8 +279,8 @@ export async function evaluateSystem(db: Kysely<DatabaseSchema>, context: Evalua
       slug: "primary-source-provenance",
       name: "一手来源归属",
       rawScore:
-        ratio(directSignals, signalProvenance.length) * 25 +
-        ratio(primarySignals, signalProvenance.length) * 45 +
+        ratio(directSignals, pointInTimeSignalProvenance.length) * 25 +
+        ratio(primarySignals, pointInTimeSignalProvenance.length) * 45 +
         ratio(pointInTimeEvidence.length, pointInTimeSignalProvenance.length) * 30,
       weight: 10,
       sufficient: pointInTimeSignalProvenance.length >= 10 && pointInTimeEvidence.length >= 10,

@@ -734,6 +734,10 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
       freshness_slo_hours: source.freshnessSloHours ?? 168,
       adapter_version: source.adapterVersion ?? "1",
       content_scope: contentScope,
+      map_status: "pending",
+      pipeline_stages_json: "[]",
+      substitute_for_json: "[]",
+      restriction_note: "",
     });
     if (
       contentScope === "embodied-data" &&

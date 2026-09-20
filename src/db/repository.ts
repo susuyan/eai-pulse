@@ -215,6 +215,10 @@ export class Repository {
         freshness_slo_hours: input.freshness_slo_hours,
         adapter_version: input.adapter_version,
         content_scope: input.content_scope,
+        map_status: input.map_status,
+        pipeline_stages_json: input.pipeline_stages_json,
+        substitute_for_json: input.substitute_for_json,
+        restriction_note: input.restriction_note,
         updated_at: timestamp,
       })
       .where("id", "=", existing.id)

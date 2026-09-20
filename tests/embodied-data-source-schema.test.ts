@@ -4,6 +4,10 @@ import { createDatabase } from "../src/db/database.js";
 import { migrateToLatest } from "../src/db/migrate.js";
 import { Repository } from "../src/db/repository.js";
 import { seedDatabase } from "../src/db/seed.js";
+import {
+  SourceMapStatusSchema,
+  SourcePipelineCoverageSchema,
+} from "../src/domain/embodied-source-map.js";
 
 const databases: ReturnType<typeof createDatabase>[] = [];
 
@@ -21,12 +25,39 @@ async function setup(seed = false) {
 }
 
 describe("embodied source governance schema", () => {
+  it("validates source-map status and normalizes pipeline coverage", () => {
+    expect(SourceMapStatusSchema.options).toEqual([
+      "integrated",
+      "pending",
+      "restricted",
+      "substitute",
+    ]);
+    expect(
+      SourcePipelineCoverageSchema.parse([
+        "multimodal-capture",
+        "multimodal-capture",
+        "quality-training-feedback",
+      ]),
+    ).toEqual(["multimodal-capture", "quality-training-feedback"]);
+  });
+
   it("persists governance fields and gives restored legacy rows safe defaults", async () => {
     const db = await setup();
     const sourceTable = (await db.introspection.getTables()).find(
       (table) => table.name === "sources",
     );
     for (const name of ["owner", "robots_policy", "freshness_slo_hours", "adapter_version"]) {
+      expect(sourceTable?.columns.find((column) => column.name === name)).toMatchObject({
+        isNullable: false,
+        hasDefaultValue: true,
+      });
+    }
+    for (const name of [
+      "map_status",
+      "pipeline_stages_json",
+      "substitute_for_json",
+      "restriction_note",
+    ]) {
       expect(sourceTable?.columns.find((column) => column.name === name)).toMatchObject({
         isNullable: false,
         hasDefaultValue: true,
@@ -60,7 +91,16 @@ describe("embodied source governance schema", () => {
     expect(
       await db
         .selectFrom("sources")
-        .select(["owner", "robots_policy", "freshness_slo_hours", "adapter_version"])
+        .select([
+          "owner",
+          "robots_policy",
+          "freshness_slo_hours",
+          "adapter_version",
+          "map_status",
+          "pipeline_stages_json",
+          "substitute_for_json",
+          "restriction_note",
+        ])
         .where("id", "=", "legacy-source")
         .executeTakeFirstOrThrow(),
     ).toEqual({
@@ -68,6 +108,55 @@ describe("embodied source governance schema", () => {
       robots_policy: "Review required",
       freshness_slo_hours: 168,
       adapter_version: "1",
+      map_status: "pending",
+      pipeline_stages_json: "[]",
+      substitute_for_json: "[]",
+      restriction_note: "",
+    });
+  });
+
+  it("updates catalog-owned source-map fields without changing operational state", async () => {
+    const db = await setup(true);
+    const repository = new Repository(db);
+    const source = (await repository.listSources()).find(
+      (candidate) => candidate.content_scope === "embodied-data",
+    );
+    expect(source).toBeDefined();
+    if (!source) throw new Error("Missing seeded embodied source");
+
+    await repository.updateSource(source.id, {
+      observation_enabled: 1,
+      state_json: JSON.stringify({ cursor: "preserve-me" }),
+      lifecycle_status: "shadow",
+      consecutive_failures: 2,
+      success_count: 11,
+      failure_count: 3,
+    });
+    const operational = await repository.getSource(source.id);
+    if (!operational) throw new Error("Missing source after operational update");
+    const { created_at, updated_at, ...catalogSource } = operational;
+
+    await repository.saveCatalogSource({
+      ...catalogSource,
+      name: "Updated catalog source",
+      map_status: "restricted",
+      pipeline_stages_json: JSON.stringify(["multimodal-capture"]),
+      substitute_for_json: JSON.stringify(["fallback-source"]),
+      restriction_note: "Manual access only.",
+    });
+
+    expect(await repository.getSource(source.id)).toMatchObject({
+      name: "Updated catalog source",
+      map_status: "restricted",
+      pipeline_stages_json: JSON.stringify(["multimodal-capture"]),
+      substitute_for_json: JSON.stringify(["fallback-source"]),
+      restriction_note: "Manual access only.",
+      observation_enabled: 1,
+      state_json: JSON.stringify({ cursor: "preserve-me" }),
+      lifecycle_status: "shadow",
+      consecutive_failures: 2,
+      success_count: 11,
+      failure_count: 3,
     });
   });
 

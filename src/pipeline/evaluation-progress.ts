@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { EmbodiedDataQuality, EmbodiedQualityReasonCode } from "./embodied-data-quality.js";
 import type { EvaluationDimension } from "./evaluate.js";
 import {
   type EvaluationContext,
@@ -25,6 +26,7 @@ export interface EvaluationResult {
   notes: string;
   startedAt: string;
   finishedAt: string;
+  embodiedQuality?: EmbodiedDataQuality | undefined;
 }
 
 export interface EvaluationImprovement {
@@ -56,6 +58,8 @@ export interface SystemEvaluationReportV2 extends EvaluationResult {
   improvementPlan: EvaluationImprovement[];
   comparison?: EvaluationComparison | undefined;
   operationalDecision?: OperationalEvaluationDecision | undefined;
+  qualityGatePassed?: boolean | undefined;
+  qualityReasonCodes?: EmbodiedQualityReasonCode[] | undefined;
 }
 
 export type SystemEvaluationReport = SystemEvaluationReportV2;
@@ -106,6 +110,8 @@ export function buildSystemEvaluationReport(
     targetReached: evaluation.overallScore >= SYSTEM_EVALUATION_TARGET,
     policy: "measured-evidence-only",
     improvementPlan,
+    qualityGatePassed: evaluation.embodiedQuality?.passed ?? true,
+    qualityReasonCodes: evaluation.embodiedQuality?.reasonCodes ?? [],
   };
 }
 
@@ -129,6 +135,9 @@ export function compareSystemEvaluations(
     };
   }
   const regressions: string[] = [];
+  if ((current.embodiedQuality?.genericAILeak.numerator ?? 0) > 0) {
+    regressions.push("generic_ai_leak");
+  }
   if (current.overallScore < baseline.overallScore) {
     regressions.push(
       `overall score regressed from ${baseline.overallScore} to ${current.overallScore}`,
@@ -257,7 +266,50 @@ const evaluationReportFields = {
   policy: z.literal("measured-evidence-only"),
   improvementPlan: z.array(evaluationImprovementSchema),
   comparison: evaluationComparisonSchema.optional(),
+  qualityGatePassed: z.boolean().optional(),
+  qualityReasonCodes: z
+    .array(
+      z.enum([
+        "missing_stage_coverage",
+        "insufficient_tier1_evidence",
+        "incomplete_data_profile",
+        "unsupported_peer_claim",
+        "generic_ai_leak",
+      ]),
+    )
+    .optional(),
 };
+
+const embodiedQualityReasonSchema = z.enum([
+  "missing_stage_coverage",
+  "insufficient_tier1_evidence",
+  "incomplete_data_profile",
+  "unsupported_peer_claim",
+  "generic_ai_leak",
+]);
+
+const embodiedQualityMetricSchema = z
+  .object({
+    numerator: z.number(),
+    denominator: z.number(),
+    score: z.number(),
+    status: z.enum(["pass", "fail"]),
+    evidenceAgeHours: z.number().nullable(),
+    reasonCodes: z.array(embodiedQualityReasonSchema),
+  })
+  .strict();
+
+const embodiedDataQualitySchema = z
+  .object({
+    stageCoverage: embodiedQualityMetricSchema,
+    tier1EvidenceRatio: embodiedQualityMetricSchema,
+    dataProfileCompleteness: embodiedQualityMetricSchema,
+    peerClaimEvidenceRatio: embodiedQualityMetricSchema,
+    genericAILeak: embodiedQualityMetricSchema,
+    passed: z.boolean(),
+    reasonCodes: z.array(embodiedQualityReasonSchema),
+  })
+  .strict();
 
 const systemEvaluationReportV1Schema = z
   .object({ schemaVersion: z.literal(1), ...evaluationReportFields })
@@ -270,6 +322,7 @@ export const systemEvaluationReportV2Schema = z
     evaluationAsOf: timestampSchema,
     gateMode: z.enum(["change", "operational"]),
     operationalDecision: operationalEvaluationDecisionSchema.optional(),
+    embodiedQuality: embodiedDataQualitySchema.optional(),
   })
   .strict();
 
@@ -326,6 +379,7 @@ export function renderEvaluationSummary(
     `- Score: ${report.overallScore} / 100 (target ${report.target}, delta ${delta})`,
     `- Raw weighted score: ${report.rawWeightedScore} / 100`,
     `- Evidence coverage: ${report.evidenceCoverage}%`,
+    `- Embodied quality gate: ${report.qualityGatePassed ? "passed" : "failed"} (${(report.qualityReasonCodes ?? []).join(", ") || "none"})`,
     `- Regression gate: ${comparison ? (comparison.passed ? "passed" : "failed") : "baseline unavailable"}`,
     "",
     "### Highest-priority evidence gaps",

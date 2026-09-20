@@ -88,6 +88,9 @@ export async function runEvaluateCli(): Promise<void> {
       );
     }
     console.log(JSON.stringify(payload, null, 2));
+    if ((report.embodiedQuality?.genericAILeak.numerator ?? 0) > 0) {
+      throw new Error("Embodied data quality gate failed: generic_ai_leak");
+    }
     if (invocation.failOnRegression && comparison && !comparison.passed) {
       throw new Error(`System evaluation regression: ${comparison.regressions.join("; ")}`);
     }

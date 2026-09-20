@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { EmbodiedDataQuality } from "../src/pipeline/embodied-data-quality.js";
 import type { EvaluationDimension } from "../src/pipeline/evaluate.js";
 import { parseEvaluationInstant } from "../src/pipeline/evaluation-context.js";
 import {
@@ -69,6 +70,33 @@ function reportV2(evaluationAsOf: string, gateMode: "change" | "operational") {
     schemaVersion: 2 as const,
     evaluationAsOf,
     gateMode,
+  };
+}
+
+function embodiedQuality(leaks = 0): EmbodiedDataQuality {
+  const passing = {
+    numerator: 1,
+    denominator: 1,
+    score: 100,
+    status: "pass" as const,
+    evidenceAgeHours: 1,
+    reasonCodes: [],
+  };
+  return {
+    stageCoverage: passing,
+    tier1EvidenceRatio: passing,
+    dataProfileCompleteness: passing,
+    peerClaimEvidenceRatio: passing,
+    genericAILeak: {
+      numerator: leaks,
+      denominator: 1,
+      score: leaks === 0 ? 100 : 0,
+      status: leaks === 0 ? ("pass" as const) : ("fail" as const),
+      evidenceAgeHours: 1,
+      reasonCodes: leaks === 0 ? [] : ["generic_ai_leak"],
+    },
+    passed: leaks === 0,
+    reasonCodes: leaks === 0 ? [] : ["generic_ai_leak"],
   };
 }
 
@@ -174,6 +202,22 @@ describe("system evaluation progress", () => {
       passed: true,
       scoreDelta: 0,
       regressions: [],
+    });
+  });
+
+  it("fails the comparison absolutely when one generic AI item leaks", () => {
+    const baseline = buildSystemEvaluationReport(
+      { ...evaluation([dimension()]), embodiedQuality: embodiedQuality(0) },
+      { asOf: new Date("2026-07-14T00:00:01.000Z"), gateMode: "operational", persist: false },
+    );
+    const current = buildSystemEvaluationReport(
+      { ...evaluation([dimension({ score: 100 })]), embodiedQuality: embodiedQuality(1) },
+      { asOf: new Date("2026-07-14T00:00:01.000Z"), gateMode: "change", persist: false },
+    );
+
+    expect(compareSystemEvaluations(current, baseline)).toMatchObject({
+      passed: false,
+      regressions: expect.arrayContaining(["generic_ai_leak"]),
     });
   });
 

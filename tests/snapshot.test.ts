@@ -198,6 +198,7 @@ describe("repository data snapshot", () => {
     const serialized = await readFile(join(root, "data/snapshot/v1.json"), "utf8");
     expect(serialized).not.toContain("must-not-leak");
     expect(serialized).not.toContain("raw_meta_json");
+    expect(serialized).not.toMatch(/"(?:rawPayload|raw_payload|privateNote|private_note)"\s*:/i);
     expect(serialized).not.toContain("/Users/");
     expect(serialized).toContain("[local-path]");
     const snapshot = JSON.parse(serialized);

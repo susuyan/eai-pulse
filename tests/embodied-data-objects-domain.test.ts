@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   ActorDataCapabilitySchema,
@@ -88,6 +90,37 @@ describe("embodied data domain objects", () => {
     for (const item of sourceManifest) {
       expect(new URL(item.url).protocol).toBe("https:");
       expect(new Date(item.verifiedAt).toISOString()).toBe(item.verifiedAt);
+    }
+  });
+
+  it("keeps private object fixtures out of seed and the current repository snapshot", async () => {
+    const seedSource = await readFile(
+      fileURLToPath(new URL("../src/db/seed.ts", import.meta.url)),
+      "utf8",
+    );
+    const snapshot = JSON.parse(
+      await readFile(fileURLToPath(new URL("../data/snapshot/v1.json", import.meta.url)), "utf8"),
+    ) as Record<string, unknown>;
+    const fixtureSlugs = [
+      ...datasets.map((item) => item.slug),
+      ...standards.map((item) => item.slug),
+      ...collectionMethods.map((item) => item.slug),
+    ];
+
+    for (const slug of fixtureSlugs) {
+      expect(seedSource).not.toContain(`"${slug}"`);
+    }
+    for (const key of [
+      "datasets",
+      "datasetEvents",
+      "standards",
+      "standardEvents",
+      "collectionMethods",
+      "collectionMethodEvents",
+      "actorDataCapabilities",
+      "actorCapabilityEvidence",
+    ]) {
+      expect(snapshot[key] ?? []).toEqual([]);
     }
   });
 });

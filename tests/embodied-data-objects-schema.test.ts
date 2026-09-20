@@ -117,6 +117,26 @@ describe("embodied data object persistence", () => {
       })
       .execute();
     await db
+      .insertInto("standards")
+      .values({
+        id: "standard-1",
+        slug: "fixture-standard",
+        profile_json: "{}",
+        created_at: timestamp,
+        updated_at: timestamp,
+      })
+      .execute();
+    await db
+      .insertInto("collection_methods")
+      .values({
+        id: "method-1",
+        slug: "fixture-method",
+        profile_json: "{}",
+        created_at: timestamp,
+        updated_at: timestamp,
+      })
+      .execute();
+    await db
       .insertInto("actor_data_capabilities")
       .values({
         id: "capability-1",
@@ -137,6 +157,24 @@ describe("embodied data object persistence", () => {
       })
       .execute();
     await db
+      .insertInto("standard_events")
+      .values({
+        standard_id: "standard-1",
+        event_id: event.id,
+        relation_role: "publication",
+        created_at: timestamp,
+      })
+      .execute();
+    await db
+      .insertInto("collection_method_events")
+      .values({
+        collection_method_id: "method-1",
+        event_id: event.id,
+        relation_role: "demonstration",
+        created_at: timestamp,
+      })
+      .execute();
+    await db
       .insertInto("actor_capability_evidence")
       .values({
         capability_id: "capability-1",
@@ -149,8 +187,12 @@ describe("embodied data object persistence", () => {
     await db.deleteFrom("events").where("id", "=", event.id).execute();
 
     expect(await countRows(db, "datasets")).toBe(1);
+    expect(await countRows(db, "standards")).toBe(1);
+    expect(await countRows(db, "collection_methods")).toBe(1);
     expect(await countRows(db, "actor_data_capabilities")).toBe(1);
     expect(await countRows(db, "dataset_events")).toBe(0);
+    expect(await countRows(db, "standard_events")).toBe(0);
+    expect(await countRows(db, "collection_method_events")).toBe(0);
     expect(await countRows(db, "actor_capability_evidence")).toBe(0);
   });
 
@@ -170,11 +212,49 @@ describe("embodied data object persistence", () => {
       })
       .execute();
     await db
+      .insertInto("standards")
+      .values({
+        id: "standard-1",
+        slug: "fixture-standard",
+        profile_json: "{}",
+        created_at: timestamp,
+        updated_at: timestamp,
+      })
+      .execute();
+    await db
+      .insertInto("collection_methods")
+      .values({
+        id: "method-1",
+        slug: "fixture-method",
+        profile_json: "{}",
+        created_at: timestamp,
+        updated_at: timestamp,
+      })
+      .execute();
+    await db
       .insertInto("dataset_events")
       .values({
         dataset_id: "dataset-1",
         event_id: event.id,
         relation_role: "release",
+        created_at: timestamp,
+      })
+      .execute();
+    await db
+      .insertInto("standard_events")
+      .values({
+        standard_id: "standard-1",
+        event_id: event.id,
+        relation_role: "publication",
+        created_at: timestamp,
+      })
+      .execute();
+    await db
+      .insertInto("collection_method_events")
+      .values({
+        collection_method_id: "method-1",
+        event_id: event.id,
+        relation_role: "demonstration",
         created_at: timestamp,
       })
       .execute();
@@ -200,9 +280,13 @@ describe("embodied data object persistence", () => {
       .execute();
 
     await db.deleteFrom("datasets").where("id", "=", "dataset-1").execute();
+    await db.deleteFrom("standards").where("id", "=", "standard-1").execute();
+    await db.deleteFrom("collection_methods").where("id", "=", "method-1").execute();
     await db.deleteFrom("actors").where("id", "=", actor.id).execute();
 
     expect(await countRows(db, "dataset_events")).toBe(0);
+    expect(await countRows(db, "standard_events")).toBe(0);
+    expect(await countRows(db, "collection_method_events")).toBe(0);
     expect(await countRows(db, "actor_data_capabilities")).toBe(0);
     expect(await countRows(db, "actor_capability_evidence")).toBe(0);
     expect(
@@ -231,6 +315,8 @@ describe("embodied data object persistence", () => {
     await repository.linkDatasetEvent(datasetId, event.id, "release");
     await repository.linkDatasetEvent(datasetId, event.id, "release");
     await repository.linkStandardEvent(standardId, event.id, "publication");
+    await repository.linkStandardEvent(standardId, event.id, "publication");
+    await repository.linkCollectionMethodEvent(methodId, event.id, "demonstration");
     await repository.linkCollectionMethodEvent(methodId, event.id, "demonstration");
 
     expect(await repository.getDatasetBySlug(datasetFixture.slug)).toMatchObject({

@@ -20,9 +20,38 @@ export interface PublicPipelineStage {
   slug: EmbodiedPipelineStage;
   name: string;
   description: string;
+  nameEn: string;
+  descriptionEn: string;
   color: string;
   icon: string;
   order: number;
+  milestones: PublicPipelineMilestone[];
+  peerComparisons: PublicPipelinePeerComparison[];
+  counterEvidence: PublicPipelineMilestone[];
+  nextSignals: PublicPipelineNextSignal[];
+}
+
+export interface PublicPipelineMilestone {
+  eventSlug: string;
+  title: string;
+  happenedAt: string;
+  deliveryImpact: string;
+  evidenceStatus: EventDataProfile["evidenceStatus"];
+  evidence: PublicEvent["evidence"];
+}
+
+export interface PublicPipelinePeerComparison {
+  peerSlug: string;
+  peerName: string;
+  claimText: string;
+  verificationStatus: ActorDataCapability["verificationStatus"];
+  sourceUrl: string;
+}
+
+export interface PublicPipelineNextSignal {
+  eventSlug: string;
+  eventTitle: string;
+  signal: string;
 }
 
 export type PublicEmbodiedEvent = Omit<PublicEvent, "id"> & {

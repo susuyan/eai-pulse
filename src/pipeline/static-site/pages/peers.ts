@@ -1,14 +1,14 @@
 import type { StaticSiteModel } from "../dto.js";
 import type { Locale } from "../i18n.js";
 import { escapeHtml } from "../render.js";
-import { localize, pageHero, statusChip } from "./shared.js";
+import { externalTextLink, localize, pageHero, statusChip } from "./shared.js";
 
 export function renderPeersPage(model: StaticSiteModel, locale: Locale): string {
   const rows = model.peers
     .flatMap((peer) =>
       peer.capabilities.map(
-        (capability) =>
-          `<tr><th scope="row"><a href="${escapeHtml(peer.websiteUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(peer.name)}</a><small>${escapeHtml(peer.region)}</small></th><td>${escapeHtml(capability.pipelineStages.join(" · "))}</td><td>${escapeHtml(capability.claimText)}</td><td>${statusChip(capability.verificationStatus, locale)}</td><td><a href="${escapeHtml(capability.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(localize(locale, "查看证据", "View evidence"))}</a></td></tr>`,
+        (capability, index) =>
+          `<tr${index === 0 ? ` id="${escapeHtml(peer.slug)}"` : ""}><th scope="row">${externalTextLink(peer.websiteUrl, peer.name)}<small>${escapeHtml(peer.region)}</small></th><td>${escapeHtml(capability.pipelineStages.join(" · "))}</td><td>${escapeHtml(capability.claimText)}</td><td>${statusChip(capability.verificationStatus, locale)}</td><td>${externalTextLink(capability.sourceUrl, localize(locale, "查看证据", "View evidence"))}</td></tr>`,
       ),
     )
     .join("");

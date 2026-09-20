@@ -1,4 +1,5 @@
 import type { Kysely } from "kysely";
+import { embodiedTracks } from "../../catalog/embodied-data/tracks.js";
 import type { DomainObjectRecord, Repository } from "../../db/repository.js";
 import type { DatabaseSchema } from "../../db/types.js";
 import {
@@ -182,20 +183,22 @@ export async function buildEmbodiedPublicData(
     )
   ).filter((peer): peer is PublicPeer => peer !== null);
 
+  const events = input.events.map((event) => {
+    const profile = profiles.get(event.id);
+    if (!profile)
+      throw new Error(`Published event is missing an embodied data profile: ${event.slug}`);
+    return projectPublicEmbodiedEvent(event, profile, {
+      tracks: input.eventTracks.get(event.id) ?? [],
+      datasets: datasetRelations.get(event.id) ?? [],
+      standards: standardRelations.get(event.id) ?? [],
+      collectionMethods: collectionMethodRelations.get(event.id) ?? [],
+      peers: peerRelations.get(event.id) ?? [],
+    });
+  });
+
   return {
-    events: input.events.map((event) => {
-      const profile = profiles.get(event.id);
-      if (!profile)
-        throw new Error(`Published event is missing an embodied data profile: ${event.slug}`);
-      return projectPublicEmbodiedEvent(event, profile, {
-        tracks: input.eventTracks.get(event.id) ?? [],
-        datasets: datasetRelations.get(event.id) ?? [],
-        standards: standardRelations.get(event.id) ?? [],
-        collectionMethods: collectionMethodRelations.get(event.id) ?? [],
-        peers: peerRelations.get(event.id) ?? [],
-      });
-    }),
-    pipelineStages: projectPipelineStages(input.tracks),
+    events,
+    pipelineStages: projectPipelineStages(input.tracks, events, peers),
     datasets: datasetRecords.map((record) =>
       projectPublicDataset(record, objectRelatedEvents(datasetLinks, record.id, eventById)),
     ),
@@ -300,13 +303,59 @@ export function projectPipelineStages(
     color: string;
     icon: string;
   }>,
+  events: PublicEmbodiedEvent[] = [],
+  peers: PublicPeer[] = [],
 ): PublicPipelineStage[] {
   return tracks
-    .map((track) => ({
-      ...track,
-      slug: EmbodiedPipelineStageSchema.parse(track.slug),
-      order: orderBySlug.get(EmbodiedPipelineStageSchema.parse(track.slug)) ?? 99,
-    }))
+    .map((track) => {
+      const slug = EmbodiedPipelineStageSchema.parse(track.slug);
+      const catalog = embodiedTracks.find((item) => item.slug === slug);
+      if (!catalog) throw new Error(`Missing embodied pipeline catalog entry: ${slug}`);
+      const stageEvents = events
+        .filter((event) => event.pipelineStages.includes(slug))
+        .sort((left, right) => Date.parse(right.happenedAt) - Date.parse(left.happenedAt));
+      const milestones = stageEvents.map((event) => ({
+        eventSlug: event.slug,
+        title: event.title,
+        happenedAt: event.happenedAt,
+        deliveryImpact: event.dataProfile.deliveryImpact,
+        evidenceStatus: event.dataProfile.evidenceStatus,
+        evidence: event.evidence,
+      }));
+      return {
+        ...track,
+        slug,
+        nameEn: catalog.nameEn,
+        descriptionEn: catalog.descriptionEn,
+        order: orderBySlug.get(slug) ?? 99,
+        milestones,
+        peerComparisons: peers
+          .flatMap((peer) =>
+            peer.capabilities
+              .filter((capability) => capability.pipelineStages.includes(slug))
+              .map((capability) => ({
+                peerSlug: peer.slug,
+                peerName: peer.name,
+                claimText: capability.claimText,
+                verificationStatus: capability.verificationStatus,
+                sourceUrl: capability.sourceUrl,
+              })),
+          )
+          .sort(
+            (left, right) =>
+              left.peerName.localeCompare(right.peerName) ||
+              left.claimText.localeCompare(right.claimText),
+          ),
+        counterEvidence: milestones.filter((item) =>
+          ["conflicting", "unknown"].includes(item.evidenceStatus),
+        ),
+        nextSignals: stageEvents.map((event) => ({
+          eventSlug: event.slug,
+          eventTitle: event.title,
+          signal: event.futureOutlook,
+        })),
+      };
+    })
     .sort((left, right) => left.order - right.order);
 }
 

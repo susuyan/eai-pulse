@@ -179,6 +179,8 @@ describe("repository data snapshot", () => {
       rawMeta: {},
     });
     const deepmind = (await repository.listSources()).find((source) => source.slug === "deepmind");
+    expect(deepmind).toBeDefined();
+    await repository.updateSource(deepmind?.id ?? "", { content_scope: "embodied-data" });
     await repository.insertSignal(deepmind?.id ?? "", {
       externalId: "snapshot-second-observation",
       url: "https://openai.com/index/snapshot-test?utm_medium=syndication",

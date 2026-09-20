@@ -82,6 +82,95 @@ describe("static-site intelligence consumption model", () => {
     expect(home).not.toContain("六个领域趋势");
   });
 
+  it("renders complete English stage labels and English event metadata fallbacks", () => {
+    const model = embodiedSiteModel();
+    const event = model.embodiedEvents[0];
+    if (!event) throw new Error("Missing event fixture");
+    event.title = "具身数据事件";
+    event.factSummary = "中文事实摘要";
+    const pages = renderStaticPages(model);
+    const pipeline = pages.find((page) => page.path === "en/pipeline/index.html")?.content ?? "";
+    const eventPage =
+      pages.find((page) => page.path === "en/events/embodied-event/index.html")?.content ?? "";
+    const head = eventPage.match(/<head>[\s\S]*?<\/head>/)?.[0] ?? "";
+
+    expect(pipeline).toContain("Demand and task definition");
+    expect(pipeline).toContain("Decide what data to collect");
+    expect(pipeline).not.toContain("需求与任务定义");
+    expect(head).toContain("Embodied Event · Agent Pulse");
+    expect(head).toContain("Evidence and production impact for the embodied-data event");
+    expect(head).not.toContain("具身数据事件");
+    expect(head).not.toContain("中文事实摘要");
+    expect(eventPage).toContain("Original-language record");
+  });
+
+  it("renders milestones, peer comparisons, counter-evidence, and next signals per stage", () => {
+    const pages = renderStaticPages(embodiedSiteModel());
+    const pipeline = pages.find((page) => page.path === "pipeline/index.html")?.content ?? "";
+
+    expect(pipeline).toContain("阶段里程碑");
+    expect(pipeline).toContain("同行对比");
+    expect(pipeline).toContain("反证与未知");
+    expect(pipeline).toContain("下一信号");
+    expect(pipeline).toContain("embodied-event");
+    expect(pipeline).toContain("Next signal");
+    expect(pipeline).toContain("Example Lab");
+  });
+
+  it("rejects unsafe source and peer links and keeps object relations navigable", () => {
+    const model = embodiedSiteModel();
+    const source = model.sources[0];
+    const peer = model.peers[0];
+    const event = model.embodiedEvents[0];
+    if (!source || !peer || !event) throw new Error("Missing public-site fixtures");
+    source.homepageUrl = "javascript:alert('source')";
+    peer.websiteUrl = "javascript:alert('peer')";
+    const capability = peer.capabilities[0];
+    if (!capability) throw new Error("Missing capability fixture");
+    capability.sourceUrl = "javascript:alert('evidence')";
+    model.datasets = [
+      {
+        slug: "droid",
+        name: "DROID",
+        publisher: "Example Lab",
+        canonicalUrl: "https://example.com/droid",
+        version: "1",
+        releaseDate: "2026-09-20",
+        pipelineStages: ["acquisition-route"],
+        modalities: ["rgb"],
+        embodiments: ["single-arm"],
+        scenarios: ["tabletop"],
+        tasks: ["manipulation"],
+        acquisitionMethods: ["teleoperation"],
+        dataFormats: ["RLDS"],
+        scaleClaims: [],
+        sensorConfiguration: [],
+        synchronization: [],
+        calibration: [],
+        annotations: [],
+        qualityMethods: ["task completion"],
+        license: null,
+        access: { mode: "open", url: "https://example.com/droid" },
+        useCases: ["robot policy training"],
+        knownResults: [],
+        limitations: [],
+        evidenceStatus: "verified",
+        relatedEvents: [{ slug: event.slug, title: "Embodied event", role: "release" }],
+      },
+    ];
+
+    const pages = renderStaticPages(model);
+    const sources = pages.find((page) => page.path === "sources/index.html")?.content ?? "";
+    const peers = pages.find((page) => page.path === "peers/index.html")?.content ?? "";
+    const assets = pages.find((page) => page.path === "assets/index.html")?.content ?? "";
+
+    expect(sources).not.toContain("javascript:");
+    expect(peers).not.toContain("javascript:");
+    expect(sources).toContain("Example Source");
+    expect(peers).toContain('id="example-lab"');
+    expect(assets).toContain('href="../events/embodied-event/"');
+  });
+
   it("sorts one event per card by its latest evidence update", () => {
     const olderEventWithNewUpdate = event("older", "2026-01-01T00:00:00Z", [
       evidence("Official update", "primary", "2026-07-10T00:00:00Z"),
@@ -484,19 +573,88 @@ function embodiedSiteModel(): StaticSiteModel {
   primaryEvidence.source = "Example Lab";
   const { id: _id, actors: _actors, ...publicEvent } = legacyEvent;
   const pipelineStages = [
-    ["demand-definition", "需求与任务定义", "01"],
-    ["acquisition-route", "采集技术路线", "02"],
-    ["multimodal-capture", "多模态采集设备", "03"],
-    ["production-operations", "生产运营与成本", "04"],
-    ["data-engineering-standards", "数据工程与标准", "05"],
-    ["quality-training-feedback", "质量验收与训练反馈", "06"],
-  ].map(([slug, name, icon], order) => ({
+    [
+      "demand-definition",
+      "需求与任务定义",
+      "Demand and task definition",
+      "Decide what data to collect and why.",
+      "01",
+    ],
+    [
+      "acquisition-route",
+      "采集技术路线",
+      "Acquisition route",
+      "Compare collection and production routes.",
+      "02",
+    ],
+    [
+      "multimodal-capture",
+      "多模态采集设备",
+      "Multimodal capture",
+      "Track synchronized multimodal capture.",
+      "03",
+    ],
+    [
+      "production-operations",
+      "生产运营与成本",
+      "Production operations and cost",
+      "Track throughput, cost, and delivery.",
+      "04",
+    ],
+    [
+      "data-engineering-standards",
+      "数据工程与标准",
+      "Data engineering and standards",
+      "Track formats and governance standards.",
+      "05",
+    ],
+    [
+      "quality-training-feedback",
+      "质量验收与训练反馈",
+      "Quality acceptance and training feedback",
+      "Feed evaluation results into collection.",
+      "06",
+    ],
+  ].map(([slug, name, nameEn, descriptionEn, icon], order) => ({
     slug,
     name,
     description: `${name}说明`,
+    nameEn,
+    descriptionEn,
     color: "#345",
     icon,
     order,
+    milestones:
+      slug === "acquisition-route"
+        ? [
+            {
+              eventSlug: "embodied-event",
+              title: "embodied-event",
+              happenedAt: "2026-09-20T00:00:00.000Z",
+              deliveryImpact:
+                "Defines the production and acceptance boundary for a robot data run.",
+              evidenceStatus: "verified",
+              evidence: legacyEvent.evidence,
+            },
+          ]
+        : [],
+    peerComparisons:
+      slug === "acquisition-route"
+        ? [
+            {
+              peerSlug: "example-lab",
+              peerName: "Example Lab",
+              claimText: "Publishes a sourced teleoperation collection method.",
+              verificationStatus: "independently-verified",
+              sourceUrl: "https://example.com/lab/evidence",
+            },
+          ]
+        : [],
+    counterEvidence: [],
+    nextSignals:
+      slug === "acquisition-route"
+        ? [{ eventSlug: "embodied-event", eventTitle: "embodied-event", signal: "Next signal" }]
+        : [],
   }));
   return {
     siteUrl: "https://example.com/",

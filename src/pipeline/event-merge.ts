@@ -105,6 +105,9 @@ export async function mergeEventCandidates(
   const sources = sourceIds.map((eventId) => {
     const source = events.find((event) => event.id === eventId);
     if (!source) throw new Error(`Source event not found: ${eventId}`);
+    if (source.content_scope !== target.content_scope) {
+      throw new Error("Events from different content scopes cannot be merged");
+    }
     if (source.status === "published") {
       throw new Error(`Published source events must be unpublished before merge: ${eventId}`);
     }
@@ -347,6 +350,7 @@ function connectedComponents(events: EventRow[]): EventRow[][] {
         const candidate = byId.get(candidateId);
         if (
           candidate &&
+          candidate.content_scope === event.content_scope &&
           belongsToEvent(
             { title: candidate.title, publishedAt: candidate.happened_at },
             { title: event.title, happenedAt: event.happened_at },

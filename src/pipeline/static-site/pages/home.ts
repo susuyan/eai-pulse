@@ -29,7 +29,7 @@ export function renderEmbodiedHome(model: StaticSiteModel, locale: Locale): stri
   <section class="section section-tint"><div class="shell">${sectionHeader("02 / SIX-STAGE PIPELINE", localize(locale, "六段数据生产管线", "Six-stage data pipeline"), localize(locale, "按生产决策顺序组织证据，而不是按通用 AI 主题聚合。", "Evidence is organized by production decisions, not generic AI topics."))}<ol class="pipeline-rail">${model.pipelineStages
     .map(
       (stage) =>
-        `<li data-pipeline-stage="${escapeHtml(stage.slug)}"><span class="pipeline-index">${String(stage.order + 1).padStart(2, "0")}</span><h3><a href="__PREFIX__pipeline/#${escapeHtml(stage.slug)}">${escapeHtml(stage.name)}</a></h3><p>${escapeHtml(stage.description)}</p></li>`,
+        `<li data-pipeline-stage="${escapeHtml(stage.slug)}"><span class="pipeline-index">${String(stage.order + 1).padStart(2, "0")}</span><h3><a href="__PREFIX__pipeline/#${escapeHtml(stage.slug)}">${escapeHtml(localize(locale, stage.name, stage.nameEn))}</a></h3><p>${escapeHtml(localize(locale, stage.description, stage.descriptionEn))}</p></li>`,
     )
     .join("")}</ol></div></section>
   <section class="section shell">${sectionHeader("03 / EVIDENCE CHAIN", localize(locale, "关键证据链", "Primary evidence chain"), localize(locale, "发布方自述、独立核验和证据冲突会被明确区分。", "Publisher claims, independent verification, and conflicts are explicitly separated."))}${evidenceLinks(evidence, locale)}</section>

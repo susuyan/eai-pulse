@@ -124,6 +124,65 @@ describe("event merge candidate queue", () => {
     expect(groups.some((item) => item.events.some((event) => event.id === incidentId))).toBe(false);
   });
 
+  it("does not propose merge candidates across content scopes", async () => {
+    const db = await setup();
+    const original = await db
+      .selectFrom("events")
+      .selectAll()
+      .where("slug", "=", "openai-o1-test-time-reasoning")
+      .executeTakeFirstOrThrow();
+    const embodiedId = randomUUID();
+    await db
+      .insertInto("events")
+      .values({
+        ...original,
+        id: embodiedId,
+        slug: "openai-o1-embodied-scope-fixture",
+        title: "OpenAI o1 capability expansion through test-time compute",
+        status: "review",
+        manual_override: 0,
+        published_at: null,
+        content_scope: "embodied-data",
+      })
+      .execute();
+
+    const groups = await findEventMergeCandidates(db);
+
+    expect(groups.some((item) => item.events.some((event) => event.id === embodiedId))).toBe(false);
+  });
+
+  it("refuses an explicit merge across content scopes", async () => {
+    const db = await setup();
+    const target = await db
+      .selectFrom("events")
+      .selectAll()
+      .where("slug", "=", "openai-o1-test-time-reasoning")
+      .executeTakeFirstOrThrow();
+    const sourceId = randomUUID();
+    await db
+      .insertInto("events")
+      .values({
+        ...target,
+        id: sourceId,
+        slug: "openai-o1-cross-scope-merge-fixture",
+        title: "OpenAI o1 capability expansion through test-time compute",
+        status: "review",
+        manual_override: 0,
+        published_at: null,
+        content_scope: "embodied-data",
+      })
+      .execute();
+
+    await expect(
+      mergeEventCandidates(db, {
+        targetEventId: target.id,
+        sourceEventIds: [sourceId],
+        reason: "manual-review",
+        mergedBy: "test",
+      }),
+    ).rejects.toThrow("Events from different content scopes cannot be merged");
+  });
+
   it("refuses to merge a published event as a disposable branch", async () => {
     const db = await setup();
     const events = await db

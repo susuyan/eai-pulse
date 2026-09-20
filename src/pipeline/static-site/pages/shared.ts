@@ -49,6 +49,13 @@ export function evidenceLinks(evidence: PublicEvidence[], locale: Locale): strin
     .join("")}</ul>`;
 }
 
+export function externalTextLink(value: string, label: string): string {
+  const href = safeExternalLink(value);
+  return href
+    ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`
+    : `<span>${escapeHtml(label)}</span>`;
+}
+
 export function relationLinks(
   relations: PublicEventRelation[],
   baseRoute: string,

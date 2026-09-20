@@ -48,19 +48,88 @@ export function embodiedSiteModel(): StaticSiteModel {
   };
   const { id: _id, actors: _actors, ...publicEvent } = legacyEvent;
   const pipelineStages = [
-    ["demand-definition", "需求与任务定义", "01"],
-    ["acquisition-route", "采集技术路线", "02"],
-    ["multimodal-capture", "多模态采集设备", "03"],
-    ["production-operations", "生产运营与成本", "04"],
-    ["data-engineering-standards", "数据工程与标准", "05"],
-    ["quality-training-feedback", "质量验收与训练反馈", "06"],
-  ].map(([slug, name, icon], order) => ({
+    [
+      "demand-definition",
+      "需求与任务定义",
+      "Demand and task definition",
+      "Decide what data to collect and why.",
+      "01",
+    ],
+    [
+      "acquisition-route",
+      "采集技术路线",
+      "Acquisition route",
+      "Compare collection and production routes.",
+      "02",
+    ],
+    [
+      "multimodal-capture",
+      "多模态采集设备",
+      "Multimodal capture",
+      "Track synchronized multimodal capture.",
+      "03",
+    ],
+    [
+      "production-operations",
+      "生产运营与成本",
+      "Production operations and cost",
+      "Track throughput, cost, and delivery.",
+      "04",
+    ],
+    [
+      "data-engineering-standards",
+      "数据工程与标准",
+      "Data engineering and standards",
+      "Track formats and governance standards.",
+      "05",
+    ],
+    [
+      "quality-training-feedback",
+      "质量验收与训练反馈",
+      "Quality acceptance and training feedback",
+      "Feed evaluation results into collection.",
+      "06",
+    ],
+  ].map(([slug, name, nameEn, descriptionEn, icon], order) => ({
     slug,
     name,
     description: `${name}说明`,
+    nameEn,
+    descriptionEn,
     color: "#345",
     icon,
     order,
+    milestones:
+      slug === "acquisition-route"
+        ? [
+            {
+              eventSlug: "embodied-event",
+              title: "embodied-event",
+              happenedAt,
+              deliveryImpact:
+                "Defines the production and acceptance boundary for a robot data run.",
+              evidenceStatus: "verified",
+              evidence: legacyEvent.evidence,
+            },
+          ]
+        : [],
+    peerComparisons:
+      slug === "acquisition-route"
+        ? [
+            {
+              peerSlug: "example-lab",
+              peerName: "Example Lab",
+              claimText: "Publishes a sourced teleoperation collection method.",
+              verificationStatus: "independently-verified",
+              sourceUrl: "https://example.com/lab/evidence",
+            },
+          ]
+        : [],
+    counterEvidence: [],
+    nextSignals:
+      slug === "acquisition-route"
+        ? [{ eventSlug: "embodied-event", eventTitle: "embodied-event", signal: "Next signal" }]
+        : [],
   }));
 
   return {

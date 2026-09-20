@@ -872,12 +872,48 @@ export class Repository {
     }
     const canonicalUrl = canonicalizeUrl(item.url);
     const urlHash = sha256(canonicalUrl);
-    const existing = await this.db
+    let existing = await this.db
       .selectFrom("signals")
       .selectAll()
       .where("url_hash", "=", urlHash)
       .executeTakeFirst();
     if (existing) {
+      if (existing.content_scope !== source.content_scope) {
+        if (existing.content_scope === "embodied-data") return undefined;
+        const timestamp = now();
+        const existingId = existing.id;
+        const promoted = await this.db.transaction().execute(async (transaction) => {
+          const relations = await transaction
+            .selectFrom("signals")
+            .leftJoin("event_signals", "event_signals.signal_id", "signals.id")
+            .leftJoin("signal_triage", "signal_triage.signal_id", "signals.id")
+            .select([
+              "event_signals.signal_id as attached_signal_id",
+              "signal_triage.signal_id as triaged_signal_id",
+            ])
+            .where("signals.id", "=", existingId)
+            .executeTakeFirst();
+          if (!relations || relations.attached_signal_id || relations.triaged_signal_id)
+            return false;
+          await transaction
+            .updateTable("signals")
+            .set({
+              source_id: sourceId,
+              content_scope: "embodied-data",
+              updated_at: timestamp,
+            })
+            .where("id", "=", existingId)
+            .execute();
+          return true;
+        });
+        if (!promoted) return undefined;
+        existing = {
+          ...existing,
+          source_id: sourceId,
+          content_scope: "embodied-data",
+          updated_at: timestamp,
+        };
+      }
       const timestamp = now();
       await this.upsertSignalObservation(existing.id, sourceId, item, canonicalUrl, timestamp);
       const existingTags = parseJson<string[]>(existing.tags_json, []);
@@ -927,6 +963,7 @@ export class Repository {
         metrics_json: json(item.metrics),
         raw_meta_json: json(item.rawMeta),
         content_hash: sha256(`${item.title}\n${item.summary}`),
+        content_scope: source.content_scope,
         created_at: timestamp,
         updated_at: timestamp,
       })

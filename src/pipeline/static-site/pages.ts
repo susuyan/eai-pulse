@@ -178,13 +178,23 @@ function eventPage(
   locale: Locale,
   localePrefix: string,
 ): StaticPage {
+  const englishLabel = event.slug
+    .split("-")
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+  const title = locale === "en" ? `${englishLabel} · Agent Pulse` : `${event.title} · Agent Pulse`;
+  const pageDescription =
+    locale === "en"
+      ? `Evidence and production impact for the embodied-data event identified as ${englishLabel}.`
+      : event.factSummary;
   return renderPage(
     model,
     `${localePrefix}events/${event.slug}/index.html`,
     2,
     "timeline",
-    `${event.title} · Agent Pulse`,
-    event.factSummary,
+    title,
+    pageDescription,
     renderEventPage(event, locale),
     locale,
     {
@@ -193,8 +203,8 @@ function eventPage(
         {
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: event.title,
-          description: event.factSummary,
+          headline: locale === "en" ? englishLabel : event.title,
+          description: pageDescription,
           datePublished: event.publishedAt,
           dateModified: model.generatedAt,
           inLanguage: locale,

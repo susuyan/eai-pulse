@@ -22,6 +22,108 @@ async function setup() {
 }
 
 describe("signal eventability triage", () => {
+  it("clusters signals and deferred evidence only within the same content scope", async () => {
+    const { db, repository } = await setup();
+    const sources = await repository.listSources();
+    const embodiedSource = sources.find((item) => item.slug === "physical-intelligence");
+    const legacySource = sources.find((item) => item.slug === "openai");
+    if (!embodiedSource || !legacySource) throw new Error("Missing source fixtures");
+    await repository.updateSource(embodiedSource.id, {
+      lifecycle_status: "active",
+      enabled: 1,
+    });
+
+    const title = "Physical Intelligence releases a scoped robot dataset benchmark";
+    const summary =
+      "The release adds robot demonstration data, collection metadata, and a repeatable quality benchmark for embodied data production.";
+    const publishedAt = "2026-09-20T00:00:00.000Z";
+    const legacySignal = await repository.insertSignal(legacySource.id, {
+      url: "https://openai.com/index/legacy-scope-cluster-fixture/",
+      title,
+      summary,
+      language: "en",
+      publishedAt,
+      category: "research",
+      tags: ["robot-data", "dataset"],
+      metrics: {},
+      rawMeta: { quality: { score: 90 } },
+    });
+    if (!legacySignal) throw new Error("Missing legacy signal fixture");
+    await repository.deferSignal(legacySignal.id, "scope_isolation_fixture", 100, {});
+
+    const legacyEventId = "legacy-scope-event-fixture";
+    const timestamp = new Date().toISOString();
+    await db
+      .insertInto("events")
+      .values({
+        id: legacyEventId,
+        slug: "legacy-scope-event-fixture",
+        title,
+        fact_summary: summary,
+        summary,
+        technical_insight: "Legacy technical analysis for the scope isolation fixture.",
+        industry_insight: "Legacy industry analysis for the scope isolation fixture.",
+        future_outlook: "Legacy outlook for the scope isolation fixture.",
+        business_value: "Legacy business analysis for the scope isolation fixture.",
+        category: "research",
+        company: "Physical Intelligence",
+        keywords_json: '["robot-data","dataset"]',
+        confidence_score: 80,
+        heat_score: 0,
+        impact_score: 70,
+        value_score: 70,
+        score_factors_json: "{}",
+        status: "review",
+        featured: 0,
+        manual_override: 0,
+        happened_at: publishedAt,
+        published_at: null,
+        readiness_blockers_json: "[]",
+        content_scope: "legacy-ai",
+        created_at: timestamp,
+        updated_at: timestamp,
+      })
+      .execute();
+
+    const embodiedSignal = await repository.insertSignal(embodiedSource.id, {
+      url: "https://www.physicalintelligence.company/blog/scope-cluster-fixture",
+      title,
+      summary,
+      language: "en",
+      publishedAt,
+      category: "research",
+      tags: ["robot-data", "dataset"],
+      metrics: {},
+      rawMeta: { quality: { score: 90 } },
+    });
+    if (!embodiedSignal) throw new Error("Missing embodied signal fixture");
+
+    await clusterSignals(db);
+
+    const embodiedEvent = await db
+      .selectFrom("events")
+      .select(["id", "content_scope"])
+      .where("title", "=", title)
+      .where("content_scope", "=", "embodied-data")
+      .executeTakeFirst();
+    expect(embodiedEvent?.content_scope).toBe("embodied-data");
+    expect(
+      await db
+        .selectFrom("event_signals")
+        .select("signal_id")
+        .where("event_id", "=", embodiedEvent?.id ?? "missing")
+        .orderBy("signal_id")
+        .execute(),
+    ).toEqual([{ signal_id: embodiedSignal.id }]);
+    expect(
+      await db
+        .selectFrom("event_signals")
+        .select("signal_id")
+        .where("event_id", "=", legacyEventId)
+        .execute(),
+    ).toEqual([]);
+  });
+
   it("defers an isolated media commentary instead of creating timeline noise", async () => {
     const { db, repository } = await setup();
     const media = (await repository.listSources()).find((source) => source.slug === "galaxea-ai");

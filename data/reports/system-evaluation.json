@@ -1,33 +1,34 @@
 {
   "schemaVersion": 2,
-  "id": "dd84f3bb-69a1-4ae2-9bae-7d51cc633c87",
+  "id": "b6d26803-dc14-4d07-85e0-e30603282af9",
   "releaseVersion": "0.11.1",
   "status": "partial",
-  "overallScore": 59,
-  "rawWeightedScore": 64,
+  "overallScore": 61,
+  "rawWeightedScore": 66,
   "evidenceCoverage": 72,
   "dimensions": [
     {
       "slug": "source-coverage",
       "name": "有效来源覆盖",
-      "score": 80,
-      "rawScore": 80,
+      "score": 100,
+      "rawScore": 100,
       "scoreCap": 100,
       "weight": 10,
       "status": "measured",
-      "sampleSize": 234,
+      "sampleSize": 236,
       "sampleTarget": 100,
-      "summary": "417 个目录源中 290 个单轮健康、1 个处于隔离观察，只有 234 个既 active 且健康；E2/E3 不等同生产覆盖。",
+      "summary": "417 个目录源中 288 个单轮健康、1 个处于隔离观察，只有 236 个既 active 且健康；E2/E3 不等同生产覆盖。",
       "evidence": {
         "catalog": 417,
         "checked": 414,
-        "healthy": 290,
+        "healthy": 288,
         "degraded": 37,
-        "failed": 36,
-        "skipped": 51,
-        "active": 234,
-        "activeHealthy": 234,
+        "failed": 37,
+        "skipped": 52,
+        "active": 236,
+        "activeHealthy": 236,
         "observingHealthy": 1,
+        "operationallyCoveredHealthy": 237,
         "healthyCategories": 13,
         "healthyChina": 65
       },
@@ -42,15 +43,15 @@
       "scoreCap": 100,
       "weight": 10,
       "status": "measured",
-      "sampleSize": 327,
+      "sampleSize": 325,
       "sampleTarget": 100,
-      "summary": "327 个可用/部分可用来源参与真实抓取质量计算；目录预填 quality_score 不再计分。",
+      "summary": "325 个可用/部分可用来源参与真实抓取质量计算；目录预填 quality_score 不再计分。",
       "evidence": {
-        "usableChecks": 327,
-        "healthy": 290,
+        "usableChecks": 325,
+        "healthy": 288,
         "auditWindows": 8,
-        "averageObservedQuality": 63,
-        "schemaValid": 290
+        "averageObservedQuality": 62,
+        "schemaValid": 288
       },
       "penalties": [],
       "nextAction": "连续 7 天抽检 100+ 健康源，补原创率、正文完整度和人工准确率标签。"
@@ -87,13 +88,13 @@
       "status": "measured",
       "sampleSize": 414,
       "sampleTarget": 100,
-      "summary": "按每个来源最新一次检查/运行去重：290/414 健康，不再让单一来源的重复成功运行抬高分数。",
+      "summary": "按每个来源最新一次检查/运行去重：288/414 健康，不再让单一来源的重复成功运行抬高分数。",
       "evidence": {
         "checked": 414,
-        "healthy": 290,
+        "healthy": 288,
         "degraded": 37,
-        "failed": 36,
-        "skipped": 51,
+        "failed": 37,
+        "skipped": 52,
         "latestRuns": 234,
         "latestRunSuccess": 234,
         "auditWindows": 8
@@ -177,13 +178,13 @@
       "scoreCap": 100,
       "weight": 10,
       "status": "measured",
-      "sampleSize": 290,
+      "sampleSize": 288,
       "sampleTarget": 100,
-      "summary": "140/290 个健康来源在 7 天窗口内有新内容，最近 30 天公开事件 34 个。",
+      "summary": "140/288 个健康来源在 7 天窗口内有新内容，最近 30 天公开事件 34 个。",
       "evidence": {
-        "healthy": 290,
+        "healthy": 288,
         "freshHealthy": 140,
-        "active": 234,
+        "active": 236,
         "activeWithRecentSuccess": 231,
         "published": 538,
         "recentPublished": 34
@@ -201,9 +202,9 @@
       "status": "insufficient_data",
       "sampleSize": 0,
       "sampleTarget": 30,
-      "summary": "56 条星探卡片的编辑状态不是用户行动结果，当前真实行动/产物复盘样本为 0。",
+      "summary": "45 条星探卡片的编辑状态不是用户行动结果，当前真实行动/产物复盘样本为 0。",
       "evidence": {
-        "ideas": 56,
+        "ideas": 45,
         "editorialAccepted": 45,
         "outcomeFeedback": 0,
         "completedArtifacts": 0
@@ -691,10 +692,10 @@
       "evidence": "capability map links status, maturity, release and implementation evidence"
     }
   ],
-  "notes": "3 dimensions lack sufficient evidence; calibrated weighted score 64, evidence coverage 72%, final score 59",
-  "startedAt": "2026-09-20T06:53:31.358Z",
-  "finishedAt": "2026-09-20T06:53:31.797Z",
-  "evaluationAsOf": "2026-09-20T06:53:31.304Z",
+  "notes": "3 dimensions lack sufficient evidence; calibrated weighted score 66, evidence coverage 72%, final score 61",
+  "startedAt": "2026-09-20T07:46:40.455Z",
+  "finishedAt": "2026-09-20T07:46:40.823Z",
+  "evaluationAsOf": "2026-09-20T07:46:40.411Z",
   "gateMode": "operational",
   "target": 80,
   "targetReached": false,
@@ -762,14 +763,12 @@
     }
   ],
   "operationalDecision": {
-    "status": "critical",
-    "reasonCodes": [
-      "system_score_below_floor"
-    ],
-    "currentScore": 59,
-    "persistedEvaluationAsOf": "2026-09-20T04:21:25.182Z",
-    "ageMinutes": 152,
-    "refreshEligible": true,
-    "fingerprint": "6ffc8d32a0274c62"
+    "status": "ok",
+    "reasonCodes": [],
+    "currentScore": 61,
+    "persistedEvaluationAsOf": "2026-09-20T06:53:31.304Z",
+    "ageMinutes": 53,
+    "refreshEligible": false,
+    "fingerprint": "9ae9155343c1c891"
   }
 }

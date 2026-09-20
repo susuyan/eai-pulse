@@ -301,6 +301,7 @@ jobs:
           node -e 'JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"))' data/narratives/stage-promotions.json
           node -e 'JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"))' data/reports/research-impact.json
           node -e 'JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"))' data/reports/system-evaluation.json
+          jq -e '.operationalDecision.status and .publicReadinessDecision.status and .embodiedQuality' data/reports/system-evaluation.json >/dev/null
           git diff --check -- data/snapshot/v1.json data/narratives/stage-promotions.json data/reports/research-impact.json data/reports/system-evaluation.json
           if grep -E '"(token|secret|password|cookie|authorization|api[_-]?key|reasoning|prompt|completion)"[[:space:]]*:' data/snapshot/v1.json data/narratives/stage-promotions.json data/reports/research-impact.json data/reports/system-evaluation.json; then
             echo "Sensitive or raw model material detected in repository data" >&2

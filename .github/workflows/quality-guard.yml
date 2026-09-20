@@ -53,15 +53,18 @@ jobs:
             --output="$RUNNER_TEMP/evaluation.json" \
             --summary="$GITHUB_STEP_SUMMARY" > "$RUNNER_TEMP/evaluation-output.json"
           jq -e '.operationalDecision.status and .operationalDecision.fingerprint' "$RUNNER_TEMP/evaluation.json" >/dev/null
+          jq -e '.publicReadinessDecision.status and .publicReadinessDecision.fingerprint' "$RUNNER_TEMP/evaluation.json" >/dev/null
           jq -e '.embodiedQuality.genericAILeak.numerator == 0' "$RUNNER_TEMP/evaluation.json" >/dev/null
           score="$(jq -r '.overallScore' "$RUNNER_TEMP/evaluation.json")"
           test "$score" -ge 0
           echo "score=$score" >> "$GITHUB_OUTPUT"
           echo "status=$(jq -r '.operationalDecision.status' "$RUNNER_TEMP/evaluation.json")" >> "$GITHUB_OUTPUT"
           echo "reason_codes=$(jq -c '.operationalDecision.reasonCodes' "$RUNNER_TEMP/evaluation.json")" >> "$GITHUB_OUTPUT"
+          echo "public_status=$(jq -r '.publicReadinessDecision.status' "$RUNNER_TEMP/evaluation.json")" >> "$GITHUB_OUTPUT"
+          echo "public_reason_codes=$(jq -c '.publicReadinessDecision.reasonCodes' "$RUNNER_TEMP/evaluation.json")" >> "$GITHUB_OUTPUT"
           echo "fingerprint=$(jq -r '.operationalDecision.fingerprint' "$RUNNER_TEMP/evaluation.json")" >> "$GITHUB_OUTPUT"
           echo "refresh_eligible=$(jq -r '.operationalDecision.refreshEligible' "$RUNNER_TEMP/evaluation.json")" >> "$GITHUB_OUTPUT"
-          jq '{overallScore, rawWeightedScore, evidenceCoverage, evaluationAsOf, operationalDecision}' "$RUNNER_TEMP/evaluation.json"
+          jq '{overallScore, rawWeightedScore, evidenceCoverage, evaluationAsOf, operationalDecision, publicReadinessDecision}' "$RUNNER_TEMP/evaluation.json"
 
       - name: Record guard summary
         if: always()
@@ -71,8 +74,10 @@ jobs:
             echo "## Quality Guard"
             echo "- Score: ${{ steps.evaluation.outputs.score || 'unavailable' }} / 100"
             echo "- Floor: $QUALITY_FLOOR"
-            echo "- Status: ${{ steps.evaluation.outputs.status || 'unknown' }}"
-            echo '- Reasons: `${{ steps.evaluation.outputs.reason_codes || '[]' }}`'
+            echo "- Maturity status: ${{ steps.evaluation.outputs.status || 'unknown' }}"
+            echo '- Maturity reasons: `${{ steps.evaluation.outputs.reason_codes || '[]' }}`'
+            echo "- Public readiness: ${{ steps.evaluation.outputs.public_status || 'unknown' }}"
+            echo '- Public blockers: `${{ steps.evaluation.outputs.public_reason_codes || '[]' }}`'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload evaluation evidence
@@ -164,6 +169,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run data-refresh.yml --ref main --field mode=incremental --field recovery=true
 
-      - name: Fail the operational gate
-        if: always() && steps.evaluation.outputs.status == 'critical'
+      - name: Fail the embodied public gate
+        if: always() && steps.evaluation.outputs.public_status == 'critical'
         run: exit 1

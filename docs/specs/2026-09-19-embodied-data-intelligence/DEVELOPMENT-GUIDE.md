@@ -361,7 +361,7 @@ allowlist DTO -> 静态站 -> GitHub Pages
 
 - `.github/workflows/data-refresh.yml`：验证新对象生成、快照合并和公开指纹。
 - `.github/workflows/source-audit.yml`：审计具身来源并维护健康摘要。
-- `.github/workflows/quality-guard.yml`：监测具身覆盖与证据质量回退。
+- `.github/workflows/quality-guard.yml`：同时记录长期运营成熟度与具身公开发布资格。低于 60 分继续保留 Incident；公开发布只在具身五项质量门禁、零通用 AI 泄漏和评测水位均通过时放行。
 - `.github/workflows/monitor.yml`：检查手动审计与 Pages 新鲜度。
 - `CHANGELOG.md` 与 `src/catalog/product.ts`：所有用户可感知变化双写。
 

@@ -12,7 +12,10 @@ import {
   type EvaluationGateMode,
   parseEvaluationInstant,
 } from "../pipeline/evaluation-context.js";
-import { decideOperationalEvaluation } from "../pipeline/evaluation-policy.js";
+import {
+  decideOperationalEvaluation,
+  decidePublicReadiness,
+} from "../pipeline/evaluation-policy.js";
 import {
   buildSystemEvaluationReport,
   compareSystemEvaluations,
@@ -75,10 +78,16 @@ export async function runEvaluateCli(): Promise<void> {
             now: runStartedAt,
           })
         : null;
+    const publicReadinessDecision = operationalDecision
+      ? decidePublicReadiness({
+          operationalDecision,
+          embodiedQuality: report.embodiedQuality ?? null,
+        })
+      : null;
     const payload = comparison
       ? { ...report, comparison }
       : operationalDecision
-        ? { ...report, operationalDecision }
+        ? { ...report, operationalDecision, publicReadinessDecision }
         : report;
     if (outputPath) await atomicWriteJson(outputPath, payload);
     if (summaryPath) {

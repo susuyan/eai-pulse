@@ -374,6 +374,8 @@ gh workflow run monitor.yml --repo susuyan/eai-pulse --ref main --field allow_no
 
 Wait for each real run to complete before starting the next state-dependent validation. Confirm the source-health Issue remains open and fresh, the snapshot commit does not reintroduce legacy public rows, and any Pages redeploy reaches the same embodied fingerprint.
 
+If the first post-switch Quality Guard reports `system_score_below_floor` while all embodied quality gates pass, do not lower or hide the legacy maturity score. Add the approved domain-aware public readiness decision, keep the maturity Incident open, and rerun the workflow chain from the corrected main commit.
+
 - [ ] **Step 6: Apply the rollback rule if any hard gate fails**
 
 Stop further workflows and create a normal revert PR against the atomic switch PR. Restore from the baseline Git revision and snapshot, run local checks, merge the revert after CI, wait for Pages, and verify the baseline public fingerprint. Never use reset, history rewrite, or force push.

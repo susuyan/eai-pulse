@@ -9,6 +9,8 @@ import {
 import {
   type OperationalEvaluationDecision,
   operationalEvaluationReasonCodes,
+  type PublicReadinessDecision,
+  publicReadinessReasonCodes,
 } from "./evaluation-policy.js";
 
 export const SYSTEM_EVALUATION_SCHEMA_VERSION = 2;
@@ -58,6 +60,7 @@ export interface SystemEvaluationReportV2 extends EvaluationResult {
   improvementPlan: EvaluationImprovement[];
   comparison?: EvaluationComparison | undefined;
   operationalDecision?: OperationalEvaluationDecision | undefined;
+  publicReadinessDecision?: PublicReadinessDecision | undefined;
   qualityGatePassed?: boolean | undefined;
   qualityReasonCodes?: EmbodiedQualityReasonCode[] | undefined;
 }
@@ -393,6 +396,14 @@ const embodiedDataQualitySchema = z
   })
   .strict();
 
+const publicReadinessDecisionSchema = z
+  .object({
+    status: z.enum(["ok", "critical"]),
+    reasonCodes: z.array(z.enum(publicReadinessReasonCodes)),
+    fingerprint: z.string().min(1),
+  })
+  .strict();
+
 const systemEvaluationReportV1Schema = z
   .object({ schemaVersion: z.literal(1), ...evaluationReportFields })
   .strict();
@@ -404,6 +415,7 @@ export const systemEvaluationReportV2Schema = z
     evaluationAsOf: timestampSchema,
     gateMode: z.enum(["change", "operational"]),
     operationalDecision: operationalEvaluationDecisionSchema.optional(),
+    publicReadinessDecision: publicReadinessDecisionSchema.optional(),
     embodiedQuality: embodiedDataQualitySchema.optional(),
   })
   .strict();

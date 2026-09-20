@@ -110,7 +110,18 @@ repository snapshot
 
 Operational gate 不用旧分数做相对比较。其目标是恢复当前运营状态，而不是证明某次代码变更造成下降。
 
-### 5.1 结构化策略结果
+### 5.1 领域切换后的双状态
+
+领域切换后，长期运营成熟度与公开内容发布资格必须分开表达：
+
+- `operationalDecision` 继续按绝对分数和水位年龄判断长期运营成熟度。低于 60 分仍是 `critical`，必须保留 Incident、刷新建议和完整证据，禁止降低分数或关闭告警来换取绿色状态。
+- `publicReadinessDecision` 只回答当前具身公开站是否可以继续发布。它要求具身质量五项门禁全部通过、通用 AI 泄漏为零，且版本化评测水位合法且未过期。
+- `system_score_below_floor` 不单独阻断已经通过具身质量门禁的静态公开站；其他运营原因（无效报告、24 小时或 72 小时过期）仍然阻断公开发布。
+- Quality Guard 始终记录两个状态。运营成熟度为 `critical` 时继续更新同一个 Incident 和执行有界刷新；只有 `publicReadinessDecision` 为 `critical` 时才使公开发布门禁失败。
+
+该分离不声明 collector 已达到生产级，也不把 `shadow` 来源视为 `active`。它只避免使用旧通用 AI 领域的绝对成熟度分数，否决已经通过独立领域硬门禁的具身静态内容。
+
+### 5.2 结构化策略结果
 
 ```ts
 interface OperationalEvaluationDecision {
@@ -125,6 +136,21 @@ interface OperationalEvaluationDecision {
   persistedEvaluationAsOf: string | null;
   ageMinutes: number | null;
   refreshEligible: boolean;
+  fingerprint: string;
+}
+
+interface PublicReadinessDecision {
+  status: "ok" | "critical";
+  reasonCodes: Array<
+    | "evaluation_stale"
+    | "evaluation_persistently_stale"
+    | "evaluation_report_invalid"
+    | "missing_stage_coverage"
+    | "insufficient_tier1_evidence"
+    | "incomplete_data_profile"
+    | "unsupported_peer_claim"
+    | "generic_ai_leak"
+  >;
   fingerprint: string;
 }
 ```

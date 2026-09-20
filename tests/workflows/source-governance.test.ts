@@ -278,7 +278,16 @@ describe("GitHub source governance workflows", () => {
     expect(guard).not.toContain("publish_weekly=true");
     expect(guard).toContain("--baseline=data/reports/system-evaluation.json");
     expect(guard).toContain(".embodiedQuality.genericAILeak.numerator == 0");
-    expect(monitor).toContain(".evaluationAsOf and .gateMode and .embodiedQuality");
+    expect(guard).toContain(".publicReadinessDecision.status");
+    expect(guard).toContain("steps.evaluation.outputs.public_status == 'critical'");
+    expect(guard).toContain("Maturity status:");
+    expect(guard).toContain("Public readiness:");
+    expect(monitor).toContain(
+      ".evaluationAsOf and .gateMode and .operationalDecision.status and .publicReadinessDecision.status and .embodiedQuality",
+    );
+    expect(refresh).toContain(
+      ".operationalDecision.status and .publicReadinessDecision.status and .embodiedQuality",
+    );
     expect(guard).toContain('--summary="$GITHUB_STEP_SUMMARY"');
     expect(guard.indexOf("Upload evaluation evidence")).toBeLessThan(
       guard.indexOf("Update the single monitor incident"),
@@ -287,7 +296,7 @@ describe("GitHub source governance workflows", () => {
       guard.indexOf("Trigger one bounded system update"),
     );
     expect(guard.indexOf("Trigger one bounded system update")).toBeLessThan(
-      guard.indexOf("Fail the operational gate"),
+      guard.indexOf("Fail the embodied public gate"),
     );
     expect(refresh).toContain("--gate=operational");
     expect(refresh).toContain("--persist");

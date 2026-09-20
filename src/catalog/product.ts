@@ -450,7 +450,7 @@ export const capabilities = [
     maturity: 62,
     release: "0.2.0",
     evidence:
-      "versioned evaluation history, a current scorecard, previous-main CI regression gates and ranked evidence-backed improvement actions",
+      "versioned evaluation history and time context, fixed-reference change gates, current-time operational freshness gates and ranked evidence-backed improvement actions",
   },
   {
     slug: "bounded-evolution",
@@ -573,6 +573,7 @@ export const releases = [
       "来源更新新增粗粒度来源类型过滤，移动端地域与来源类型过滤器紧凑并排",
       "本地启动、数据库 seed 与默认静态导出自动合并仓库最新快照，避免新 clone 停留在不完整的 seed 数据",
       "系统能力评测历史进入版本化快照，CI 以上一提交为基线阻止分数回退，并持续输出按加权缺口排序的真实改进动作",
+      "系统评测拆分为固定参考时刻的 PR 回归门禁与当前时间的运营时效门禁：自然时间流逝不再阻塞无关变更，真实数据过期仍会更新单一健康告警并按冷却期触发一次有界刷新；Monitor 改用版本化评测水位，不再依赖 checkout 文件时间。",
       "事件时间线筛选 tabs 支持桌面鼠标拖拽，取消加载时自动居中，仅在用户点击筛选项后平滑居中",
       "公开站新增符合 llms.txt 约定的 AI 可读索引，明确事实、观察与假设边界，并在 Footer 提供可发现入口",
     ],

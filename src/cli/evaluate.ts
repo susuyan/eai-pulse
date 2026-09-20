@@ -15,6 +15,7 @@ import {
 } from "../pipeline/evaluation-progress.js";
 
 export async function runEvaluateCli(): Promise<void> {
+  const runStartedAt = new Date();
   const outputPath = argumentValue("--output");
   const baselinePath = argumentValue("--baseline");
   const summaryPath = argumentValue("--summary");
@@ -25,12 +26,13 @@ export async function runEvaluateCli(): Promise<void> {
   try {
     if (skipBootstrap) await migrateToLatest(db, config);
     else await bootstrapRepositoryDatabase(db, config);
-    const evaluation = await evaluateSystem(db);
-    const report = buildSystemEvaluationReport(evaluation, {
-      asOf: new Date(evaluation.finishedAt),
+    const context = {
+      asOf: runStartedAt,
       gateMode: "operational",
-      persist: false,
-    });
+      persist: true,
+    } as const;
+    const evaluation = await evaluateSystem(db, context);
+    const report = buildSystemEvaluationReport(evaluation, context);
     const baseline = baselinePath ? await readReport(baselinePath) : null;
     const comparison = baseline ? compareSystemEvaluations(report, baseline) : null;
     const payload = comparison ? { ...report, comparison } : report;

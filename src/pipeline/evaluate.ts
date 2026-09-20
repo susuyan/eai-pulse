@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Kysely } from "kysely";
 import { capabilities, productVersion } from "../catalog/product.js";
 import type { DatabaseSchema } from "../db/types.js";
+import { type EvaluationContext, isAtOrBefore, isWithinPastWindow } from "./evaluation-context.js";
 import { eventReadinessSummary } from "./readiness.js";
 
 export interface EvaluationDimension {
@@ -86,7 +87,7 @@ export function calculateOverallScore(dimensions: EvaluationDimension[]) {
   };
 }
 
-export async function evaluateSystem(db: Kysely<DatabaseSchema>) {
+export async function evaluateSystem(db: Kysely<DatabaseSchema>, context: EvaluationContext) {
   const startedAt = new Date().toISOString();
   const [allSources, runs, checks, events, eventEvidence, scout, signalProvenance, readiness] =
     await Promise.all([
@@ -109,21 +110,42 @@ export async function evaluateSystem(db: Kysely<DatabaseSchema>) {
           "sources.tier as tier",
           "sources.role as role",
           "sources.source_category as sourceCategory",
+          "event_signals.created_at as evidenceCreatedAt",
+          "signals.created_at as signalCreatedAt",
         ])
         .execute(),
       db.selectFrom("scout_insights").selectAll().execute(),
       db
         .selectFrom("signals")
         .innerJoin("sources", "sources.id", "signals.source_id")
-        .select(["signals.id", "sources.role", "sources.source_category as sourceCategory"])
+        .select([
+          "signals.id",
+          "signals.created_at as signalCreatedAt",
+          "sources.role",
+          "sources.source_category as sourceCategory",
+        ])
         .execute(),
-      eventReadinessSummary(db),
+      eventReadinessSummary(db, context.asOf),
     ]);
 
   const sources = allSources.filter((source) => source.lifecycle_status !== "retired");
   const sourcesById = new Map(sources.map((source) => [source.id, source]));
-  const latestChecks = latestBySource(checks);
-  const latestRuns = latestBySource(runs);
+  const pointInTimeRuns = runs.filter((run) => isAtOrBefore(run.finished_at, context.asOf));
+  const pointInTimeChecks = checks.filter((check) => isAtOrBefore(check.finished_at, context.asOf));
+  const pointInTimeEvents = events.filter((event) => isAtOrBefore(event.created_at, context.asOf));
+  const pointInTimeEvidence = eventEvidence.filter(
+    (row) =>
+      isAtOrBefore(row.evidenceCreatedAt, context.asOf) &&
+      isAtOrBefore(row.signalCreatedAt, context.asOf),
+  );
+  const pointInTimeScout = scout.filter((insight) =>
+    isAtOrBefore(insight.generated_at, context.asOf),
+  );
+  const pointInTimeSignalProvenance = signalProvenance.filter((row) =>
+    isAtOrBefore(row.signalCreatedAt, context.asOf),
+  );
+  const latestChecks = latestBySource(pointInTimeChecks);
+  const latestRuns = latestBySource(pointInTimeRuns);
   const checkedSources = [...latestChecks.values()].filter((check) =>
     sourcesById.has(check.source_id),
   );
@@ -139,7 +161,8 @@ export async function evaluateSystem(db: Kysely<DatabaseSchema>) {
     (source) => source.observation_enabled === 1 && healthySourceIds.has(source.id),
   );
   const checkCoverage = ratio(checkedSources.length, sources.length);
-  const auditWindows = new Set(checks.map((check) => check.finished_at.slice(0, 10))).size;
+  const auditWindows = new Set(pointInTimeChecks.map((check) => check.finished_at.slice(0, 10)))
+    .size;
   const healthyCategories = new Set(healthySources.map((source) => source.source_category));
   const healthyCn = healthySources.filter((source) => source.region === "CN").length;
   const checkedQuality = healthyChecks.concat(degradedChecks);
@@ -149,8 +172,10 @@ export async function evaluateSystem(db: Kysely<DatabaseSchema>) {
     ["succeeded", "not_modified"].includes(run.status),
   );
 
-  const published = events.filter((event) => event.status === "published");
-  const evidenceByEvent = groupEvidence(eventEvidence);
+  const published = pointInTimeEvents.filter(
+    (event) => event.status === "published" && isAtOrBefore(event.happened_at, context.asOf),
+  );
+  const evidenceByEvent = groupEvidence(pointInTimeEvidence);
   const publishedEvidence = published.map((event) => evidenceByEvent.get(event.id) ?? []);
   const averageEvidence = average(publishedEvidence.map((rows) => rows.length));
   const publishedWithPrimary = publishedEvidence.filter((rows) =>
@@ -165,23 +190,22 @@ export async function evaluateSystem(db: Kysely<DatabaseSchema>) {
     readiness.items.filter((item) => item.status === "ready").map((item) => item.eventId),
   );
   const readyPublished = published.filter((event) => readyIds.has(event.id)).length;
-  const linkedSignals = new Set(eventEvidence.flatMap((row) => row.sourceId)).size;
-  const directSignals = signalProvenance.filter(
+  const linkedSignals = new Set(pointInTimeEvidence.flatMap((row) => row.sourceId)).size;
+  const directSignals = pointInTimeSignalProvenance.filter(
     (row) => row.role !== "aggregator" && row.sourceCategory !== "aggregator",
   ).length;
-  const primarySignals = signalProvenance.filter((row) =>
+  const primarySignals = pointInTimeSignalProvenance.filter((row) =>
     ["primary", "research", "policy"].includes(row.role),
   ).length;
 
   const freshHealthy = healthyChecks.filter(
     (check) => check.freshness_hours !== null && check.freshness_hours <= 24 * 7,
   ).length;
-  const recentPublished = published.filter(
-    (event) => Date.now() - Date.parse(event.happened_at) <= 30 * 86_400_000,
+  const recentPublished = published.filter((event) =>
+    isWithinPastWindow(event.happened_at, context.asOf, 30 * 86_400_000),
   ).length;
-  const activeWithRecentSuccess = activeSources.filter(
-    (source) =>
-      source.last_success_at && Date.now() - Date.parse(source.last_success_at) <= 7 * 86_400_000,
+  const activeWithRecentSuccess = activeSources.filter((source) =>
+    isWithinPastWindow(source.last_success_at, context.asOf, 7 * 86_400_000),
   ).length;
   const feedbackSamples = 0; // Editorial status is not a user outcome signal.
 
@@ -257,21 +281,21 @@ export async function evaluateSystem(db: Kysely<DatabaseSchema>) {
       rawScore:
         ratio(directSignals, signalProvenance.length) * 25 +
         ratio(primarySignals, signalProvenance.length) * 45 +
-        ratio(eventEvidence.length, signalProvenance.length) * 30,
+        ratio(pointInTimeEvidence.length, pointInTimeSignalProvenance.length) * 30,
       weight: 10,
-      sufficient: signalProvenance.length >= 10 && eventEvidence.length >= 10,
-      sampleSize: signalProvenance.length,
+      sufficient: pointInTimeSignalProvenance.length >= 10 && pointInTimeEvidence.length >= 10,
+      sampleSize: pointInTimeSignalProvenance.length,
       sampleTarget: 100,
-      summary: `${signalProvenance.length} 条信号中 ${primarySignals} 条来自 primary/research/policy，${eventEvidence.length} 条证据进入事件。`,
+      summary: `${pointInTimeSignalProvenance.length} 条信号中 ${primarySignals} 条来自 primary/research/policy，${pointInTimeEvidence.length} 条证据进入事件。`,
       evidence: {
-        signals: signalProvenance.length,
+        signals: pointInTimeSignalProvenance.length,
         direct: directSignals,
         primary: primarySignals,
-        linkedEvidence: eventEvidence.length,
+        linkedEvidence: pointInTimeEvidence.length,
         linkedSourceCount: linkedSignals,
-        aggregatorDebt: signalProvenance.length - directSignals,
+        aggregatorDebt: pointInTimeSignalProvenance.length - directSignals,
       },
-      penalties: eventEvidence.length < 30 ? ["进入事件的证据样本不足 30"] : [],
+      penalties: pointInTimeEvidence.length < 30 ? ["进入事件的证据样本不足 30"] : [],
       nextAction: "提升一手信号占比和 Signal→Event 证据绑定率，并核验媒体集团独立性。",
     }),
     calibrateDimension({
@@ -408,17 +432,18 @@ export async function evaluateSystem(db: Kysely<DatabaseSchema>) {
     calibrateDimension({
       slug: "effectiveness",
       name: "机会与行动效果",
-      rawScore: ratio(feedbackSamples, 30) * 70 + ratio(scout.length, 30) * 30,
+      rawScore: ratio(feedbackSamples, 30) * 70 + ratio(pointInTimeScout.length, 30) * 30,
       weight: 8,
       sufficient: feedbackSamples >= 30,
       sampleSize: feedbackSamples,
       sampleTarget: 30,
       insufficientCap: 45,
-      summary: `${scout.length} 条星探卡片的编辑状态不是用户行动结果，当前真实行动/产物复盘样本为 0。`,
+      summary: `${pointInTimeScout.length} 条星探卡片的编辑状态不是用户行动结果，当前真实行动/产物复盘样本为 0。`,
       evidence: {
-        ideas: scout.length,
-        editorialAccepted: scout.filter((idea) => ["accepted", "published"].includes(idea.status))
-          .length,
+        ideas: pointInTimeScout.length,
+        editorialAccepted: pointInTimeScout.filter((idea) =>
+          ["accepted", "published"].includes(idea.status),
+        ).length,
         outcomeFeedback: feedbackSamples,
         completedArtifacts: 0,
       },
@@ -472,20 +497,22 @@ export async function evaluateSystem(db: Kysely<DatabaseSchema>) {
     (dimension) => dimension.status === "insufficient_data",
   ).length;
   const notes = `${insufficientCount} dimensions lack sufficient evidence; calibrated weighted score ${rawWeightedScore}, evidence coverage ${evidenceCoverage}%, final score ${overallScore}`;
-  await db
-    .insertInto("evaluation_runs")
-    .values({
-      id,
-      release_version: productVersion,
-      status,
-      overall_score: overallScore,
-      dimensions_json: JSON.stringify(dimensions),
-      capability_snapshot_json: JSON.stringify(capabilities),
-      notes,
-      started_at: startedAt,
-      finished_at: finishedAt,
-    })
-    .execute();
+  if (context.persist) {
+    await db
+      .insertInto("evaluation_runs")
+      .values({
+        id,
+        release_version: productVersion,
+        status,
+        overall_score: overallScore,
+        dimensions_json: JSON.stringify(dimensions),
+        capability_snapshot_json: JSON.stringify(capabilities),
+        notes,
+        started_at: startedAt,
+        finished_at: finishedAt,
+      })
+      .execute();
+  }
   return {
     id,
     releaseVersion: productVersion,

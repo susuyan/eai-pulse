@@ -253,9 +253,8 @@ describe("GitHub source governance workflows", () => {
     expect(guard).toContain("REFRESH_COOLDOWN_HOURS: 120");
     expect(guard).toContain("--gate=operational");
     expect(guard).toContain("agent-pulse-monitor:v3 fingerprint=");
-    expect(guard).toContain("gh run list --workflow data-refresh.yml --status queued");
-    expect(guard).toContain("gh run list --workflow data-refresh.yml --status in_progress");
-    expect(guard).toContain("const active = Boolean(queued.id || inProgress.id);");
+    expect(guard).toContain("data-refresh.yml/runs?branch=main&per_page=100");
+    expect(guard).toContain('const active = runs.some(run => run.status !== "completed");');
     expect(guard).toContain("if (!refreshEligible || active)");
     expect(guard).toContain("gh workflow run data-refresh.yml --ref main --field mode=incremental");
     expect(guard).not.toContain("publish_weekly=true");

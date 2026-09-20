@@ -30,6 +30,42 @@ function scoreState(result: Awaited<ReturnType<typeof evaluateSystem>>) {
 }
 
 describe("point-in-time system evaluation", () => {
+  it("keeps historical evidence when future rows exceed both query limits", async () => {
+    const context = { asOf: AS_OF, gateMode: "change" as const, persist: false };
+    const before = await evaluateSystem(db, context);
+    const run = await db.selectFrom("source_runs").selectAll().executeTakeFirstOrThrow();
+    const check = await db.selectFrom("source_checks").selectAll().executeTakeFirstOrThrow();
+
+    for (let offset = 0; offset < 5_100; offset += 100) {
+      if (offset < 2_100) {
+        await db
+          .insertInto("source_runs")
+          .values(
+            Array.from({ length: 100 }, (_, index) => ({
+              ...run,
+              id: `future-run-${offset + index}`,
+              started_at: EXCLUDED,
+              finished_at: EXCLUDED,
+            })),
+          )
+          .execute();
+      }
+      await db
+        .insertInto("source_checks")
+        .values(
+          Array.from({ length: 100 }, (_, index) => ({
+            ...check,
+            id: `future-check-${offset + index}`,
+            started_at: EXCLUDED,
+            finished_at: EXCLUDED,
+          })),
+        )
+        .execute();
+    }
+
+    expect(scoreState(await evaluateSystem(db, context))).toEqual(scoreState(before));
+  });
+
   it("keeps scores stable when wall time advances", async () => {
     vi.useFakeTimers();
     vi.setSystemTime("2026-08-26T12:00:02.000Z");

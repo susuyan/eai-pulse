@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import type { JsonModelClient } from "../../src/ai/deepseek.js";
 import {
+  decideOperationalEvaluation,
+  evaluateVersionedFreshness,
+} from "../../src/pipeline/evaluation-policy.js";
+import {
   decideMonitorAlert,
   type MonitorReportInput,
   monitorFingerprint,
@@ -48,6 +52,73 @@ function client(value: unknown): JsonModelClient {
 }
 
 describe("monitor alert decision", () => {
+  it.each([
+    60, 59,
+  ])("recognizes a Quality Guard evaluation incident at score %s during Monitor cooldown", async (currentScore) => {
+    const guard = decideOperationalEvaluation({
+      currentScore,
+      persistedEvaluationAsOf: "2026-07-13T07:00:00Z",
+      reportValid: true,
+      now: NOW,
+    });
+    const input = report({
+      checks: {
+        ...report().checks,
+        freshness: evaluateVersionedFreshness({
+          evaluationAsOf: "2026-07-13T07:00:00Z",
+          fileMtime: NOW.toISOString(),
+          currentScore,
+          now: NOW,
+        }),
+        sourceHealth: { ...report().checks.sourceHealth, status: "ok" },
+      },
+    });
+    const decision = await decideMonitorAlert({
+      report: input,
+      now: NOW,
+      incident: {
+        updatedAt: "2026-07-14T07:30:00Z",
+        body: `<!-- agent-pulse-monitor:v3 fingerprint=${guard.fingerprint} -->`,
+      },
+    });
+    expect(decision).toMatchObject({
+      decision: "suppress",
+      decisionSource: "cooldown",
+      fingerprint: guard.fingerprint,
+    });
+  });
+
+  it("does not let a matching evaluation incident suppress a site outage", async () => {
+    const freshness = evaluateVersionedFreshness({
+      evaluationAsOf: "2026-07-13T07:00:00Z",
+      fileMtime: NOW.toISOString(),
+      now: NOW,
+    });
+    const guard = decideOperationalEvaluation({
+      currentScore: 60,
+      persistedEvaluationAsOf: "2026-07-13T07:00:00Z",
+      reportValid: true,
+      now: NOW,
+    });
+    const input = report({
+      checks: {
+        ...report().checks,
+        freshness,
+        site: { status: "critical", message: "Site unreachable", detail: {} },
+      },
+    });
+    const decision = await decideMonitorAlert({
+      report: input,
+      now: NOW,
+      incident: {
+        updatedAt: "2026-07-14T07:30:00Z",
+        body: `<!-- agent-pulse-monitor:v3 fingerprint=${guard.fingerprint} -->`,
+      },
+    });
+    expect(decision).toMatchObject({ notify: true, reasonCode: "site_unreachable" });
+    expect(decision.fingerprint).not.toBe(guard.fingerprint);
+  });
+
   it("never lets the model suppress a public site outage", async () => {
     const model = client({
       decision: "suppress",

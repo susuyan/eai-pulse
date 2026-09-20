@@ -5,7 +5,10 @@ import {
   type EvaluationGateMode,
   parseEvaluationInstant,
 } from "./evaluation-context.js";
-import type { OperationalEvaluationDecision } from "./evaluation-policy.js";
+import {
+  type OperationalEvaluationDecision,
+  operationalEvaluationReasonCodes,
+} from "./evaluation-policy.js";
 
 export const SYSTEM_EVALUATION_SCHEMA_VERSION = 2;
 export const SYSTEM_EVALUATION_TARGET = 80;
@@ -167,9 +170,19 @@ export function compareSystemEvaluations(
   };
 }
 
-const timestampSchema = z.string().refine((value) => Number.isFinite(Date.parse(value)), {
-  message: "must be a valid timestamp",
-});
+const timestampSchema = z.string().refine(
+  (value) => {
+    try {
+      parseEvaluationInstant(value, "timestamp");
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  {
+    message: "must be a valid ISO-8601 timestamp with a timezone",
+  },
+);
 
 const evaluationDimensionSchema = z
   .object({
@@ -218,14 +231,7 @@ const evaluationComparisonSchema = z
 const operationalEvaluationDecisionSchema = z
   .object({
     status: z.enum(["ok", "critical"]),
-    reasonCodes: z.array(
-      z.enum([
-        "system_score_below_floor",
-        "evaluation_stale",
-        "evaluation_persistently_stale",
-        "evaluation_report_invalid",
-      ]),
-    ),
+    reasonCodes: z.array(z.enum(operationalEvaluationReasonCodes)),
     currentScore: z.number().nullable(),
     persistedEvaluationAsOf: timestampSchema.nullable(),
     ageMinutes: z.number().nonnegative().nullable(),
@@ -297,6 +303,14 @@ export function normalizeSystemEvaluationReport(value: unknown): SystemEvaluatio
       ? { ...normalized.comparison, contextError: normalized.comparison.contextError ?? null }
       : undefined,
   };
+}
+
+export function normalizeOperationalEvaluationReport(value: unknown): SystemEvaluationReportV2 {
+  const report = normalizeSystemEvaluationReport(value);
+  if (report.gateMode !== "operational") {
+    throw new Error("Persisted evaluation baseline must use gateMode=operational");
+  }
+  return report;
 }
 
 export function renderEvaluationSummary(

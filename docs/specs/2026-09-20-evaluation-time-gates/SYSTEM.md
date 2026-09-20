@@ -36,6 +36,8 @@ interface EvaluationContext {
 - 关系证据使用各自 `created_at`；
 - `last_success_at` 晚于参考时刻时不计入 7 天成功窗口。
 
+SourceRun 和 SourceCheck 的数据库时间条件必须先于排序数量上限执行，避免未来记录挤出历史证据。评测上下文与报告时间戳统一使用严格 ISO-8601 校验，必须包含 `Z` 或显式时区偏移，并拒绝不存在的日历日期、数字字符串与无时区时间。
+
 版本化 source 当前状态不是事件溯源模型。其 lifecycle、enabled 和其他当前态字段仍代表候选快照的显式状态变化；时间证据则按上述规则切片。若将来需要完整历史重放，应单独引入 source state transition history，不在本规格内伪造。
 
 ## 3. 报告 schema v2
@@ -57,6 +59,7 @@ interface SystemEvaluationReportV2 extends EvaluationResult {
 - `startedAt` / `finishedAt`：本次程序执行的实际时间，只用于耗时和审计。
 - 版本化 baseline 必须来自 `gateMode=operational` 的成功 Data Refresh。
 - change gate 输出只进入临时 artifact，不得覆盖版本化 baseline。
+- 通用报告读取器保留两种模式；CLI baseline 与 Monitor 水位读取器必须额外要求 `gateMode=operational`。错误模式按非法报告处理，不授予刷新权限。
 
 ### 3.1 v1 兼容适配
 
@@ -134,6 +137,9 @@ fingerprint 只依赖排序后的 reason code 和政策版本，不包含波动�
 - Monitor 是统一可用性视图：站点、来源健康和版本化评测水位。它读取同一个策略结果与 incident fingerprint，不再自行使用文件 mtime 推导新鲜度。
 - 两者更新同一个健康 Issue marker；不同 reason code 可以改变 fingerprint 并更新问题内容。
 - Quality Guard 只派发 `mode=incremental`，不设置 `publish_weekly=true`。
+- Monitor 的评测原因集合使用同一政策指纹；站点、来源或脚本故障保留独立信号。站点故障、脚本故障和 72 小时持续过期仍优先执行硬告警。
+- 两个健康事件写入工作流共享非取消并发组，使用 `monitor:critical` 标签和稳定 marker 选择同一个开放 Issue。
+- 恢复派发显式设置 `recovery=true`；Data Refresh 在恢复模式下禁止周报分支，包括周日自动分支和显式周报输入。
 
 ## 7. CLI 与兼容期
 
@@ -169,6 +175,8 @@ npm run evaluate:system -- --gate=operational --baseline=<path>
 6. 最后使本次 guard 失败。
 
 Issue 仅包含公开安全 DTO：分数、age、reason code、建议动作和 Actions URL。数据库内容、raw payload、token、本机路径和模型输入不得进入 Issue。
+
+刷新去重读取 main 分支全部 Data Refresh 运行状态，所有非 `completed` 状态均视为活动任务，包括 `pending`、`waiting`、`requested` 与未知的新状态。最近完成失败仍允许重试；成功运行仍执行 120 小时冷却。
 
 ## 10. 迁移顺序
 

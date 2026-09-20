@@ -1,15 +1,18 @@
 import { createHash } from "node:crypto";
+import { parseEvaluationInstant } from "./evaluation-context.js";
 
 export const OPERATIONAL_POLICY_VERSION = 1;
 export const QUALITY_FLOOR = 60;
 export const EVALUATION_CRITICAL_AGE_MS = 24 * 60 * 60 * 1_000;
 export const EVALUATION_PERSISTENT_AGE_MS = 72 * 60 * 60 * 1_000;
 
-export type OperationalEvaluationReasonCode =
-  | "system_score_below_floor"
-  | "evaluation_stale"
-  | "evaluation_persistently_stale"
-  | "evaluation_report_invalid";
+export const operationalEvaluationReasonCodes = [
+  "system_score_below_floor",
+  "evaluation_stale",
+  "evaluation_persistently_stale",
+  "evaluation_report_invalid",
+] as const;
+export type OperationalEvaluationReasonCode = (typeof operationalEvaluationReasonCodes)[number];
 
 export interface OperationalEvaluationDecision {
   status: "ok" | "critical";
@@ -32,6 +35,7 @@ export interface VersionedFreshnessInput {
   evaluationAsOf: string;
   fileMtime: string;
   now: Date;
+  currentScore?: number;
 }
 
 export interface VersionedFreshnessResult {
@@ -42,6 +46,9 @@ export interface VersionedFreshnessResult {
     fileMtime: string;
     ageMinutes: number | null;
     reasonCode: OperationalEvaluationReasonCode | null;
+    reasonCodes: OperationalEvaluationReasonCode[];
+    fingerprint: string;
+    refreshEligible: boolean;
   };
 }
 
@@ -49,7 +56,15 @@ export function decideOperationalEvaluation(
   input: OperationalEvaluationInput,
 ): OperationalEvaluationDecision {
   const currentScore = input.currentScore;
-  const evaluationTime = Date.parse(input.persistedEvaluationAsOf ?? "");
+  let evaluationTime = Number.NaN;
+  try {
+    evaluationTime = parseEvaluationInstant(
+      input.persistedEvaluationAsOf ?? "",
+      "evaluationAsOf",
+    ).getTime();
+  } catch {
+    // Invalid watermarks cannot authorize recovery.
+  }
   if (
     !input.reportValid ||
     currentScore === null ||
@@ -101,23 +116,29 @@ export function evaluateVersionedFreshness(
   input: VersionedFreshnessInput,
 ): VersionedFreshnessResult {
   const decision = decideOperationalEvaluation({
-    currentScore: QUALITY_FLOOR,
+    currentScore: input.currentScore ?? QUALITY_FLOOR,
     persistedEvaluationAsOf: input.evaluationAsOf,
     reportValid: true,
     now: input.now,
   });
-  const reasonCode = decision.reasonCodes[0] ?? null;
+  const reasonCode =
+    decision.reasonCodes.find((reason) => reason !== "system_score_below_floor") ??
+    decision.reasonCodes[0] ??
+    null;
   return {
     status: decision.status,
     message:
       decision.status === "ok"
         ? `Evaluation watermark is ${decision.ageMinutes} minutes old`
-        : `Evaluation watermark is ${decision.ageMinutes ?? "unknown"} minutes old — ${reasonCode}`,
+        : `Evaluation watermark is ${decision.ageMinutes ?? "unknown"} minutes old — ${decision.reasonCodes.join(", ")}`,
     detail: {
       evaluationAsOf: decision.persistedEvaluationAsOf ?? input.evaluationAsOf,
       fileMtime: input.fileMtime,
       ageMinutes: decision.ageMinutes,
       reasonCode,
+      reasonCodes: decision.reasonCodes,
+      fingerprint: decision.fingerprint,
+      refreshEligible: decision.refreshEligible,
     },
   };
 }

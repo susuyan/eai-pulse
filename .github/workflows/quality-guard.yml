@@ -12,8 +12,8 @@ permissions:
   issues: write
 
 concurrency:
-  group: agent-pulse-quality-guard-main
-  cancel-in-progress: true
+  group: agent-pulse-monitor-incident-main
+  cancel-in-progress: false
 
 jobs:
   guard:
@@ -108,7 +108,8 @@ jobs:
             echo "[查看本次 Actions 运行](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           } > "$body"
           gh label create "monitor:critical" --color d73a4a --description "Operational health incident" --force
-          issue="$(gh issue list --state open --label 'monitor:critical' --limit 1 --json number --jq '.[0].number // empty')"
+          issue="$(gh issue list --state open --label 'monitor:critical' --limit 100 --json number,body \
+            --jq 'sort_by(.number) | (map(select(.body | contains("agent-pulse-monitor:v")))[0] // .[0]) | .number // empty')"
           if [[ -n "$issue" ]]; then
             gh issue edit "$issue" --body-file "$body"
           else
@@ -124,17 +125,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          queued="$(gh run list --workflow data-refresh.yml --status queued --limit 1 --json databaseId,status --jq 'if length > 0 then {id: .[0].databaseId, status: .[0].status} else {} end')"
-          in_progress="$(gh run list --workflow data-refresh.yml --status in_progress --limit 1 --json databaseId,status --jq 'if length > 0 then {id: .[0].databaseId, status: .[0].status} else {} end')"
-          latest="$(gh run list --workflow data-refresh.yml --status completed --limit 1 --json createdAt,status,conclusion --jq '.[0] // {}')"
-          QUEUED_REFRESH="$queued" IN_PROGRESS_REFRESH="$in_progress" LATEST_REFRESH="$latest" node --input-type=module <<'NODE' >> "$GITHUB_OUTPUT"
-          const queued = JSON.parse(process.env.QUEUED_REFRESH || "{}");
-          const inProgress = JSON.parse(process.env.IN_PROGRESS_REFRESH || "{}");
-          const latest = JSON.parse(process.env.LATEST_REFRESH || "{}");
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/workflows/data-refresh.yml/runs?branch=main&per_page=100" \
+            --jq '[.[].workflow_runs[] | {status, conclusion, createdAt: .created_at}]' > "$RUNNER_TEMP/refresh-runs.json"
+          REFRESH_RUNS_PATH="$RUNNER_TEMP/refresh-runs.json" node --input-type=module <<'NODE' >> "$GITHUB_OUTPUT"
+          import { readFileSync } from "node:fs";
+          const runs = JSON.parse(readFileSync(process.env.REFRESH_RUNS_PATH, "utf8"));
+          const latest = runs.filter(run => run.status === "completed")
+            .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt))[0] || {};
           const refreshEligible = process.env.REFRESH_ELIGIBLE === "true";
-          const active = Boolean(queued.id || inProgress.id);
+          const active = runs.some(run => run.status !== "completed");
           const ageMs = Date.now() - Date.parse(latest.createdAt || "");
-          const cooldownMs = Number(process.env.REFRESH_COOLDOWN_HOURS || 2) * 60 * 60 * 1000;
+          const cooldownMs = Number(process.env.REFRESH_COOLDOWN_HOURS || 120) * 60 * 60 * 1000;
           const stale = !Number.isFinite(ageMs) || ageMs >= cooldownMs;
           const failed = latest.status === "completed" && latest.conclusion !== "success";
           if (!refreshEligible || active) {
@@ -150,7 +151,7 @@ jobs:
         if: steps.evaluation.outputs.status == 'critical' && steps.cooldown.outputs.dispatch == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run data-refresh.yml --ref main --field mode=incremental
+        run: gh workflow run data-refresh.yml --ref main --field mode=incremental --field recovery=true
 
       - name: Fail the operational gate
         if: always() && steps.evaluation.outputs.status == 'critical'

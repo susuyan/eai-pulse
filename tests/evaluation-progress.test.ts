@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { EvaluationDimension } from "../src/pipeline/evaluate.js";
+import { parseEvaluationInstant } from "../src/pipeline/evaluation-context.js";
 import {
   buildSystemEvaluationReport,
   compareSystemEvaluations,
@@ -72,6 +73,42 @@ function reportV2(evaluationAsOf: string, gateMode: "change" | "operational") {
 }
 
 describe("system evaluation progress", () => {
+  it.each([
+    "2026-02-30T12:00:00.000Z",
+    "2026-02-29T12:00:00.000Z",
+    "2026-04-31T12:00:00+08:00",
+    "2026-08-26T12:00:00",
+    "2026-08-26",
+    "12",
+    "August 26, 2026 12:00:00 GMT",
+    "2026-08-26T24:00:00Z",
+  ])("rejects ambiguous or invalid context and report timestamps: %s", (timestamp) => {
+    expect(() => parseEvaluationInstant(timestamp, "asOf")).toThrow(/Invalid asOf/);
+    expect(() =>
+      normalizeSystemEvaluationReport({
+        ...buildLegacyReport(),
+        finishedAt: timestamp,
+      }),
+    ).toThrow(/finishedAt/);
+    for (const field of ["startedAt", "finishedAt", "evaluationAsOf"]) {
+      expect(() =>
+        normalizeSystemEvaluationReport({
+          ...reportV2("2026-08-26T12:00:00Z", "operational"),
+          [field]: timestamp,
+        }),
+      ).toThrow(new RegExp(field));
+    }
+  });
+
+  it("accepts leap-day and explicit-offset instants in both report modes", () => {
+    expect(parseEvaluationInstant("2024-02-29T20:00:00+08:00", "asOf").toISOString()).toBe(
+      "2024-02-29T12:00:00.000Z",
+    );
+    expect(
+      normalizeSystemEvaluationReport(reportV2("2026-08-26T20:00:00+08:00", "change")),
+    ).toMatchObject({ evaluationAsOf: "2026-08-26T12:00:00.000Z", gateMode: "change" });
+  });
+
   it("ranks the largest weighted evidence gap first", () => {
     const report = buildSystemEvaluationReport(
       evaluation([

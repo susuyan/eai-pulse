@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import type { JsonModelClient } from "../ai/deepseek.js";
+import { operationalEvaluationReasonCodes, operationalFingerprint } from "./evaluation-policy.js";
 
 const statusSchema = z.enum(["ok", "warning", "critical"]);
 const checkSchema = z
@@ -238,12 +239,32 @@ export async function decideMonitorAlert(
 
 export function monitorFingerprint(reportInput: MonitorReportInput): string {
   const report = monitorReportSchema.parse(reportInput);
+  const freshness = report.checks.freshness;
+  const evaluationReasons = z
+    .array(z.enum(operationalEvaluationReasonCodes))
+    .safeParse(
+      freshness.detail.reasonCodes ??
+        (freshness.detail.reasonCode ? [freshness.detail.reasonCode] : []),
+    );
+  const evaluationFingerprint =
+    freshness.status === "critical" &&
+    evaluationReasons.success &&
+    evaluationReasons.data.length > 0
+      ? operationalFingerprint(evaluationReasons.data)
+      : null;
   const signals = Object.entries(report.checks)
-    .filter(([, check]) => check.status === "critical")
+    .filter(
+      ([name, check]) =>
+        check.status === "critical" && !(name === "freshness" && evaluationFingerprint),
+    )
     .map(([name]) => name)
     .sort();
   if (report.issues.some((issue) => issue.startsWith("Monitor script crashed:"))) {
     signals.push("monitor-crash");
+  }
+  if (evaluationFingerprint) {
+    if (signals.length === 0) return evaluationFingerprint;
+    signals.push(`evaluation:${evaluationFingerprint}`);
   }
   return createHash("sha256")
     .update(signals.join("|") || report.status)
@@ -268,6 +289,12 @@ function classifyHardFailure(
   }
   const ageMinutes = Number(report.checks.freshness.detail.ageMinutes);
   const freshnessReason = String(report.checks.freshness.detail.reasonCode ?? "");
+  if (freshnessReason === "evaluation_report_invalid") {
+    return {
+      reasonCode: "evaluation_report_invalid",
+      rationale: "The operational evaluation report is invalid and cannot authorize recovery.",
+    };
+  }
   if (
     report.checks.freshness.status === "critical" &&
     (freshnessReason === "evaluation_persistently_stale" ||

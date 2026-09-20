@@ -15,6 +15,7 @@
 - `last_success_at > evaluationAsOf` 不计入 7 天成功窗口。
 - 恰好位于参考时刻的证据参与计算。
 - 非法、缺失或未来时间不能通过负 age 抬分。
+- 超过 2,000 条未来 SourceRun 和 5,000 条未来 SourceCheck 不影响相同参考时刻的历史评测。
 
 ### 1.3 报告 schema
 
@@ -22,6 +23,8 @@
 - 合法 v1 使用 `finishedAt` 规范化为 operational baseline。
 - v1 缺失 `finishedAt`、非法 JSON、未知 schemaVersion 和字段类型错误均 fail closed。
 - 规范化只发生在内存，输入文件内容不改变。
+- 严格拒绝无效日历日期、数字、非 ISO 文本、无时区时间；合法闰日与显式偏移通过。
+- 通用解析器接受 v2 change 报告；CLI baseline 和 Monitor 水位拒绝该模式，并输出不可刷新的非法报告状态。
 
 ### 1.4 Change gate
 
@@ -64,6 +67,7 @@
 - 文件 mtime 很旧、版本化 `evaluationAsOf` 新鲜时不因 mtime 失败。
 - v1 baseline 使用 `finishedAt` 得到相同 age 结论。
 - site、source health 和 evaluation staleness 进入同一 incident contract，但保留独立 reason code。
+- Monitor 识别 Quality Guard 同一评测原因集合的指纹并进入冷却；持续过期仍触发硬告警。
 
 ## 3. Workflow 契约测试
 
@@ -71,10 +75,12 @@
 - CI 在评测后上传临时 artifact，不修改版本化 report。
 - Quality Guard 使用 operational gate 和绝对政策。
 - 失败路径的文本顺序满足：artifact/summary → Issue → cooldown → incremental refresh → fail。
-- 最近 refresh 为 queued/in_progress 时不 dispatch。
+- 最近 refresh 为任意非 completed 状态时不 dispatch，包含 pending/waiting/requested 与未知状态。
 - cooldown 未到时不 dispatch。
 - 最近 refresh 失败且没有运行中任务时允许一次重试。
 - dispatch 不包含 `publish_weekly=true`。
+- 两个 Issue 写入者共享非取消串行边界，按稳定 marker 和标签查找同一 Issue。
+- 恢复刷新显式传入 `recovery=true`；周日夜间也不生成或发布周报。
 - 所有已暂停 schedule 仍保持注释。
 
 ## 4. 回归场景

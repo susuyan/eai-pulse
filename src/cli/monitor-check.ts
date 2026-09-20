@@ -18,12 +18,17 @@
  */
 
 import { readFile, stat } from "node:fs/promises";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { loadConfig } from "../config/env.js";
 import { createDatabase } from "../db/database.js";
 import { migrateToLatest } from "../db/migrate.js";
 import { seedDatabase } from "../db/seed.js";
-import { evaluateVersionedFreshness } from "../pipeline/evaluation-policy.js";
-import { normalizeSystemEvaluationReport } from "../pipeline/evaluation-progress.js";
+import {
+  decideOperationalEvaluation,
+  evaluateVersionedFreshness,
+} from "../pipeline/evaluation-policy.js";
+import { normalizeOperationalEvaluationReport } from "../pipeline/evaluation-progress.js";
 import {
   generateMonitorReport,
   getSeverityLevel,
@@ -97,7 +102,7 @@ async function checkSite(config: ReturnType<typeof loadConfig>): Promise<CheckDe
   }
 }
 
-async function checkFreshness(rootDir: string): Promise<CheckDetail> {
+export async function checkFreshness(rootDir: string, now = new Date()): Promise<CheckDetail> {
   try {
     const snapshotPath = new URL(SNAPSHOT_PATH, `file://${rootDir}/`).pathname;
     const reportPath = new URL(EVALUATION_REPORT_PATH, `file://${rootDir}/`).pathname;
@@ -105,18 +110,31 @@ async function checkFreshness(rootDir: string): Promise<CheckDetail> {
       stat(snapshotPath),
       readFile(reportPath, "utf8"),
     ]);
-    const report = normalizeSystemEvaluationReport(JSON.parse(serializedReport));
+    const report = normalizeOperationalEvaluationReport(JSON.parse(serializedReport));
     return evaluateVersionedFreshness({
       evaluationAsOf: report.evaluationAsOf,
+      currentScore: report.overallScore,
       fileMtime: fileStat.mtime.toISOString(),
-      now: new Date(),
+      now,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    const decision = decideOperationalEvaluation({
+      currentScore: null,
+      persistedEvaluationAsOf: null,
+      reportValid: false,
+      now,
+    });
     return {
       status: "critical",
       message: `Cannot read versioned evaluation state: ${message}`,
-      detail: { error: message },
+      detail: {
+        error: message,
+        reasonCode: "evaluation_report_invalid",
+        reasonCodes: decision.reasonCodes,
+        fingerprint: decision.fingerprint,
+        refreshEligible: false,
+      },
     };
   }
 }
@@ -220,8 +238,14 @@ async function main(): Promise<never> {
 
   if (freshness.status !== "ok") {
     const level = freshness.status === "critical" ? "Critical" : "Warning";
-    issues.push(`${level}: versioned evaluation watermark is stale.`);
-    recommendations.push("Trigger the incremental data-refresh workflow to update the watermark.");
+    issues.push(
+      `${level}: operational evaluation state is unhealthy (${freshness.detail.reasonCode ?? "evaluation_report_invalid"}).`,
+    );
+    recommendations.push(
+      freshness.detail.refreshEligible === false
+        ? "Inspect and restore a valid operational evaluation report before recovery."
+        : "Trigger the incremental data-refresh workflow to update the watermark.",
+    );
   }
 
   if (sourceHealth.status !== "ok") {
@@ -260,28 +284,29 @@ async function main(): Promise<never> {
   process.exit(exitCode);
 }
 
-main().catch((error) => {
-  const errorResult: MonitorCheckResult = {
-    timestamp: new Date().toISOString(),
-    status: "critical",
-    systemScore: 0,
-    checks: {
-      site: { status: "critical", message: "Monitor script error", detail: {} },
-      freshness: { status: "critical", message: "Monitor script error", detail: {} },
-      sourceHealth: {
-        status: "critical",
-        message: "Monitor script error",
-        detail: {},
-        totalSources: 0,
-        activePercent: 0,
-        degradedPercent: 0,
-        failedPercent: 0,
-        avgHealthScore: 0,
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url))
+  main().catch((error) => {
+    const errorResult: MonitorCheckResult = {
+      timestamp: new Date().toISOString(),
+      status: "critical",
+      systemScore: 0,
+      checks: {
+        site: { status: "critical", message: "Monitor script error", detail: {} },
+        freshness: { status: "critical", message: "Monitor script error", detail: {} },
+        sourceHealth: {
+          status: "critical",
+          message: "Monitor script error",
+          detail: {},
+          totalSources: 0,
+          activePercent: 0,
+          degradedPercent: 0,
+          failedPercent: 0,
+          avgHealthScore: 0,
+        },
       },
-    },
-    issues: [`Monitor script crashed: ${error instanceof Error ? error.message : String(error)}`],
-    recommendations: ["Check the monitor workflow logs for details."],
-  };
-  console.log(JSON.stringify(errorResult, null, 2));
-  process.exit(2);
-});
+      issues: [`Monitor script crashed: ${error instanceof Error ? error.message : String(error)}`],
+      recommendations: ["Check the monitor workflow logs for details."],
+    };
+    console.log(JSON.stringify(errorResult, null, 2));
+    process.exit(2);
+  });

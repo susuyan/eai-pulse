@@ -15,7 +15,7 @@ import { decideOperationalEvaluation } from "../pipeline/evaluation-policy.js";
 import {
   buildSystemEvaluationReport,
   compareSystemEvaluations,
-  normalizeSystemEvaluationReport,
+  normalizeOperationalEvaluationReport,
   renderEvaluationSummary,
   type SystemEvaluationReportV2,
 } from "../pipeline/evaluation-progress.js";
@@ -116,6 +116,7 @@ export function resolveEvaluationInvocation(
     if (!baselinePath || !baseline) {
       throw new Error("Change evaluation gate requires --baseline with a valid report");
     }
+    normalizeOperationalEvaluationReport(baseline);
     if (asOfArgument) {
       throw new Error("Change evaluation gate cannot override baseline evaluationAsOf");
     }
@@ -158,7 +159,7 @@ function changeGateRequested(args: string[], baselinePath: string | undefined): 
 async function readReport(path: string): Promise<ReadReportResult> {
   try {
     const serialized = await readFile(path, "utf8");
-    return { report: normalizeSystemEvaluationReport(JSON.parse(serialized)), error: null };
+    return { report: normalizeOperationalEvaluationReport(JSON.parse(serialized)), error: null };
   } catch (error) {
     return {
       report: null,

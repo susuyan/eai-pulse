@@ -92,10 +92,17 @@ export async function evaluateSystem(db: Kysely<DatabaseSchema>, context: Evalua
   const [allSources, runs, checks, events, eventEvidence, scout, signalProvenance, readiness] =
     await Promise.all([
       db.selectFrom("sources").selectAll().execute(),
-      db.selectFrom("source_runs").selectAll().orderBy("started_at", "desc").limit(2_000).execute(),
+      db
+        .selectFrom("source_runs")
+        .selectAll()
+        .where("finished_at", "<=", context.asOf.toISOString())
+        .orderBy("started_at", "desc")
+        .limit(2_000)
+        .execute(),
       db
         .selectFrom("source_checks")
         .selectAll()
+        .where("finished_at", "<=", context.asOf.toISOString())
         .orderBy("finished_at", "desc")
         .limit(5_000)
         .execute(),

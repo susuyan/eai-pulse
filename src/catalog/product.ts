@@ -561,6 +561,7 @@ export const releases = [
       "AI 可读站点索引",
     ],
     changes: [
+      "升级静态服务、XML 解析、HTTP、MySQL 与测试工具链依赖，清零当前 npm 安全告警；CI 新增生产依赖审计门禁，锁文件出现已知漏洞时立即失败。",
       "修复运营评测的非单调来源覆盖：健康来源从 observation 晋级 active 时不再因观察数下降而扣分；Quality Guard 同时兼容新版 GitHub CLI 的分页输出约束，刷新冷却检查不再因互斥参数失败。",
       "修复通用网页来源对链接属性顺序、英文月份缩写和无日期卡片的识别：adapter 只输出具备标题、同站公开 URL 与可信发布日期的对象，并将 Databricks 切换到可用的一方 Feed；来源恢复仍需经过连续健康检查与既有生命周期门禁。",
       "新增具身数据方向的实验性领域基础：受控词表、Event DataProfile、可审计 content scope 和只读迁移预览。公开站、现有数据和发布规则尚未切换。",

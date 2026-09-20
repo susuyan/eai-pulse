@@ -134,7 +134,9 @@ jobs:
         run: |
           set -euo pipefail
           gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/workflows/data-refresh.yml/runs?branch=main&per_page=100" \
-            --jq '[.[].workflow_runs[] | {status, conclusion, createdAt: .created_at}]' > "$RUNNER_TEMP/refresh-runs.json"
+            > "$RUNNER_TEMP/refresh-run-pages.json"
+          jq '[.[].workflow_runs[] | {status, conclusion, createdAt: .created_at}]' \
+            "$RUNNER_TEMP/refresh-run-pages.json" > "$RUNNER_TEMP/refresh-runs.json"
           REFRESH_RUNS_PATH="$RUNNER_TEMP/refresh-runs.json" node --input-type=module <<'NODE' >> "$GITHUB_OUTPUT"
           import { readFileSync } from "node:fs";
           const runs = JSON.parse(readFileSync(process.env.REFRESH_RUNS_PATH, "utf8"));

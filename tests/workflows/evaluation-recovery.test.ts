@@ -70,8 +70,15 @@ describe("evaluation recovery workflow contract", () => {
 
   it("queries all main refresh states and dispatches explicit recovery suppression", async () => {
     const guard = await workflow("quality-guard");
+    const cooldown = stepScript(guard, "Check refresh cooldown and active runs");
+    const apiCommand = cooldown.match(/gh api[\s\S]*?refresh-run-pages\.json"/)?.[0] ?? "";
     expect(guard).toContain("data-refresh.yml/runs?branch=main&per_page=100");
-    expect(guard).toContain("--paginate");
+    expect(apiCommand).toContain("--paginate --slurp");
+    expect(apiCommand).not.toContain("--jq");
+    expect(cooldown).toContain(
+      "jq '[.[].workflow_runs[] | {status, conclusion, createdAt: .created_at}]'",
+    );
+    expect(cooldown).toContain('"$RUNNER_TEMP/refresh-run-pages.json"');
     expect(guard).toContain("--field mode=incremental --field recovery=true");
     expect(await workflow("data-refresh")).toContain(
       ["RECOVERY: $", "{{ inputs.recovery || false }}"].join(""),

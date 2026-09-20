@@ -159,6 +159,7 @@ npm run evaluate:system -- --gate=operational --baseline=<path>
 
 - `persist=false` 时不得写 `evaluation_runs`。
 - Data Refresh 在采集、远端 snapshot merge 和 reconciliation 完成后，使用 `persist=true` 生成 operational report。
+- Source Audit 在远端 snapshot merge 和 lifecycle reconciliation 完成后，同样使用 `persist=true` 刷新 operational report；来源健康报告、评测报告和 snapshot 必须原子提交。
 - evaluation run 必须持久化 `evaluationAsOf` 和 `gateMode`；旧行只能显式回退到 `finishedAt` + `operational`。
 - evaluation run、`data/reports/system-evaluation.json` 和 `data/snapshot/v1.json` 必须在同一版本化提交中出现。
 - 无效、缺失或未来时间的 operational baseline 不得写入历史，也不得原地覆盖；独立诊断 artifact 仍可读取失败状态。

@@ -31,6 +31,21 @@ describe("GitHub source governance workflows", () => {
     expect(audit.lastIndexOf("npm run ops:reconcile")).toBeLessThan(
       audit.lastIndexOf("npm run export"),
     );
+    expect(audit.indexOf("git show origin/main:data/reports/system-evaluation.json")).toBeLessThan(
+      audit.indexOf("--output=data/reports/system-evaluation.json"),
+    );
+    expect(audit.indexOf("npm run db:snapshot -- merge")).toBeLessThan(
+      audit.indexOf("--output=data/reports/system-evaluation.json"),
+    );
+    expect(audit.lastIndexOf("npm run ops:reconcile")).toBeLessThan(
+      audit.indexOf("--output=data/reports/system-evaluation.json"),
+    );
+    expect(audit.indexOf("--output=data/reports/system-evaluation.json")).toBeLessThan(
+      audit.indexOf("npm run db:snapshot -- write"),
+    );
+    expect(audit).toContain(
+      "git add -- data/reports/source-health.json data/reports/system-evaluation.json data/snapshot/v1.json",
+    );
     expect(refresh.indexOf("git fetch origin main")).toBeLessThan(
       refresh.indexOf("npm run db:snapshot -- merge"),
     );
@@ -200,6 +215,8 @@ describe("GitHub source governance workflows", () => {
   it("keeps CI deterministic while exposing the exact failing phase", async () => {
     const ci = await workflow("ci.yml");
     for (const step of [
+      "name: Audit production dependencies",
+      "run: npm audit --omit=dev",
       "name: Lint",
       "run: npm run lint",
       "name: Typecheck",
@@ -224,6 +241,8 @@ describe("GitHub source governance workflows", () => {
     expect(ci).not.toContain("run: npm run check");
     expect(ci).toContain("--gate=change");
     expect(ci).toContain("git show HEAD^:data/reports/system-evaluation.json");
+    expect(ci.indexOf("run: npm ci")).toBeLessThan(ci.indexOf("run: npm audit --omit=dev"));
+    expect(ci.indexOf("run: npm audit --omit=dev")).toBeLessThan(ci.indexOf("run: npm run lint"));
     expect(ci.indexOf("run: npm run db:seed")).toBeLessThan(ci.indexOf("--fail-on-regression"));
     expect(ci.indexOf("--fail-on-regression")).toBeLessThan(
       ci.indexOf("npm run export -- --skip-seed"),

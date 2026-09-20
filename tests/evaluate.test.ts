@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   calculateOverallScore,
+  calculateSourceCoverageRawScore,
   calibrateDimension,
   type EvaluationDimension,
 } from "../src/pipeline/evaluate.js";
@@ -26,6 +27,27 @@ function dimension(overrides: Partial<EvaluationDimension> = {}): EvaluationDime
 }
 
 describe("evaluation calibration", () => {
+  it("does not reduce source coverage when a healthy observed source becomes active", () => {
+    const observed = calculateSourceCoverageRawScore({
+      healthyChecks: 200,
+      operationallyCoveredHealthy: 150,
+      activeHealthy: 100,
+      healthyCategories: 12,
+      healthyChina: 30,
+      checkCoverage: 1,
+    });
+    const promoted = calculateSourceCoverageRawScore({
+      healthyChecks: 200,
+      operationallyCoveredHealthy: 150,
+      activeHealthy: 101,
+      healthyCategories: 12,
+      healthyChina: 30,
+      checkCoverage: 1,
+    });
+
+    expect(promoted).toBeGreaterThanOrEqual(observed);
+  });
+
   it("never treats a future timestamp as recent", () => {
     const asOf = new Date("2026-08-26T12:00:00.000Z");
     expect(isWithinPastWindow("2026-08-26T12:00:00.000Z", asOf, 7 * 86_400_000)).toBe(true);

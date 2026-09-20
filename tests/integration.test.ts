@@ -1,4 +1,4 @@
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
@@ -17,7 +17,6 @@ import { migrateToLatest } from "../src/db/migrate.js";
 import { Repository } from "../src/db/repository.js";
 import { seedDatabase } from "../src/db/seed.js";
 import { exportStaticSite } from "../src/pipeline/export.js";
-import { validatePublicSite } from "../src/pipeline/public-site-integrity.js";
 import { buildApp } from "../src/server/app.js";
 
 const databases: ReturnType<typeof createDatabase>[] = [];
@@ -119,13 +118,57 @@ describe("SQLite application", () => {
       signals: expect.any(Number),
       version: "0.11.1",
     });
-    const timeline = await readFile(join(config.distDir, "data/timeline.json"), "utf8");
-    expect(timeline).not.toContain("ADMIN_TOKEN");
-    expect(timeline).not.toContain("/Users/");
-    expect(timeline).not.toContain('\n  "schemaVersion"');
-    expect(Buffer.byteLength(timeline)).toBeLessThan(1_400_000);
-    expect(gzipSync(timeline).byteLength).toBeLessThan(300_000);
-    expect(JSON.parse(timeline).events[0]).not.toHaveProperty("manual_override");
+    expect((await readdir(join(config.distDir, "data"))).sort()).toEqual([
+      "assets.json",
+      "events.json",
+      "peers.json",
+      "pipeline.json",
+      "product.json",
+      "scout.json",
+      "sources.json",
+    ]);
+    const eventsJson = await readFile(join(config.distDir, "data/events.json"), "utf8");
+    expect(eventsJson).not.toContain("ADMIN_TOKEN");
+    expect(eventsJson).not.toContain("/Users/");
+    expect(eventsJson).not.toContain('\n  "schemaVersion"');
+    expect(Buffer.byteLength(eventsJson)).toBeLessThan(1_400_000);
+    expect(gzipSync(eventsJson).byteLength).toBeLessThan(300_000);
+    const publicEvents = JSON.parse(eventsJson).events;
+    expect(publicEvents).toHaveLength(embodiedLaunchEvents.length);
+    expect(publicEvents[0]).not.toHaveProperty("id");
+    expect(publicEvents[0]).not.toHaveProperty("manual_override");
+    expect(publicEvents[0]).toMatchObject({
+      pipelineStages: expect.any(Array),
+      dataProfile: { evidenceStatus: expect.any(String) },
+    });
+    const publicPipeline = JSON.parse(
+      await readFile(join(config.distDir, "data/pipeline.json"), "utf8"),
+    );
+    expect(publicPipeline.stages.map((stage: { slug: string }) => stage.slug)).toEqual([
+      "demand-definition",
+      "acquisition-route",
+      "multimodal-capture",
+      "production-operations",
+      "data-engineering-standards",
+      "quality-training-feedback",
+    ]);
+    const publicAssets = JSON.parse(
+      await readFile(join(config.distDir, "data/assets.json"), "utf8"),
+    );
+    expect(publicAssets.datasets).toHaveLength(12);
+    expect(publicAssets.standards).toHaveLength(4);
+    expect(publicAssets.collectionMethods).toHaveLength(6);
+    expect(publicAssets.datasets[0]).not.toHaveProperty("id");
+    expect(publicAssets.datasets[0]).not.toHaveProperty("profile_json");
+    const publicPeers = JSON.parse(
+      await readFile(join(config.distDir, "data/peers.json"), "utf8"),
+    );
+    expect(publicPeers.peers).toHaveLength(embodiedPeers.length);
+    expect(publicPeers.peers[0]).not.toHaveProperty("actorId");
+    expect(publicPeers.peers[0].capabilities[0]).toMatchObject({
+      verificationStatus: expect.any(String),
+      evidence: expect.any(Array),
+    });
     const scout = JSON.parse(await readFile(join(config.distDir, "data/scout.json"), "utf8"));
     expect(scout.insights).toHaveLength(6);
     expect(scout.insights[0]).not.toHaveProperty("cooldown_key");
@@ -181,30 +224,6 @@ describe("SQLite application", () => {
     });
     expect(publicSources[0]).not.toHaveProperty("sample_json");
     expect(publicSources[0]).not.toHaveProperty("error_summary");
-    const publicSignals = JSON.parse(
-      await readFile(join(config.distDir, "data/signals.json"), "utf8"),
-    );
-    expect(publicSignals.signals.length).toBeGreaterThan(0);
-    expect(publicSignals.signals[0]).toMatchObject({
-      title: expect.any(String),
-      description: expect.any(String),
-      url: expect.stringMatching(/^https?:\/\//),
-      sourceName: expect.any(String),
-      publishedAt: expect.any(String),
-    });
-    expect(publicSignals.signals[0]).not.toHaveProperty("summary");
-    expect(publicSignals.signals[0]).not.toHaveProperty("rawMeta");
-    expect(publicSignals.signals[0]).not.toHaveProperty("metrics");
-    expect(publicSignals.signals[0]).not.toHaveProperty("id");
-    const publicInfluencers = JSON.parse(
-      await readFile(join(config.distDir, "data/influencers.json"), "utf8"),
-    );
-    expect(publicInfluencers.length).toBeGreaterThanOrEqual(10);
-    expect(publicInfluencers.find((item: { slug: string }) => item.slug === "baoyu")).toMatchObject(
-      {
-        feedSourceSlug: "baoyu",
-      },
-    );
     const staticPages = [
       ["index.html", "AI 行业关键变化与证据 · Agent Pulse"],
       ["lines/index.html", "领域趋势 · Agent Pulse"],
@@ -565,7 +584,7 @@ describe("SQLite application", () => {
       for (const domain of ["Claude Code", "OpenAI / Codex", "Lovable", "MCP", "A2A"]) {
         expect(sourcesPage).toContain(domain);
       }
-      const eventSlug = JSON.parse(timeline).events[0].slug as string;
+      const eventSlug = JSON.parse(eventsJson).events[0].slug as string;
       const eventPage = await readFile(
         join(config.distDir, "events", eventSlug, "index.html"),
         "utf8",
@@ -588,10 +607,10 @@ describe("SQLite application", () => {
       expect(vendorEventPage).toContain("为什么重要");
       expect(vendorEventPage).toContain("原始证据");
     }
-    const exportedTimeline = JSON.parse(timeline) as {
+    const exportedEvents = JSON.parse(eventsJson) as {
       events: Array<{ slug: string }>;
     };
-    expect(exportedTimeline.events.map((event) => event.slug).sort()).toEqual(
+    expect(exportedEvents.events.map((event) => event.slug).sort()).toEqual(
       embodiedLaunchEvents.map((event) => event.slug).sort(),
     );
     const embodiedEventPage = await readFile(
@@ -599,26 +618,6 @@ describe("SQLite application", () => {
       "utf8",
     );
     expect(embodiedEventPage).toContain(embodiedLaunchEvents[0]?.title);
-    const github = JSON.parse(await readFile(join(config.distDir, "data/github.json"), "utf8"));
-    expect(github).toMatchObject({
-      repositoryUrl: "https://github.com/barretlee/agent-pulse",
-      stars: null,
-      latestRelease: "v0.11.1",
-    });
-    const integrity = await validatePublicSite(config.distDir, "2026-07-14T00:00:00.000Z");
-    expect(integrity.issues.length).toBeGreaterThan(0);
-    expect(new Set(integrity.issues.map((issue) => issue.code))).toEqual(
-      new Set(["empty_main_tab", "sitemap_missing_url", "missing_file"]),
-    );
-    expect(integrity).toMatchObject({
-      ok: false,
-      counts: {
-        events: result.events,
-        signals: result.signals,
-        scout: result.scout,
-        sources: result.sources,
-      },
-    });
   });
 
   it("protects production admin APIs", async () => {

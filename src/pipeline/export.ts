@@ -24,6 +24,7 @@ import type {
   StaticSiteModel,
 } from "./static-site/dto.js";
 import { githubDataAtBuildTime } from "./static-site/github.js";
+import { buildEmbodiedPublicData } from "./static-site/embodied-intelligence.js";
 import { renderLlmsTxt } from "./static-site/llms.js";
 import type { StaticPage } from "./static-site/pages.js";
 import { renderStaticPages } from "./static-site/pages.js";
@@ -97,19 +98,19 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
       persist: true,
     }));
   const narratives = await loadMergedIndustryNarratives(config.rootDir);
-  const [events, tracks, actors, resources, view, scout, latestSourceChecks, signals] =
+  const [events, tracks, actors, resources, scout, latestSourceChecks, signals] =
     await Promise.all([
       repository.publicEvents(),
       repository.listTracks(),
       repository.listActors(),
       repository.listResources(),
-      repository.getDefaultView(),
       repository.publicScoutInsights(),
       repository.latestSourceChecks(),
       repository.publicSignals(),
     ]);
   const sources = (await repository.listSources()).filter(
-    (source) => source.lifecycle_status !== "retired",
+    (source) =>
+      source.content_scope === "embodied-data" && source.lifecycle_status !== "retired",
   );
 
   const generatedAt = new Date().toISOString();
@@ -117,6 +118,12 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
     join(config.rootDir, "data/reports/research-impact.json"),
   );
   const eventRelations = await repository.publicEventRelations(events.map((event) => event.id));
+  const embodiedData = await buildEmbodiedPublicData(db, repository, {
+    events,
+    tracks,
+    actors,
+    eventTracks: eventRelations.tracks,
+  });
   const enrichedEvents = events.map((event) => ({
     ...event,
     tracks: eventRelations.tracks.get(event.id) ?? [],
@@ -246,51 +253,39 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
   await optimizeStaticAssets(config.distDir);
 
   await Promise.all([
-    writeJson(join(config.distDir, "data/timeline.json"), {
+    writeJson(join(config.distDir, "data/events.json"), {
       schemaVersion: 1,
       generatedAt,
       siteUrl: config.PUBLIC_SITE_URL,
-      events: enrichedEvents,
+      events: embodiedData.events,
     }),
-    writeJson(join(config.distDir, "data/tracks.json"), publicTracks),
+    writeJson(join(config.distDir, "data/pipeline.json"), {
+      schemaVersion: 1,
+      generatedAt,
+      stages: embodiedData.pipelineStages,
+    }),
+    writeJson(join(config.distDir, "data/assets.json"), {
+      schemaVersion: 1,
+      generatedAt,
+      datasets: embodiedData.datasets,
+      standards: embodiedData.standards,
+      collectionMethods: embodiedData.collectionMethods,
+    }),
+    writeJson(join(config.distDir, "data/peers.json"), {
+      schemaVersion: 1,
+      generatedAt,
+      peers: embodiedData.peers,
+    }),
     writeJson(join(config.distDir, "data/scout.json"), {
       schemaVersion: 1,
       generatedAt,
       insights: publicScout,
-    }),
-    writeJson(join(config.distDir, "data/narratives.json"), {
-      schemaVersion: 1,
-      generatedAt,
-      ...narratives,
     }),
     writeJson(join(config.distDir, "data/product.json"), {
       schemaVersion: 1,
       ...productData,
     }),
     writeJson(join(config.distDir, "data/sources.json"), publicSources),
-    writeJson(join(config.distDir, "data/signals.json"), {
-      schemaVersion: 1,
-      generatedAt,
-      disclaimer:
-        "Source observations are not verified public facts. Follow the original URL and use published Events for evidence-backed judgments.",
-      signals: publicSignals,
-    }),
-    writeJson(join(config.distDir, "data/influencers.json"), publicInfluencers),
-    writeJson(join(config.distDir, "data/actors.json"), publicActors),
-    writeJson(
-      join(config.distDir, "data/view.json"),
-      view
-        ? {
-            slug: view.slug,
-            name: view.name,
-            description: view.description,
-            filters: parseJson(view.filters_json, {}),
-            layout: parseJson(view.layout_json, {}),
-            theme: parseJson(view.theme_json, {}),
-          }
-        : {},
-    ),
-    writeJson(join(config.distDir, "data/github.json"), github),
   ]);
 
   const model: StaticSiteModel = {
@@ -324,6 +319,12 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
     } satisfies IndustryNarratives,
     product: productData,
     github,
+    embodiedEvents: embodiedData.events,
+    pipelineStages: embodiedData.pipelineStages,
+    datasets: embodiedData.datasets,
+    standards: embodiedData.standards,
+    collectionMethods: embodiedData.collectionMethods,
+    peers: embodiedData.peers,
   };
 
   const allPages = renderStaticPages(model);

@@ -238,7 +238,10 @@ describe("GitHub source governance workflows", () => {
     }
     expect(ci).not.toContain("run: npm run check");
     expect(ci).toContain("--gate=change");
-    expect(ci).toContain("git show HEAD^:data/reports/system-evaluation.json");
+    expect(ci).toContain("github.event.pull_request.base.sha");
+    expect(ci).toContain('git show "$base_sha:data/reports/system-evaluation.json"');
+    expect(ci).toContain("embodied-data-operational-baseline-transition.json");
+    expect(ci).toContain("evaluationReportSha256");
     expect(ci.indexOf("run: npm ci")).toBeLessThan(ci.indexOf("run: npm audit --omit=dev"));
     expect(ci.indexOf("run: npm audit --omit=dev")).toBeLessThan(ci.indexOf("run: npm run lint"));
     expect(ci.indexOf("run: npm run db:seed")).toBeLessThan(ci.indexOf("--fail-on-regression"));
@@ -278,7 +281,16 @@ describe("GitHub source governance workflows", () => {
     expect(guard).not.toContain("publish_weekly=true");
     expect(guard).toContain("--baseline=data/reports/system-evaluation.json");
     expect(guard).toContain(".embodiedQuality.genericAILeak.numerator == 0");
-    expect(monitor).toContain(".evaluationAsOf and .gateMode and .embodiedQuality");
+    expect(guard).toContain(".publicReadinessDecision.status");
+    expect(guard).toContain("steps.evaluation.outputs.public_status == 'critical'");
+    expect(guard).toContain("Maturity status:");
+    expect(guard).toContain("Public readiness:");
+    expect(monitor).toContain(
+      ".evaluationAsOf and .gateMode and .operationalDecision.status and .publicReadinessDecision.status and .embodiedQuality",
+    );
+    expect(refresh).toContain(
+      ".operationalDecision.status and .publicReadinessDecision.status and .embodiedQuality",
+    );
     expect(guard).toContain('--summary="$GITHUB_STEP_SUMMARY"');
     expect(guard.indexOf("Upload evaluation evidence")).toBeLessThan(
       guard.indexOf("Update the single monitor incident"),
@@ -287,7 +299,7 @@ describe("GitHub source governance workflows", () => {
       guard.indexOf("Trigger one bounded system update"),
     );
     expect(guard.indexOf("Trigger one bounded system update")).toBeLessThan(
-      guard.indexOf("Fail the operational gate"),
+      guard.indexOf("Fail the embodied public gate"),
     );
     expect(refresh).toContain("--gate=operational");
     expect(refresh).toContain("--persist");

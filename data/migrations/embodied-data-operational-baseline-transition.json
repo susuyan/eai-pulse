@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-20T12:11:52.000Z",
+  "purpose": "Authorize the bounded post-switch operational baseline handoff after the audited source snapshot.",
+  "baseGitSha": "579f5a9799722085c2df2ce2b0c8a48df187d3b2",
+  "snapshotSha256": "eefc06be0764bbed44af9ebaf330af69bcc6d7dde6c2cd51e7e53940dea33c8f",
+  "evaluationReportSha256": "a1c05d9e10a67636638d94a24f9b76841c30664134e14d5356ba829d3b08731a"
+}

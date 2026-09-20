@@ -2,7 +2,7 @@ import { loadConfig } from "../config/env.js";
 import { createDatabase } from "../db/database.js";
 import { migrateToLatest } from "../db/migrate.js";
 import { clusterSignals } from "../pipeline/cluster.js";
-import { collectSources } from "../pipeline/collect.js";
+import { collectSources, parseCollectionScopeArgument } from "../pipeline/collect.js";
 
 const config = loadConfig();
 const db = createDatabase(config);
@@ -14,10 +14,7 @@ try {
   const scopeArgument = process.argv
     .find((argument) => argument.startsWith("--scope="))
     ?.split("=")[1];
-  if (scopeArgument && scopeArgument !== "eligible" && scopeArgument !== "all") {
-    throw new Error("--scope must be eligible or all");
-  }
-  const scope = scopeArgument === "all" ? "all" : "eligible";
+  const scope = parseCollectionScopeArgument(scopeArgument);
   const collection = await collectSources(db, config, {
     ...(sourceId ? { sourceId } : {}),
     scope,

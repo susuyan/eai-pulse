@@ -4,7 +4,11 @@ import { createDatabase } from "../src/db/database.js";
 import { migrateToLatest } from "../src/db/migrate.js";
 import { Repository } from "../src/db/repository.js";
 import { seedDatabase } from "../src/db/seed.js";
-import { isCurrentEmbodiedSource, planSourceCollection } from "../src/pipeline/collect.js";
+import {
+  isCurrentEmbodiedSource,
+  parseCollectionScopeArgument,
+  planSourceCollection,
+} from "../src/pipeline/collect.js";
 
 const databases: ReturnType<typeof createDatabase>[] = [];
 
@@ -36,6 +40,21 @@ function crossScopeItem(slug: string) {
 }
 
 describe("collection scope", () => {
+  it.each([
+    [undefined, "eligible"],
+    ["eligible", "eligible"],
+    ["embodied-data", "eligible"],
+    ["all", "all"],
+  ] as const)("maps CLI scope %s to %s", (argument, expected) => {
+    expect(parseCollectionScopeArgument(argument)).toBe(expected);
+  });
+
+  it("rejects unknown collection scopes", () => {
+    expect(() => parseCollectionScopeArgument("legacy-ai")).toThrow(
+      /eligible, embodied-data, or all/,
+    );
+  });
+
   it("inherits the source content scope when a signal is collected", async () => {
     const db = await setup();
     const repository = new Repository(db);

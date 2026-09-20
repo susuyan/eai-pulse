@@ -6,6 +6,7 @@ import { embodiedDatasets } from "../catalog/embodied-data/datasets.js";
 import { embodiedEventEvidence } from "../catalog/embodied-data/event-evidence.js";
 import { embodiedLaunchEvents } from "../catalog/embodied-data/events.js";
 import { embodiedPeers } from "../catalog/embodied-data/peers.js";
+import type { EmbodiedCatalogSource } from "../catalog/embodied-data/sources.js";
 import { embodiedStandards } from "../catalog/embodied-data/standards.js";
 import { embodiedTracks } from "../catalog/embodied-data/tracks.js";
 import { type CuratedEventSeed, historicalEvents } from "../catalog/history.js";
@@ -689,10 +690,11 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
   const timestamp = isoNow();
 
   const saveCatalogEntry = async (
-    source: CatalogSource,
+    source: CatalogSource | EmbodiedCatalogSource,
     contentScope: "legacy-ai" | "embodied-data",
   ) => {
     const previous = await repository.getSourceByIdOrSlug(source.slug);
+    const mapSource = "mapStatus" in source ? source : undefined;
     await repository.saveCatalogSource({
       id: stableId("source", source.slug),
       slug: source.slug,
@@ -734,10 +736,10 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
       freshness_slo_hours: source.freshnessSloHours ?? 168,
       adapter_version: source.adapterVersion ?? "1",
       content_scope: contentScope,
-      map_status: "pending",
-      pipeline_stages_json: "[]",
-      substitute_for_json: "[]",
-      restriction_note: "",
+      map_status: mapSource?.mapStatus ?? "pending",
+      pipeline_stages_json: JSON.stringify(mapSource?.pipelineStages ?? []),
+      substitute_for_json: JSON.stringify(mapSource?.substituteFor ?? []),
+      restriction_note: mapSource?.restrictionNote ?? "",
     });
     if (
       contentScope === "embodied-data" &&

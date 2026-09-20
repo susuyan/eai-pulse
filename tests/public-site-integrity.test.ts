@@ -2,6 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { embodiedSourceCatalog } from "../src/catalog/embodied-data/sources.js";
 import { loadConfig } from "../src/config/env.js";
 import { createDatabase } from "../src/db/database.js";
 import { migrateToLatest } from "../src/db/migrate.js";
@@ -42,7 +43,7 @@ describe("embodied public-site integrity", () => {
         standards: 4,
         collectionMethods: 6,
         peers: 15,
-        sources: 36,
+        sources: embodiedSourceCatalog.length,
         scout: 6,
       },
       issues: [],

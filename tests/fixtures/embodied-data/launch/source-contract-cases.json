@@ -3,62 +3,886 @@
     "slug": "droid-project",
     "category": "dataset-benchmark",
     "adapter": "web-scraper",
-    "region": "GLOBAL"
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "production-operations", "quality-training-feedback"],
+    "verification": "catalog-only"
   },
   {
     "slug": "bridge-data-v2",
     "category": "dataset-benchmark",
     "adapter": "web-scraper",
-    "region": "GLOBAL"
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
   },
   {
     "slug": "open-x-embodiment",
     "category": "dataset-benchmark",
     "adapter": "web-scraper",
-    "region": "GLOBAL"
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["data-engineering-standards", "quality-training-feedback"],
+    "verification": "catalog-only"
   },
   {
-    "slug": "huggingface-lerobot",
-    "category": "standard-policy",
-    "adapter": "github-releases",
-    "region": "GLOBAL"
+    "slug": "rh20t",
+    "category": "dataset-benchmark",
+    "adapter": "web-scraper",
+    "region": "CN",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["multimodal-capture", "quality-training-feedback"],
+    "verification": "catalog-only"
   },
   {
-    "slug": "ros2-rosbag2",
-    "category": "standard-policy",
-    "adapter": "github-releases",
-    "region": "GLOBAL"
+    "slug": "roboset",
+    "category": "dataset-benchmark",
+    "adapter": "web-scraper",
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "production-operations", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "robomind",
+    "category": "dataset-benchmark",
+    "adapter": "web-scraper",
+    "region": "CN",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture", "quality-training-feedback"],
+    "verification": "catalog-only"
   },
   {
     "slug": "agibot-world",
     "category": "robot-team",
     "adapter": "github-releases",
-    "region": "CN"
+    "region": "CN",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "production-operations", "quality-training-feedback"],
+    "verification": "catalog-only"
   },
-  { "slug": "robomind", "category": "dataset-benchmark", "adapter": "web-scraper", "region": "CN" },
+  {
+    "slug": "behavior-1k",
+    "category": "dataset-benchmark",
+    "adapter": "github-releases",
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["demand-definition", "acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "libero-benchmark",
+    "category": "dataset-benchmark",
+    "adapter": "github-releases",
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["demand-definition", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "robocasa",
+    "category": "dataset-benchmark",
+    "adapter": "github-releases",
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "calvin-benchmark",
+    "category": "dataset-benchmark",
+    "adapter": "github-releases",
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["demand-definition", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "holoassist",
+    "category": "dataset-benchmark",
+    "adapter": "web-scraper",
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["multimodal-capture"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "ego-exo4d",
+    "category": "dataset-benchmark",
+    "adapter": "web-scraper",
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "ario-dataset",
+    "category": "dataset-benchmark",
+    "adapter": "web-scraper",
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["data-engineering-standards"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "huggingface-lerobot",
+    "category": "standard-policy",
+    "adapter": "github-releases",
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["data-engineering-standards", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "google-rlds",
+    "category": "standard-policy",
+    "adapter": "github-releases",
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["data-engineering-standards"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "ros2-rosbag2",
+    "category": "standard-policy",
+    "adapter": "github-releases",
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["multimodal-capture", "data-engineering-standards"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "foxglove-mcap",
+    "category": "standard-policy",
+    "adapter": "github-releases",
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["data-engineering-standards"],
+    "verification": "catalog-only"
+  },
   {
     "slug": "universal-manipulation-interface",
     "category": "capture-tool",
     "adapter": "github-releases",
-    "region": "GLOBAL"
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture"],
+    "verification": "catalog-only"
   },
-  { "slug": "galaxea-ai", "category": "peer-evidence", "adapter": "web-scraper", "region": "CN" },
+  {
+    "slug": "gello",
+    "category": "capture-tool",
+    "adapter": "github-releases",
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "aloha-act",
+    "category": "capture-tool",
+    "adapter": "github-releases",
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "nvidia-isaac-sim",
+    "category": "capture-tool",
+    "adapter": "github-releases",
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "nvidia-isaac-lab",
+    "category": "capture-tool",
+    "adapter": "github-releases",
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "nvidia-isaac-teleop",
+    "category": "capture-tool",
+    "adapter": "web-scraper",
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "google-deepmind-robotics",
+    "category": "robot-team",
+    "adapter": "web-scraper",
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "unitree-robotics",
+    "category": "robot-team",
+    "adapter": "github-releases",
+    "region": "CN",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "fourier-intelligence",
+    "category": "robot-team",
+    "adapter": "web-scraper",
+    "region": "CN",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "production-operations", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "ubtech-robotics",
+    "category": "robot-team",
+    "adapter": "web-scraper",
+    "region": "CN",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["demand-definition", "production-operations"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "robotera",
+    "category": "robot-team",
+    "adapter": "web-scraper",
+    "region": "CN",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "astribot",
+    "category": "robot-team",
+    "adapter": "web-scraper",
+    "region": "CN",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture"],
+    "verification": "catalog-only"
+  },
   {
     "slug": "nexdata-embodied-ai",
     "category": "data-service",
     "adapter": "web-scraper",
-    "region": "CN"
+    "region": "CN",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": [
+      "multimodal-capture",
+      "production-operations",
+      "data-engineering-standards",
+      "quality-training-feedback"
+    ],
+    "verification": "catalog-only"
   },
   {
     "slug": "discover-robotics-data",
     "category": "data-service",
     "adapter": "web-scraper",
-    "region": "CN"
+    "region": "CN",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": [
+      "acquisition-route",
+      "multimodal-capture",
+      "production-operations",
+      "data-engineering-standards",
+      "quality-training-feedback"
+    ],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "gesen-ai",
+    "category": "data-service",
+    "adapter": "web-scraper",
+    "region": "CN",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": [
+      "production-operations",
+      "data-engineering-standards",
+      "quality-training-feedback"
+    ],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "galaxea-ai",
+    "category": "peer-evidence",
+    "adapter": "web-scraper",
+    "region": "CN",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "production-operations", "quality-training-feedback"],
+    "verification": "catalog-only"
   },
   {
     "slug": "physical-intelligence",
     "category": "peer-evidence",
     "adapter": "web-scraper",
-    "region": "GLOBAL"
+    "region": "GLOBAL",
+    "lifecycleStatus": "shadow",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "samr-standards",
+    "category": "standard-policy",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "substitute",
+    "pipelineStages": ["data-engineering-standards", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "miit-embodied-policy",
+    "category": "standard-policy",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["demand-definition", "production-operations", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "cesi-embodied-standards",
+    "category": "standard-policy",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "restricted",
+    "pipelineStages": ["data-engineering-standards", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "beijing-humanoid-center",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "production-operations", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "shanghai-humanoid-center",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": [
+      "production-operations",
+      "data-engineering-standards",
+      "quality-training-feedback"
+    ],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "shanghai-embodied-policy",
+    "category": "standard-policy",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["demand-definition", "acquisition-route", "production-operations"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "beijing-embodied-policy",
+    "category": "standard-policy",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["demand-definition", "acquisition-route", "production-operations"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "shenzhen-embodied-policy",
+    "category": "standard-policy",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["demand-definition", "acquisition-route", "production-operations"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "guangzhou-embodied-policy",
+    "category": "standard-policy",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["demand-definition", "production-operations", "data-engineering-standards"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "galbot",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "limx-dynamics",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "noetix-robotics",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "engineai",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["multimodal-capture", "data-engineering-standards"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "xpeng-robotics",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "tencent-robotics-x",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "bytedance-seed-robotics",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["multimodal-capture", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "internrobotics",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": [
+      "acquisition-route",
+      "data-engineering-standards",
+      "quality-training-feedback"
+    ],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "horizon-holomotion",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": [
+      "acquisition-route",
+      "multimodal-capture",
+      "data-engineering-standards",
+      "quality-training-feedback"
+    ],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "tsinghua-air-robotics",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "opendrivelab",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "deep-robotics",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "datatang-embodied",
+    "category": "data-service",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": [
+      "acquisition-route",
+      "multimodal-capture",
+      "production-operations",
+      "data-engineering-standards",
+      "quality-training-feedback"
+    ],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "pnp-robotics",
+    "category": "data-service",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture", "production-operations"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "noitom",
+    "category": "capture-tool",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "pico-motion-tracking",
+    "category": "capture-tool",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["multimodal-capture"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "robotwin",
+    "category": "dataset-benchmark",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["demand-definition", "acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "orbbec",
+    "category": "capture-tool",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["multimodal-capture"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "agilex-data-capture",
+    "category": "capture-tool",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "dobot-data-capture",
+    "category": "capture-tool",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "paxini",
+    "category": "capture-tool",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture", "data-engineering-standards"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "dexforce",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "leju-training",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["production-operations", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "linkerbot-data",
+    "category": "capture-tool",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": [
+      "acquisition-route",
+      "multimodal-capture",
+      "production-operations",
+      "data-engineering-standards",
+      "quality-training-feedback"
+    ],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "spirit-ai",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "CN",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": [
+      "multimodal-capture",
+      "data-engineering-standards",
+      "quality-training-feedback"
+    ],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "figure-ai",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "GLOBAL",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "one-x",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "GLOBAL",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "apptronik",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "GLOBAL",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["production-operations", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "sanctuary-ai",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "GLOBAL",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["multimodal-capture", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "rai-institute",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "GLOBAL",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "toyota-research-robotics",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "GLOBAL",
+    "lifecycleStatus": "draft",
+    "mapStatus": "restricted",
+    "pipelineStages": ["acquisition-route", "quality-training-feedback"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "nvidia-isaac-groot",
+    "category": "robot-team",
+    "adapter": "manual",
+    "region": "GLOBAL",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": [
+      "acquisition-route",
+      "data-engineering-standards",
+      "quality-training-feedback"
+    ],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "nist-physical-ai",
+    "category": "standard-policy",
+    "adapter": "manual",
+    "region": "GLOBAL",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": [
+      "demand-definition",
+      "data-engineering-standards",
+      "quality-training-feedback"
+    ],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "iso-tc299",
+    "category": "standard-policy",
+    "adapter": "manual",
+    "region": "GLOBAL",
+    "lifecycleStatus": "draft",
+    "mapStatus": "restricted",
+    "pipelineStages": [
+      "demand-definition",
+      "data-engineering-standards",
+      "quality-training-feedback"
+    ],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "itu-robot-data-factory",
+    "category": "standard-policy",
+    "adapter": "manual",
+    "region": "GLOBAL",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["production-operations", "data-engineering-standards"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "manus",
+    "category": "capture-tool",
+    "adapter": "manual",
+    "region": "GLOBAL",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "xsens",
+    "category": "capture-tool",
+    "adapter": "manual",
+    "region": "GLOBAL",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "senseglove",
+    "category": "capture-tool",
+    "adapter": "manual",
+    "region": "GLOBAL",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["acquisition-route", "multimodal-capture"],
+    "verification": "catalog-only"
+  },
+  {
+    "slug": "realsense",
+    "category": "capture-tool",
+    "adapter": "manual",
+    "region": "GLOBAL",
+    "lifecycleStatus": "draft",
+    "mapStatus": "pending",
+    "pipelineStages": ["multimodal-capture"],
+    "verification": "catalog-only"
   }
 ]

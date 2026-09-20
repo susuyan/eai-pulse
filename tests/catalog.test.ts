@@ -25,7 +25,13 @@ describe("embodied data source catalog", () => {
       expect(source.freshnessSloHours).toBeGreaterThan(0);
       expect(source.adapterVersion).toMatch(/^\d+$/);
       expect(source.licenseNote.length).toBeGreaterThan(20);
-      expect(hasAdapter(source.adapter)).toBe(true);
+      if (source.acquisition === "manual") {
+        expect(source.adapter).toBe("manual");
+        expect(source.lifecycleStatus).toBe("draft");
+        expect(source.mapStatus).not.toBe("integrated");
+      } else {
+        expect(hasAdapter(source.adapter)).toBe(true);
+      }
       expect(new URL(source.homepageUrl).protocol).toBe("https:");
       expect(new URL(source.endpoint).protocol).toBe("https:");
     }
@@ -56,7 +62,9 @@ describe("embodied data source catalog", () => {
         category: contract.category,
         adapter: contract.adapter,
         region: contract.region,
-        lifecycleStatus: "shadow",
+        lifecycleStatus: contract.lifecycleStatus,
+        mapStatus: contract.mapStatus,
+        pipelineStages: contract.pipelineStages,
         enabled: false,
       });
     }

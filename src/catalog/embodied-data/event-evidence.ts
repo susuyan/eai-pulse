@@ -249,8 +249,8 @@ export const embodiedEventEvidence: EmbodiedEventEvidence[] = [
   evidence({
     slug: "droid-consortium-project",
     eventSlug: "droid-consortium-site-operations",
-    sourceSlug: "droid-consortium",
-    sourceIdentity: "DROID Consortium",
+    sourceSlug: "droid-project",
+    sourceIdentity: "DROID Dataset Team",
     sourceTier: 1,
     role: "primary",
     title: "DROID distributed collection project",

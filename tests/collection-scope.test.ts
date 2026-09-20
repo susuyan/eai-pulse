@@ -269,6 +269,7 @@ describe("collection scope", () => {
     const repository = new Repository(db);
     const [selected, unobserved] = (await repository.listSources())
       .filter(isCurrentEmbodiedSource)
+      .filter((source) => source.lifecycle_status === "shadow" && source.adapter !== "manual")
       .slice(0, 2);
     if (!selected || !unobserved) throw new Error("Missing source fixtures");
     await repository.updateSource(selected.id, { observation_enabled: 1 });
@@ -279,8 +280,16 @@ describe("collection scope", () => {
     expect(plan.sources.map((source) => source.slug)).toEqual([selected.slug]);
     expect(plan.sources.every(isCurrentEmbodiedSource)).toBe(true);
     expect(plan.summary.skippedByReason.not_enabled).toBe(
-      sources.filter(isCurrentEmbodiedSource).length - 1,
+      sources.filter(
+        (source) => isCurrentEmbodiedSource(source) && source.lifecycle_status === "shadow",
+      ).length - 1,
     );
+    const manualSources = sources.filter(
+      (source) => isCurrentEmbodiedSource(source) && source.adapter === "manual",
+    );
+    expect(manualSources.length).toBeGreaterThan(0);
+    expect(planSourceCollection(manualSources, "all", true).sources).toEqual([]);
+    expect(plan.summary.skippedByReason["lifecycle:draft"]).toBe(manualSources.length);
   });
 
   it("never collects legacy or retired sources even in diagnostic scope", async () => {

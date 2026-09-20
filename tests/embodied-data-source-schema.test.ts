@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { embodiedEventEvidence } from "../src/catalog/embodied-data/event-evidence.js";
+import { embodiedSourceCatalog } from "../src/catalog/embodied-data/sources.js";
 import { loadConfig } from "../src/config/env.js";
 import { createDatabase } from "../src/db/database.js";
 import { migrateToLatest } from "../src/db/migrate.js";
@@ -25,6 +27,54 @@ async function setup(seed = false) {
 }
 
 describe("embodied source governance schema", () => {
+  it("provides a reviewed China-first source portfolio with explicit pipeline coverage", () => {
+    expect(embodiedSourceCatalog.length).toBeGreaterThanOrEqual(80);
+    expect(embodiedSourceCatalog.length).toBeLessThanOrEqual(100);
+    const slugs = new Set(embodiedSourceCatalog.map((source) => source.slug));
+    expect(slugs.size).toBe(embodiedSourceCatalog.length);
+    expect(
+      embodiedSourceCatalog.filter((source) => source.region === "CN").length,
+    ).toBeGreaterThanOrEqual(Math.floor(embodiedSourceCatalog.length * 0.55));
+    for (const source of embodiedSourceCatalog) {
+      expect(SourceMapStatusSchema.parse(source.mapStatus)).toBe(source.mapStatus);
+      expect(SourcePipelineCoverageSchema.parse(source.pipelineStages).length).toBeGreaterThan(0);
+      expect(source.owner.trim().length).toBeGreaterThan(1);
+      expect(source.robotsPolicy.trim().length).toBeGreaterThan(10);
+      if (source.mapStatus === "substitute") {
+        expect(source.substituteFor.length).toBeGreaterThan(0);
+        for (const slug of source.substituteFor) {
+          expect(slugs.has(slug)).toBe(true);
+          expect(slug).not.toBe(source.slug);
+        }
+      }
+      if (source.mapStatus === "restricted")
+        expect(source.restrictionNote.trim().length).toBeGreaterThan(0);
+      // The catalog has no source-specific adapter verification records yet.
+      expect(source.mapStatus).not.toBe("integrated");
+      if (source.adapter === "manual") {
+        expect(source.lifecycleStatus).toBe("draft");
+        expect(source.enabled).toBe(false);
+      }
+    }
+  });
+
+  it("does not count one owner and channel twice", () => {
+    const identities = embodiedSourceCatalog.map(
+      (source) => `${source.owner}:${source.homepageUrl}`,
+    );
+    expect(new Set(identities).size).toBe(identities.length);
+    const droidEvidence = embodiedEventEvidence.filter((evidence) =>
+      ["droid-paper", "droid-consortium-project"].includes(evidence.slug),
+    );
+    expect(droidEvidence.length).toBeGreaterThan(1);
+    expect(new Set(droidEvidence.map((evidence) => evidence.sourceSlug))).toEqual(
+      new Set(["droid-project"]),
+    );
+    expect(new Set(droidEvidence.map((evidence) => evidence.sourceIdentity))).toEqual(
+      new Set(["DROID Dataset Team"]),
+    );
+  });
+
   it("validates source-map status and normalizes pipeline coverage", () => {
     expect(SourceMapStatusSchema.options).toEqual([
       "integrated",
@@ -167,6 +217,31 @@ describe("embodied source governance schema", () => {
     const legacy = sources.filter((source) => source.content_scope === "legacy-ai");
 
     expect(current.length).toBeGreaterThanOrEqual(30);
+    expect(current.find((source) => source.slug === "droid-project")).toMatchObject({
+      map_status: "pending",
+      pipeline_stages_json: JSON.stringify([
+        "acquisition-route",
+        "production-operations",
+        "quality-training-feedback",
+      ]),
+    });
+    expect(current.find((source) => source.slug === "samr-standards")).toMatchObject({
+      map_status: "substitute",
+      substitute_for_json: JSON.stringify(["cesi-embodied-standards"]),
+      lifecycle_status: "draft",
+      adapter: "manual",
+      enabled: 0,
+      observation_enabled: 0,
+    });
+    expect(current.find((source) => source.slug === "cesi-embodied-standards")).toMatchObject({
+      map_status: "restricted",
+      restriction_note:
+        "Official site returned a JavaScript cloud-protection challenge; do not bypass it.",
+    });
+    for (const source of current)
+      expect(
+        SourcePipelineCoverageSchema.parse(JSON.parse(source.pipeline_stages_json)).length,
+      ).toBeGreaterThan(0);
     expect(
       current.every(
         (source) =>

@@ -325,6 +325,65 @@ describe("monitor alert decision", () => {
     expect(decision).toMatchObject({ decision: "alert", wouldNotify: true, notify: false });
   });
 
+  it("resolves an open incident only after a healthy non-dry-run decision", async () => {
+    const healthy = report({
+      status: "ok",
+      checks: {
+        ...report().checks,
+        sourceHealth: { ...report().checks.sourceHealth, status: "ok" },
+      },
+      issues: [],
+      recommendations: [],
+    });
+    const incident = {
+      number: 7,
+      updatedAt: "2026-07-14T07:30:00Z",
+      body: "<!-- agent-pulse-monitor:v3 fingerprint=0123456789abcdef -->",
+    };
+
+    const notificationRun = await decideMonitorAlert({
+      report: healthy,
+      incident,
+      now: NOW,
+    });
+    const dryRun = await decideMonitorAlert({
+      report: healthy,
+      incident,
+      mode: "dry-run",
+      now: NOW,
+    });
+    const noIncident = await decideMonitorAlert({ report: healthy, now: NOW });
+    const warning = await decideMonitorAlert({
+      report: { ...healthy, status: "warning" },
+      incident,
+      now: NOW,
+    });
+    const critical = await decideMonitorAlert({ report: report(), incident, now: NOW });
+
+    expect(notificationRun).toMatchObject({
+      decision: "suppress",
+      notify: false,
+      wouldResolveIncident: true,
+      resolveIncident: true,
+    });
+    expect(dryRun).toMatchObject({
+      wouldResolveIncident: true,
+      resolveIncident: false,
+    });
+    expect(noIncident).toMatchObject({
+      wouldResolveIncident: false,
+      resolveIncident: false,
+    });
+    expect(warning).toMatchObject({
+      wouldResolveIncident: false,
+      resolveIncident: false,
+    });
+    expect(critical).toMatchObject({
+      wouldResolveIncident: false,
+      resolveIncident: false,
+    });
+  });
+
   it("uses a stable fingerprint for the same set of critical checks", () => {
     const first = report();
     const second = report({ systemScore: 65, issues: ["A differently worded source warning"] });

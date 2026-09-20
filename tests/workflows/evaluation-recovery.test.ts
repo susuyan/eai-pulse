@@ -41,6 +41,19 @@ describe("evaluation recovery workflow contract", () => {
     }
   });
 
+  it("closes a recovered incident only when the validated decision authorizes it", async () => {
+    const monitor = await workflow("monitor");
+    expect(monitor).toContain(
+      'echo "resolve_incident=$(jq -r \'.resolveIncident\' "$RUNNER_TEMP/monitor-decision.json")" >> "$GITHUB_OUTPUT"',
+    );
+    expect(monitor).toContain("if: steps.decision.outputs.resolve_incident == 'true'");
+    expect(monitor).toContain("agent-pulse-monitor-recovery:v1");
+    expect(monitor).toContain(
+      'gh issue comment "$issue" --body-file "$RUNNER_TEMP/monitor-recovery.md"',
+    );
+    expect(monitor).toContain('gh issue close "$issue" --reason completed');
+  });
+
   it.each([
     "queued",
     "in_progress",

@@ -114,8 +114,9 @@ jobs:
             args+=(--dry-run)
           fi
           npm run --silent monitor:decide -- "${args[@]}" > "$RUNNER_TEMP/monitor-decision.json"
-          jq -e '.decision and (.notify | type == "boolean") and .fingerprint and .reasonCode' "$RUNNER_TEMP/monitor-decision.json" >/dev/null
+          jq -e '.decision and (.notify | type == "boolean") and (.resolveIncident | type == "boolean") and (.wouldResolveIncident | type == "boolean") and .fingerprint and .reasonCode' "$RUNNER_TEMP/monitor-decision.json" >/dev/null
           echo "notify=$(jq -r '.notify' "$RUNNER_TEMP/monitor-decision.json")" >> "$GITHUB_OUTPUT"
+          echo "resolve_incident=$(jq -r '.resolveIncident' "$RUNNER_TEMP/monitor-decision.json")" >> "$GITHUB_OUTPUT"
           echo "fingerprint=$(jq -r '.fingerprint' "$RUNNER_TEMP/monitor-decision.json")" >> "$GITHUB_OUTPUT"
           jq . "$RUNNER_TEMP/monitor-decision.json"
           {
@@ -123,6 +124,7 @@ jobs:
             echo
             echo "- Decision: $(jq -r '.decision' "$RUNNER_TEMP/monitor-decision.json")"
             echo "- Notification: $(jq -r '.notify' "$RUNNER_TEMP/monitor-decision.json")"
+            echo "- Resolve incident: $(jq -r '.resolveIncident' "$RUNNER_TEMP/monitor-decision.json")"
             echo "- Source: $(jq -r '.decisionSource' "$RUNNER_TEMP/monitor-decision.json")"
             echo "- Reason: $(jq -r '.reasonCode' "$RUNNER_TEMP/monitor-decision.json")"
             echo "- Fingerprint: $(jq -r '.fingerprint' "$RUNNER_TEMP/monitor-decision.json")"
@@ -180,3 +182,27 @@ jobs:
           else
             gh issue create --title "[Monitor] Agent Pulse critical health incident" --label "monitor:critical" --body-file "$body"
           fi
+
+      - name: Resolve recovered monitor incident
+        if: steps.decision.outputs.resolve_incident == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          issue="$(jq -r '.[0].number // empty' "$RUNNER_TEMP/monitor-incident.json")"
+          test -n "$issue"
+          {
+            echo '<!-- agent-pulse-monitor-recovery:v1 -->'
+            echo '## 自动恢复确认'
+            echo
+            echo "- 时间：$(jq -r '.timestamp' "$RUNNER_TEMP/monitor.json")"
+            echo "- 系统分：$(jq -r '.systemScore' "$RUNNER_TEMP/monitor.json") / 100"
+            echo "- 状态：$(jq -r '.status' "$RUNNER_TEMP/monitor.json")"
+            echo "- 评测水位：$(jq -r '.checks.freshness.detail.evaluationAsOf // "unknown"' "$RUNNER_TEMP/monitor.json")"
+            echo "- 来源健康：$(jq -r '.checks.sourceHealth.message' "$RUNNER_TEMP/monitor.json")"
+            echo
+            echo "[查看恢复验证](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          } > "$RUNNER_TEMP/monitor-recovery.md"
+          gh issue comment "$issue" --body-file "$RUNNER_TEMP/monitor-recovery.md"
+          gh issue close "$issue" --reason completed

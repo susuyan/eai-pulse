@@ -59,6 +59,8 @@ export interface MonitorAlertDecision {
   decision: "alert" | "suppress";
   notify: boolean;
   wouldNotify: boolean;
+  resolveIncident: boolean;
+  wouldResolveIncident: boolean;
   decisionSource: "hard-rule" | "status" | "cooldown" | "ai" | "fallback";
   reasonCode: string;
   rationale: string;
@@ -153,6 +155,9 @@ export async function decideMonitorAlert(
       "not_critical",
       "The monitor did not report a critical state, so no incident notification is needed.",
       report.recommendations[0] ?? "Continue normal monitoring.",
+      null,
+      {},
+      report.status === "ok" && typeof incident?.number === "number",
     );
   }
 
@@ -404,6 +409,7 @@ function finalizeDecision(
   suggestedAction: string,
   cooldownUntil: string | null = null,
   ai: Partial<MonitorAlertDecision["ai"]> = {},
+  wouldResolveIncident = false,
 ): MonitorAlertDecision {
   const wouldNotify = decision === "alert";
   return {
@@ -411,6 +417,8 @@ function finalizeDecision(
     decision,
     notify: wouldNotify && mode === "notify",
     wouldNotify,
+    resolveIncident: wouldResolveIncident && mode === "notify",
+    wouldResolveIncident,
     decisionSource,
     reasonCode,
     rationale,

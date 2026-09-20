@@ -44,6 +44,14 @@ export async function runEvaluateCli(): Promise<void> {
     throw new Error(`Cannot read evaluation baseline: ${baselineResult.error}`);
   }
   const invocation = resolveEvaluationInvocation(args, baselineResult.report, runStartedAt);
+  assertEvaluationBaselineWriteIsSafe({
+    invocation,
+    baselinePath,
+    outputPath,
+    baseline: baselineResult.report,
+    baselineError: baselineResult.error,
+    runStartedAt,
+  });
   const config = loadConfig();
   const db = createDatabase(config);
   try {
@@ -85,6 +93,44 @@ export async function runEvaluateCli(): Promise<void> {
     }
   } finally {
     await db.destroy();
+  }
+}
+
+interface EvaluationBaselineWriteInput {
+  invocation: EvaluationInvocation;
+  baselinePath: string | undefined;
+  outputPath: string | undefined;
+  baseline: SystemEvaluationReportV2 | null;
+  baselineError: string | null;
+  runStartedAt: Date;
+}
+
+export function assertEvaluationBaselineWriteIsSafe(input: EvaluationBaselineWriteInput): void {
+  const replacesBaseline =
+    Boolean(input.baselinePath && input.outputPath) &&
+    resolve(input.baselinePath as string) === resolve(input.outputPath as string);
+  if (input.invocation.gateMode === "change") {
+    if (replacesBaseline) {
+      throw new Error("Change evaluation output cannot overwrite its operational baseline");
+    }
+    return;
+  }
+  if (!input.invocation.persist && !replacesBaseline) return;
+  if (!input.baseline || input.baselineError) {
+    throw new Error(
+      `Cannot update operational evaluation baseline: ${input.baselineError ?? "baseline is missing"}`,
+    );
+  }
+  const validation = decideOperationalEvaluation({
+    currentScore: input.baseline.overallScore,
+    persistedEvaluationAsOf: input.baseline.evaluationAsOf,
+    reportValid: true,
+    now: input.runStartedAt,
+  });
+  if (validation.reasonCodes.includes("evaluation_report_invalid")) {
+    throw new Error(
+      "Cannot update operational evaluation baseline: watermark is invalid or future",
+    );
   }
 }
 

@@ -3,6 +3,7 @@ import { loadConfig } from "../src/config/env.js";
 import { bootstrapRepositoryDatabase } from "../src/db/bootstrap.js";
 import { createDatabase } from "../src/db/database.js";
 import { evaluateSystem } from "../src/pipeline/evaluate.js";
+import { isAtOrBefore, isWithinPastWindow } from "../src/pipeline/evaluation-context.js";
 
 const AS_OF = new Date("2026-08-26T12:00:00.000Z");
 const EXCLUDED = "2026-08-26T12:00:01.000Z";
@@ -30,6 +31,34 @@ function scoreState(result: Awaited<ReturnType<typeof evaluateSystem>>) {
 }
 
 describe("point-in-time system evaluation", () => {
+  it("treats equivalent timezone timestamps as the same instant", async () => {
+    await db.updateTable("source_checks").set({ finished_at: AS_OF.toISOString() }).execute();
+    const canonical = await evaluateSystem(db, {
+      asOf: AS_OF,
+      gateMode: "change",
+      persist: false,
+    });
+
+    await db.updateTable("source_checks").set({ finished_at: "2026-08-26T12:00:00Z" }).execute();
+    const equivalent = await evaluateSystem(db, {
+      asOf: AS_OF,
+      gateMode: "change",
+      persist: false,
+    });
+
+    expect(scoreState(equivalent)).toEqual(scoreState(canonical));
+  });
+
+  it("excludes malformed evidence timestamps from point-in-time windows", () => {
+    expect(isAtOrBefore("2026-02-30T12:00:00Z", new Date("2026-03-03T12:00:00Z"))).toBe(false);
+    expect(
+      isWithinPastWindow("2026-02-30T12:00:00Z", new Date("2026-03-03T12:00:00Z"), 7 * 86_400_000),
+    ).toBe(false);
+    expect(
+      isWithinPastWindow("2026-03-02T12:00:00", new Date("2026-03-03T12:00:00Z"), 7 * 86_400_000),
+    ).toBe(false);
+  });
+
   it("keeps historical evidence when future rows exceed both query limits", async () => {
     const context = { asOf: AS_OF, gateMode: "change" as const, persist: false };
     const before = await evaluateSystem(db, context);
@@ -185,8 +214,17 @@ describe("point-in-time system evaluation", () => {
     await evaluateSystem(db, { asOf: AS_OF, gateMode: "operational", persist: true });
     const afterPersisted = await db
       .selectFrom("evaluation_runs")
+      .selectAll()
+      .orderBy("finished_at", "desc")
+      .executeTakeFirstOrThrow();
+    expect(afterPersisted).toMatchObject({
+      evaluation_as_of: AS_OF.toISOString(),
+      gate_mode: "operational",
+    });
+    const finalCount = await db
+      .selectFrom("evaluation_runs")
       .select(({ fn }) => fn.countAll<number>().as("count"))
       .executeTakeFirstOrThrow();
-    expect(afterPersisted.count).toBe(before.count + 1);
+    expect(finalCount.count).toBe(before.count + 1);
   });
 });

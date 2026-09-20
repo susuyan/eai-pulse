@@ -7,6 +7,7 @@ import {
 import {
   decideMonitorAlert,
   type MonitorReportInput,
+  mergeEvaluationIncidentBody,
   monitorFingerprint,
 } from "../../src/pipeline/monitor-alert.js";
 
@@ -52,6 +53,36 @@ function client(value: unknown): JsonModelClient {
 }
 
 describe("monitor alert decision", () => {
+  it("preserves unresolved Monitor details while replacing the evaluation section", () => {
+    const existing = [
+      "<!-- agent-pulse-monitor:v3 fingerprint=0123456789abcdef -->",
+      "# Agent Pulse 自动监控告警",
+      "",
+      "## 问题",
+      "- Site is unreachable.",
+      "",
+      "<!-- agent-pulse-evaluation:start -->",
+      "## 运营评测",
+      "- Old score: 62",
+      "<!-- agent-pulse-evaluation:end -->",
+    ].join("\n");
+    const section = [
+      "<!-- agent-pulse-evaluation:start -->",
+      "## 运营评测",
+      "- Current score: 56",
+      "<!-- agent-pulse-evaluation:end -->",
+    ].join("\n");
+
+    const merged = mergeEvaluationIncidentBody(existing, section, "fedcba9876543210");
+
+    expect(merged).toContain("# Agent Pulse 自动监控告警");
+    expect(merged).toContain("Site is unreachable.");
+    expect(merged).toContain("Current score: 56");
+    expect(merged).not.toContain("Old score: 62");
+    expect(merged.match(/agent-pulse-evaluation:start/g)).toHaveLength(1);
+    expect(merged).toMatch(/^<!-- agent-pulse-monitor:v3 fingerprint=fedcba9876543210 -->/);
+  });
+
   it.each([
     60, 59,
   ])("recognizes a Quality Guard evaluation incident at score %s during Monitor cooldown", async (currentScore) => {

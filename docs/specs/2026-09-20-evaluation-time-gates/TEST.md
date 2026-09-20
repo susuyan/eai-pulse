@@ -52,6 +52,7 @@
 - `change` 与冲突的显式 `--as-of` 同时出现时失败。
 - `operational` 输出结构化 policy decision，并将 report 和 summary 写到指定位置。
 - `persist=false` 不增加 `evaluation_runs`；`persist=true` 恰好增加一条。
+- change gate 不得将 output 写回 baseline 同一路径；operational gate 的无效、缺失或未来 baseline 在写库前失败。
 - 旧 `--fail-on-regression` 映射到 change gate，并输出迁移提示。
 
 ### 2.2 Data Refresh

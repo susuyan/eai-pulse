@@ -41,7 +41,7 @@ describe("versioned evaluation freshness", () => {
       { asOf: now, gateMode, persist: false },
     );
     await writeFile(join(directory, "data/reports/system-evaluation.json"), JSON.stringify(report));
-    expect(await checkFreshness(directory, now)).toMatchObject(
+    expect(await checkFreshness(directory, 60, now)).toMatchObject(
       gateMode === "change"
         ? {
             status: "critical",
@@ -82,6 +82,40 @@ describe("versioned evaluation freshness", () => {
         evaluationAsOf: "2026-09-20T11:30:00.000Z",
         fileMtime: "2026-08-26T12:00:00.000Z",
         ageMinutes: 30,
+      },
+    });
+  });
+
+  it("uses the recomputed score instead of the persisted report score", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "monitor-current-score-"));
+    directories.push(directory);
+    await mkdir(join(directory, "data/snapshot"), { recursive: true });
+    await mkdir(join(directory, "data/reports"), { recursive: true });
+    await writeFile(join(directory, "data/snapshot/v1.json"), "{}");
+    const now = new Date("2026-09-20T12:00:00.000Z");
+    const report = buildSystemEvaluationReport(
+      {
+        id: "persisted",
+        releaseVersion: "test",
+        status: "partial",
+        overallScore: 62,
+        rawWeightedScore: 62,
+        evidenceCoverage: 50,
+        dimensions: [],
+        capabilities: [],
+        notes: "persisted score",
+        startedAt: now.toISOString(),
+        finishedAt: now.toISOString(),
+      },
+      { asOf: now, gateMode: "operational", persist: false },
+    );
+    await writeFile(join(directory, "data/reports/system-evaluation.json"), JSON.stringify(report));
+
+    expect(await checkFreshness(directory, 59, now)).toMatchObject({
+      status: "critical",
+      detail: {
+        reasonCodes: ["system_score_below_floor"],
+        fingerprint: "6ffc8d32a0274c62",
       },
     });
   });

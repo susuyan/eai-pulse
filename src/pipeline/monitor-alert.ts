@@ -73,6 +73,36 @@ export interface MonitorAlertDecision {
   };
 }
 
+const EVALUATION_SECTION_START = "<!-- agent-pulse-evaluation:start -->";
+const EVALUATION_SECTION_END = "<!-- agent-pulse-evaluation:end -->";
+
+export function mergeEvaluationIncidentBody(
+  existingBody: string,
+  evaluationSection: string,
+  evaluationFingerprint: string,
+): string {
+  if (!/^[a-f0-9]{16}$/.test(evaluationFingerprint)) {
+    throw new Error("Invalid evaluation incident fingerprint");
+  }
+  if (
+    !evaluationSection.includes(EVALUATION_SECTION_START) ||
+    !evaluationSection.includes(EVALUATION_SECTION_END)
+  ) {
+    throw new Error("Evaluation incident section markers are required");
+  }
+  const preserved = existingBody
+    .replace(/<!-- agent-pulse-monitor:v\d+ fingerprint=[a-f0-9]{16} -->\n?/g, "")
+    .replace(
+      /\n?<!-- agent-pulse-evaluation:start -->[\s\S]*?<!-- agent-pulse-evaluation:end -->\n?/g,
+      "",
+    )
+    .trim();
+  const monitorSection = preserved.includes("# Agent Pulse 自动监控告警") ? preserved : "";
+  const heading = monitorSection || "# Agent Pulse 运营评测告警";
+  const marker = `<!-- agent-pulse-monitor:v3 fingerprint=${evaluationFingerprint} -->`;
+  return `${marker}\n${heading}\n\n${evaluationSection.trim()}\n`;
+}
+
 export interface DecideMonitorAlertOptions {
   report: unknown;
   incident?: MonitorIncidentContext | MonitorIncidentContext[] | null;

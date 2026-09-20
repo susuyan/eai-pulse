@@ -36,12 +36,20 @@ export function parseEvaluationInstant(value: string, field: string): Date {
 
 export function isAtOrBefore(value: string | null, asOf: Date): boolean {
   if (!value) return false;
-  const timestamp = Date.parse(value);
-  return Number.isFinite(timestamp) && timestamp <= asOf.getTime();
+  try {
+    return parseEvaluationInstant(value, "evidence timestamp").getTime() <= asOf.getTime();
+  } catch {
+    return false;
+  }
 }
 
 export function isWithinPastWindow(value: string | null, asOf: Date, windowMs: number): boolean {
-  if (!isAtOrBefore(value, asOf)) return false;
-  const ageMs = asOf.getTime() - Date.parse(value as string);
-  return ageMs <= windowMs;
+  if (!value) return false;
+  try {
+    const timestamp = parseEvaluationInstant(value, "evidence timestamp").getTime();
+    const ageMs = asOf.getTime() - timestamp;
+    return ageMs >= 0 && ageMs <= windowMs;
+  } catch {
+    return false;
+  }
 }

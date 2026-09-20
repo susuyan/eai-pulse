@@ -252,7 +252,8 @@ describe("GitHub source governance workflows", () => {
     expect(guard).toContain("QUALITY_FLOOR: 60");
     expect(guard).toContain("REFRESH_COOLDOWN_HOURS: 120");
     expect(guard).toContain("--gate=operational");
-    expect(guard).toContain("agent-pulse-monitor:v3 fingerprint=");
+    expect(guard).toContain("agent-pulse-evaluation:start");
+    expect(guard).toContain("monitor:incident");
     expect(guard).toContain("data-refresh.yml/runs?branch=main&per_page=100");
     expect(guard).toContain('const active = runs.some(run => run.status !== "completed");');
     expect(guard).toContain("if (!refreshEligible || active)");

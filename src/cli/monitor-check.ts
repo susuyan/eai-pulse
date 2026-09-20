@@ -24,6 +24,7 @@ import { loadConfig } from "../config/env.js";
 import { createDatabase } from "../db/database.js";
 import { migrateToLatest } from "../db/migrate.js";
 import { seedDatabase } from "../db/seed.js";
+import { evaluateSystem } from "../pipeline/evaluate.js";
 import {
   decideOperationalEvaluation,
   evaluateVersionedFreshness,
@@ -50,6 +51,7 @@ interface HealthCheckDetail extends CheckDetail {
   degradedPercent: number;
   failedPercent: number;
   avgHealthScore: number;
+  evaluationScore: number;
 }
 
 export interface MonitorCheckResult {
@@ -102,7 +104,11 @@ async function checkSite(config: ReturnType<typeof loadConfig>): Promise<CheckDe
   }
 }
 
-export async function checkFreshness(rootDir: string, now = new Date()): Promise<CheckDetail> {
+export async function checkFreshness(
+  rootDir: string,
+  currentScore: number,
+  now = new Date(),
+): Promise<CheckDetail> {
   try {
     const snapshotPath = new URL(SNAPSHOT_PATH, `file://${rootDir}/`).pathname;
     const reportPath = new URL(EVALUATION_REPORT_PATH, `file://${rootDir}/`).pathname;
@@ -113,7 +119,7 @@ export async function checkFreshness(rootDir: string, now = new Date()): Promise
     const report = normalizeOperationalEvaluationReport(JSON.parse(serializedReport));
     return evaluateVersionedFreshness({
       evaluationAsOf: report.evaluationAsOf,
-      currentScore: report.overallScore,
+      currentScore,
       fileMtime: fileStat.mtime.toISOString(),
       now,
     });
@@ -141,6 +147,7 @@ export async function checkFreshness(rootDir: string, now = new Date()): Promise
 
 async function checkSourceHealth(
   config: ReturnType<typeof loadConfig>,
+  asOf: Date,
 ): Promise<HealthCheckDetail> {
   const db = createDatabase(config);
   try {
@@ -157,6 +164,11 @@ async function checkSourceHealth(
     }
 
     const report = await generateMonitorReport(db);
+    const evaluation = await evaluateSystem(db, {
+      asOf,
+      gateMode: "operational",
+      persist: false,
+    });
     const { activePercent, degradedPercent, failedPercent } = sourceLifecyclePercentages(report);
 
     const severity = getSeverityLevel(report);
@@ -183,6 +195,7 @@ async function checkSourceHealth(
       degradedPercent,
       failedPercent,
       avgHealthScore: report.avgHealthScore,
+      evaluationScore: evaluation.overallScore,
     };
   } finally {
     await db.destroy();
@@ -194,8 +207,9 @@ async function checkSourceHealth(
 async function main(): Promise<never> {
   const config = loadConfig();
   const skipSite = process.env.MONITOR_SKIP_SITE === "1";
+  const runStartedAt = new Date();
 
-  const checks = await Promise.all([
+  const [site, sourceHealth] = await Promise.all([
     skipSite
       ? Promise.resolve<CheckDetail>({
           status: "ok",
@@ -203,11 +217,13 @@ async function main(): Promise<never> {
           detail: {},
         })
       : checkSite(config),
-    checkFreshness(config.rootDir),
-    checkSourceHealth(config),
+    checkSourceHealth(config, runStartedAt),
   ]);
-
-  const [site, freshness, sourceHealth] = checks;
+  const freshness = await checkFreshness(
+    config.rootDir,
+    sourceHealth.evaluationScore,
+    runStartedAt,
+  );
 
   // Compute overall status: critical wins over warning, warning over ok
   const statusValue: Record<"ok" | "warning" | "critical", number> = {
@@ -257,15 +273,7 @@ async function main(): Promise<never> {
     recommendations.push("Review quarantined sources and repair failing adapters.");
   }
 
-  const systemScore = Math.max(
-    0,
-    Math.min(
-      100,
-      sourceHealth.status === "ok"
-        ? sourceHealth.avgHealthScore
-        : Math.round(sourceHealth.avgHealthScore * 0.7),
-    ),
-  );
+  const systemScore = sourceHealth.evaluationScore;
 
   const result: MonitorCheckResult = {
     timestamp: new Date().toISOString(),
@@ -302,6 +310,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
           degradedPercent: 0,
           failedPercent: 0,
           avgHealthScore: 0,
+          evaluationScore: 0,
         },
       },
       issues: [`Monitor script crashed: ${error instanceof Error ? error.message : String(error)}`],

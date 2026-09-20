@@ -92,10 +92,10 @@ jobs:
           set -euo pipefail
           report="$RUNNER_TEMP/evaluation.json"
           body="$RUNNER_TEMP/monitor-issue.md"
+          section="$RUNNER_TEMP/evaluation-section.md"
           {
-            echo "<!-- agent-pulse-monitor:v3 fingerprint=$(jq -r '.operationalDecision.fingerprint' "$report") -->"
-            echo '# Agent Pulse 运营评测告警'
-            echo
+            echo '<!-- agent-pulse-evaluation:start -->'
+            echo '## 运营评测'
             echo "- 当前评测时间：$(jq -r '.evaluationAsOf' "$report")"
             echo "- 已持久化水位：$(jq -r '.operationalDecision.persistedEvaluationAsOf // "missing"' "$report")"
             echo "- 水位年龄（分钟）：$(jq -r '.operationalDecision.ageMinutes // "unknown"' "$report")"
@@ -106,10 +106,18 @@ jobs:
             echo '- 检查本次证据；满足冷却期与并发门禁时，仅触发一次 incremental Data Refresh。'
             echo
             echo "[查看本次 Actions 运行](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-          } > "$body"
+            echo '<!-- agent-pulse-evaluation:end -->'
+          } > "$section"
           gh label create "monitor:critical" --color d73a4a --description "Operational health incident" --force
-          issue="$(gh issue list --state open --label 'monitor:critical' --limit 100 --json number,body \
-            --jq 'sort_by(.number) | (map(select(.body | contains("agent-pulse-monitor:v")))[0] // .[0]) | .number // empty')"
+          gh issue list --state open --label 'monitor:critical' --limit 100 --json number,body \
+            --jq 'sort_by(.number) | (map(select(.body | contains("agent-pulse-monitor:v")))[0] // .[0]) | if . == null then [] else [.] end' \
+            > "$RUNNER_TEMP/monitor-incident.json"
+          npm run --silent monitor:incident -- \
+            --incident="$RUNNER_TEMP/monitor-incident.json" \
+            --section="$section" \
+            --output="$body" \
+            --fingerprint="$(jq -r '.operationalDecision.fingerprint' "$report")"
+          issue="$(jq -r '.[0].number // empty' "$RUNNER_TEMP/monitor-incident.json")"
           if [[ -n "$issue" ]]; then
             gh issue edit "$issue" --body-file "$body"
           else

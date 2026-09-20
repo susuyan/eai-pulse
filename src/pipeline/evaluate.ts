@@ -2,7 +2,13 @@ import { randomUUID } from "node:crypto";
 import type { Kysely } from "kysely";
 import { capabilities, productVersion } from "../catalog/product.js";
 import type { DatabaseSchema } from "../db/types.js";
-import { type EvaluationContext, isAtOrBefore, isWithinPastWindow } from "./evaluation-context.js";
+import {
+  type EvaluationContext,
+  type EvaluationGateMode,
+  isAtOrBefore,
+  isWithinPastWindow,
+  parseEvaluationInstant,
+} from "./evaluation-context.js";
 import { eventReadinessSummary } from "./readiness.js";
 
 export interface EvaluationDimension {
@@ -92,20 +98,8 @@ export async function evaluateSystem(db: Kysely<DatabaseSchema>, context: Evalua
   const [allSources, runs, checks, events, eventEvidence, scout, signalProvenance, readiness] =
     await Promise.all([
       db.selectFrom("sources").selectAll().execute(),
-      db
-        .selectFrom("source_runs")
-        .selectAll()
-        .where("finished_at", "<=", context.asOf.toISOString())
-        .orderBy("started_at", "desc")
-        .limit(2_000)
-        .execute(),
-      db
-        .selectFrom("source_checks")
-        .selectAll()
-        .where("finished_at", "<=", context.asOf.toISOString())
-        .orderBy("finished_at", "desc")
-        .limit(5_000)
-        .execute(),
+      db.selectFrom("source_runs").selectAll().execute(),
+      db.selectFrom("source_checks").selectAll().execute(),
       db.selectFrom("events").selectAll().execute(),
       db
         .selectFrom("event_signals")
@@ -137,8 +131,13 @@ export async function evaluateSystem(db: Kysely<DatabaseSchema>, context: Evalua
 
   const sources = allSources.filter((source) => source.lifecycle_status !== "retired");
   const sourcesById = new Map(sources.map((source) => [source.id, source]));
-  const pointInTimeRuns = runs.filter((run) => isAtOrBefore(run.finished_at, context.asOf));
-  const pointInTimeChecks = checks.filter((check) => isAtOrBefore(check.finished_at, context.asOf));
+  const pointInTimeRuns = pointInTimeRows(runs, (run) => run.finished_at, context.asOf, 2_000);
+  const pointInTimeChecks = pointInTimeRows(
+    checks,
+    (check) => check.finished_at,
+    context.asOf,
+    5_000,
+  );
   const pointInTimeEvents = events.filter((event) => isAtOrBefore(event.created_at, context.asOf));
   const pointInTimeEvidence = eventEvidence.filter(
     (row) =>
@@ -515,6 +514,8 @@ export async function evaluateSystem(db: Kysely<DatabaseSchema>, context: Evalua
         dimensions_json: JSON.stringify(dimensions),
         capability_snapshot_json: JSON.stringify(capabilities),
         notes,
+        evaluation_as_of: context.asOf.toISOString(),
+        gate_mode: context.gateMode,
         started_at: startedAt,
         finished_at: finishedAt,
       })
@@ -554,9 +555,21 @@ export async function latestEvaluation(db: Kysely<DatabaseSchema>) {
     dimensions,
     capabilities: JSON.parse(row.capability_snapshot_json) as typeof capabilities,
     notes: row.notes,
+    evaluationAsOf: normalizeHistoricalEvaluationAsOf(row.evaluation_as_of, row.finished_at),
+    gateMode: normalizeHistoricalGateMode(row.gate_mode),
     startedAt: row.started_at,
     finishedAt: row.finished_at,
   };
+}
+
+function normalizeHistoricalEvaluationAsOf(value: string | null, finishedAt: string): string {
+  return parseEvaluationInstant(value ?? finishedAt, "evaluation history timestamp").toISOString();
+}
+
+function normalizeHistoricalGateMode(value: string | null): EvaluationGateMode {
+  if (value === null) return "operational";
+  if (value === "change" || value === "operational") return value;
+  throw new Error(`Invalid evaluation history gate mode: ${value}`);
 }
 
 function latestBySource<T extends { source_id: string }>(rows: T[]): Map<string, T> {
@@ -565,6 +578,29 @@ function latestBySource<T extends { source_id: string }>(rows: T[]): Map<string,
     if (!latest.has(row.source_id)) latest.set(row.source_id, row);
   }
   return latest;
+}
+
+function pointInTimeRows<T>(
+  rows: T[],
+  timestamp: (row: T) => string | null,
+  asOf: Date,
+  limit: number,
+): T[] {
+  return rows
+    .map((row) => {
+      const value = timestamp(row);
+      if (!value) return null;
+      try {
+        const instant = parseEvaluationInstant(value, "evidence timestamp").getTime();
+        return instant <= asOf.getTime() ? { row, instant } : null;
+      } catch {
+        return null;
+      }
+    })
+    .filter((entry): entry is { row: T; instant: number } => entry !== null)
+    .sort((left, right) => right.instant - left.instant)
+    .slice(0, limit)
+    .map((entry) => entry.row);
 }
 
 function groupEvidence<T extends { eventId: string }>(rows: T[]): Map<string, T[]> {

@@ -3,7 +3,10 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { resolveEvaluationInvocation } from "../../src/cli/evaluate.js";
+import {
+  assertEvaluationBaselineWriteIsSafe,
+  resolveEvaluationInvocation,
+} from "../../src/cli/evaluate.js";
 import { normalizeSystemEvaluationReport } from "../../src/pipeline/evaluation-progress.js";
 
 function legacyReport(finishedAt: string) {
@@ -125,5 +128,76 @@ describe("evaluation CLI invocation", () => {
       failOnRegression: false,
       legacyFlagUsed: false,
     });
+  });
+
+  it("does not overwrite an invalid operational baseline in place", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "evaluation-invalid-baseline-"));
+    directories.push(directory);
+    const baselinePath = join(directory, "baseline.json");
+    const original = "{invalid";
+    await writeFile(baselinePath, original);
+
+    expect(() =>
+      execFileSync(
+        process.execPath,
+        [
+          "--import",
+          "tsx",
+          "src/cli/evaluate.ts",
+          "--skip-bootstrap",
+          "--gate=operational",
+          "--persist",
+          `--baseline=${baselinePath}`,
+          `--output=${baselinePath}`,
+        ],
+        {
+          env: { ...process.env, NODE_ENV: "test", DATABASE_URL: "sqlite::memory:" },
+          stdio: "pipe",
+        },
+      ),
+    ).toThrow();
+    expect(await readFile(baselinePath, "utf8")).toBe(original);
+  });
+
+  it("rejects a future watermark before persistence", () => {
+    const runStartedAt = new Date("2026-09-20T00:00:00.000Z");
+    const baseline = normalizeSystemEvaluationReport(legacyReport("2026-09-21T00:00:00.000Z"));
+    expect(() =>
+      assertEvaluationBaselineWriteIsSafe({
+        invocation: {
+          gateMode: "operational",
+          asOf: runStartedAt,
+          persist: true,
+          failOnRegression: false,
+          legacyFlagUsed: false,
+        },
+        baselinePath: "baseline.json",
+        outputPath: "baseline.json",
+        baseline,
+        baselineError: null,
+        runStartedAt,
+      }),
+    ).toThrow(/watermark is invalid or future/);
+  });
+
+  it("does not let a change report overwrite its operational baseline", () => {
+    const runStartedAt = new Date("2026-09-20T00:00:00.000Z");
+    const baseline = normalizeSystemEvaluationReport(legacyReport("2026-08-26T12:39:38.724Z"));
+    expect(() =>
+      assertEvaluationBaselineWriteIsSafe({
+        invocation: {
+          gateMode: "change",
+          asOf: new Date(baseline.evaluationAsOf),
+          persist: false,
+          failOnRegression: true,
+          legacyFlagUsed: false,
+        },
+        baselinePath: "baseline.json",
+        outputPath: "./baseline.json",
+        baseline,
+        baselineError: null,
+        runStartedAt,
+      }),
+    ).toThrow(/cannot overwrite its operational baseline/);
   });
 });

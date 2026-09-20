@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { renderStaticPages } from "../src/pipeline/static-site/pages.js";
 import { pageLayout, serializeJsonLd } from "../src/pipeline/static-site/render.js";
+import { embodiedSiteModel } from "./fixtures/embodied-site-model.js";
 
 describe("static site SEO serialization", () => {
   it("keeps JSON-LD parseable while neutralizing script boundaries", () => {
@@ -47,5 +49,31 @@ describe("static site SEO serialization", () => {
     ]);
     expect(html).toContain('<meta property="og:type" content="article">');
     expect(html).toContain('<meta name="twitter:card" content="summary">');
+  });
+
+  it("publishes only supported embodied-data structured claims", () => {
+    const pages = renderStaticPages(embodiedSiteModel());
+    const jsonLd = (path: string) =>
+      [
+        ...(pages.find((page) => page.path === path)?.content ?? "").matchAll(
+          /<script type="application\/ld\+json">([\s\S]*?)<\/script>/g,
+        ),
+      ].map((match) => JSON.parse(match[1] ?? "{}"));
+
+    expect(jsonLd("index.html").map((item) => item["@type"])).toEqual([
+      "WebPage",
+      "WebSite",
+      "Organization",
+    ]);
+    expect(jsonLd("pipeline/index.html").map((item) => item["@type"])).toContain("CollectionPage");
+    expect(jsonLd("events/embodied-event/index.html")).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          "@type": "Article",
+          headline: "embodied-event",
+          mainEntityOfPage: "https://example.com/events/embodied-event/",
+        }),
+      ]),
+    );
   });
 });

@@ -5,8 +5,16 @@ import {
 } from "../src/cli/public-content-fingerprint.js";
 
 describe("public content fingerprint", () => {
-  it("includes trend narratives as material public content", () => {
-    expect(PUBLIC_CONTENT_FILES).toContain("narratives.json");
+  it("includes every embodied-data public DTO", () => {
+    expect(PUBLIC_CONTENT_FILES).toEqual([
+      "events.json",
+      "pipeline.json",
+      "assets.json",
+      "peers.json",
+      "sources.json",
+      "scout.json",
+      "product.json",
+    ]);
   });
 
   it("ignores export and source-check timestamps", () => {

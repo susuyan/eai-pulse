@@ -1,8 +1,6 @@
 import type { PublicEmbodiedEvent, StaticSiteModel } from "./dto.js";
 import type { Locale } from "./i18n.js";
 import { t } from "./i18n.js";
-import type { PageKey } from "./render.js";
-import { escapeHtml, pageLayout } from "./render.js";
 import { renderAssetsPage } from "./pages/assets.js";
 import { renderEventPage } from "./pages/event.js";
 import { renderEmbodiedHome } from "./pages/home.js";
@@ -11,6 +9,8 @@ import { renderEmbodiedTimeline, renderPipelinePage } from "./pages/pipeline.js"
 import { renderScoutPage } from "./pages/scout.js";
 import { localize, pageHero } from "./pages/shared.js";
 import { renderSourcesPage } from "./pages/sources.js";
+import type { PageKey } from "./render.js";
+import { escapeHtml, pageLayout } from "./render.js";
 
 export interface StaticPage {
   path: string;
@@ -187,7 +187,23 @@ function eventPage(
     event.factSummary,
     renderEventPage(event, locale),
     locale,
-    { ogType: "article" },
+    {
+      ogType: "article",
+      jsonLd: [
+        {
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: event.title,
+          description: event.factSummary,
+          datePublished: event.publishedAt,
+          dateModified: model.generatedAt,
+          inLanguage: locale,
+          mainEntityOfPage: publicUrl(model.siteUrl, `${localePrefix}events/${event.slug}/`),
+          articleSection: event.pipelineStages,
+          citation: event.evidence.map((item) => item.url),
+        },
+      ],
+    },
   );
 }
 
@@ -203,6 +219,8 @@ function renderPage(
   extra: Partial<Pick<import("./render.js").PageChrome, "robots" | "ogType" | "jsonLd">> = {},
 ): StaticPage {
   const route = path === "index.html" ? "/" : `/${path.replace(/index\.html$/, "")}`;
+  const defaultJsonLd = structuredDataForPage(model, path, active, title, pageDescription, locale);
+  const { jsonLd = [], ...pageExtra } = extra;
   return {
     path,
     content: pageLayout({
@@ -216,9 +234,78 @@ function renderPage(
       siteUrl: model.siteUrl,
       github: model.github,
       generatedAt: model.generatedAt,
-      ...extra,
+      ...pageExtra,
+      jsonLd: [...defaultJsonLd, ...jsonLd],
     }),
   };
+}
+
+function structuredDataForPage(
+  model: StaticSiteModel,
+  path: string,
+  active: PageKey,
+  title: string,
+  pageDescription: string,
+  locale: Locale,
+): Record<string, unknown>[] {
+  const route = path === "index.html" ? "" : path.replace(/index\.html$/, "");
+  const url = publicUrl(model.siteUrl, route);
+  if (path === "index.html" || path === "en/index.html") {
+    return [
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "@id": `${url}#website`,
+        name: "Agent Pulse",
+        url,
+        description: pageDescription,
+        inLanguage: locale,
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        name: "Agent Pulse",
+        url,
+      },
+    ];
+  }
+  if (
+    !new Set<PageKey>(["pipeline", "assets", "peers", "sources", "scout", "timeline"]).has(active)
+  ) {
+    return [];
+  }
+  const data: Record<string, unknown>[] = [
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: title,
+      description: pageDescription,
+      url,
+      inLanguage: locale,
+      isPartOf: { "@id": `${publicUrl(model.siteUrl, locale === "en" ? "en/" : "")}#website` },
+    },
+  ];
+  if (active === "assets") {
+    data.push(
+      ...model.datasets.map((dataset) => ({
+        "@context": "https://schema.org",
+        "@type": "Dataset",
+        name: dataset.name,
+        description: dataset.limitations.join(" ") || `${dataset.name} embodied-data dataset`,
+        url: dataset.canonicalUrl,
+        creator: { "@type": "Organization", name: dataset.publisher },
+        datePublished: dataset.releaseDate ?? undefined,
+        license: dataset.license?.url,
+        distribution: { "@type": "DataDownload", contentUrl: dataset.access.url },
+      })),
+    );
+  }
+  return data;
+}
+
+function publicUrl(siteUrl: string, route: string): string {
+  const base = siteUrl.endsWith("/") ? siteUrl : `${siteUrl}/`;
+  return new URL(route.replace(/^\//, ""), base).toString();
 }
 
 function changelogPage(model: StaticSiteModel, locale: Locale): string {
@@ -241,16 +328,46 @@ function notFoundPage(locale: Locale): string {
 
 function description(locale: Locale, page: string): string {
   const values: Record<string, [string, string]> = {
-    home: ["从一手证据追踪具身数据生产全链路的关键变化。", "Track the embodied-data production pipeline from primary evidence."],
-    pipeline: ["沿六阶段数据管线查看里程碑、边界和下一信号。", "Review milestones, boundaries, and next signals across six production stages."],
-    assets: ["比较数据集、标准和采集方法的适用边界与公开证据。", "Compare datasets, standards, and collection methods with evidence."],
-    peers: ["逐项查看同行能力声明、核验状态和证据。", "Review peer capability claims, verification states, and evidence."],
-    sources: ["查看具身数据来源覆盖、生命周期和健康状态。", "Review embodied-data source coverage, lifecycle, and health."],
-    scout: ["把已核验事件转成具身数据生产的小实验。", "Turn verified events into small embodied-data production experiments."],
-    timeline: ["按发生时间浏览具身数据生产事件。", "Browse embodied-data production events by date."],
-    changelog: ["查看 Agent Pulse 的产品变化与公开边界。", "Review Agent Pulse product changes and public boundaries."],
-    legal: ["了解证据引用、版权、纠错和隐私边界。", "Understand evidence, copyright, corrections, and privacy boundaries."],
-    "not-found": ["旧页面已移除，请使用当前决策视图。", "The old page was removed. Use the current decision views."],
+    home: [
+      "从一手证据追踪具身数据生产全链路的关键变化。",
+      "Track the embodied-data production pipeline from primary evidence.",
+    ],
+    pipeline: [
+      "沿六阶段数据管线查看里程碑、边界和下一信号。",
+      "Review milestones, boundaries, and next signals across six production stages.",
+    ],
+    assets: [
+      "比较数据集、标准和采集方法的适用边界与公开证据。",
+      "Compare datasets, standards, and collection methods with evidence.",
+    ],
+    peers: [
+      "逐项查看同行能力声明、核验状态和证据。",
+      "Review peer capability claims, verification states, and evidence.",
+    ],
+    sources: [
+      "查看具身数据来源覆盖、生命周期和健康状态。",
+      "Review embodied-data source coverage, lifecycle, and health.",
+    ],
+    scout: [
+      "把已核验事件转成具身数据生产的小实验。",
+      "Turn verified events into small embodied-data production experiments.",
+    ],
+    timeline: [
+      "按发生时间浏览具身数据生产事件。",
+      "Browse embodied-data production events by date.",
+    ],
+    changelog: [
+      "查看 Agent Pulse 的产品变化与公开边界。",
+      "Review Agent Pulse product changes and public boundaries.",
+    ],
+    legal: [
+      "了解证据引用、版权、纠错和隐私边界。",
+      "Understand evidence, copyright, corrections, and privacy boundaries.",
+    ],
+    "not-found": [
+      "旧页面已移除，请使用当前决策视图。",
+      "The old page was removed. Use the current decision views.",
+    ],
   };
   return values[page]?.[locale === "en" ? 1 : 0] ?? "Agent Pulse";
 }

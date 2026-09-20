@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { access, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 interface IntegrityIssue {
@@ -13,10 +13,13 @@ export interface PublicSiteIntegrityReport {
   generatedAt: string | null;
   counts: {
     events: number;
-    signals: number;
-    scout: number;
-    actors: number;
+    pipelineStages: number;
+    datasets: number;
+    standards: number;
+    collectionMethods: number;
+    peers: number;
     sources: number;
+    scout: number;
     sitemapUrls: number;
     timelineCards: number;
   };
@@ -25,26 +28,49 @@ export interface PublicSiteIntegrityReport {
 
 const MAIN_ROUTES = [
   "",
-  "lines/",
-  "industry-evolution/",
-  "timeline/",
-  "signals/",
-  "scout/",
-  "actors/",
-  "resources/",
-  "product/",
-  "changelog/",
+  "pipeline/",
+  "assets/",
+  "peers/",
   "sources/",
+  "scout/",
+  "timeline/",
+  "changelog/",
   "legal/",
 ] as const;
 
-const STRATEGIC_TRACKS = [
-  "tech-evolution",
-  "agi-progress",
-  "commercialization",
-  "investing",
-  "global-innovation",
-  "model-economics",
+const PIPELINE_STAGES = [
+  "demand-definition",
+  "acquisition-route",
+  "multimodal-capture",
+  "production-operations",
+  "data-engineering-standards",
+  "quality-training-feedback",
+] as const;
+
+const DATA_PATHS = {
+  events: "data/events.json",
+  pipeline: "data/pipeline.json",
+  assets: "data/assets.json",
+  peers: "data/peers.json",
+  sources: "data/sources.json",
+  scout: "data/scout.json",
+  product: "data/product.json",
+} as const;
+
+const LEGACY_FILES = [
+  "lines/index.html",
+  "signals/index.html",
+  "actors/index.html",
+  "resources/index.html",
+  "product/index.html",
+  "industry-evolution/index.html",
+  "data/timeline.json",
+  "data/tracks.json",
+  "data/signals.json",
+  "data/actors.json",
+  "data/resources.json",
+  "data/narratives.json",
+  "data/influencers.json",
 ] as const;
 
 export async function validatePublicSite(
@@ -70,51 +96,64 @@ export async function validatePublicSite(
     }
   };
 
-  const dataPaths = {
-    timeline: "data/timeline.json",
-    signals: "data/signals.json",
-    scout: "data/scout.json",
-    product: "data/product.json",
-    narratives: "data/narratives.json",
-    actors: "data/actors.json",
-    sources: "data/sources.json",
-  } as const;
   const dataText = Object.fromEntries(
     await Promise.all(
-      Object.entries(dataPaths).map(async ([key, path]) => [key, await read(path)] as const),
+      Object.entries(DATA_PATHS).map(async ([key, path]) => [key, await read(path)] as const),
     ),
-  ) as Record<keyof typeof dataPaths, string>;
-  const timeline = parse<{
+  ) as Record<keyof typeof DATA_PATHS, string>;
+  const eventsPayload = parse<{
     generatedAt?: string;
     siteUrl?: string;
-    events?: Array<{ slug?: string }>;
-  }>(dataPaths.timeline, dataText.timeline, {});
-  const signals = parse<{ generatedAt?: string; signals?: unknown[] }>(
-    dataPaths.signals,
-    dataText.signals,
+    events?: Array<{
+      slug?: string;
+      evidence?: Array<{ url?: string }>;
+      dataProfile?: { evidenceStatus?: string };
+    }>;
+  }>(DATA_PATHS.events, dataText.events, {});
+  const pipelinePayload = parse<{ generatedAt?: string; stages?: Array<{ slug?: string }> }>(
+    DATA_PATHS.pipeline,
+    dataText.pipeline,
     {},
   );
-  const scout = parse<{ generatedAt?: string; insights?: unknown[] }>(
-    dataPaths.scout,
+  const assetsPayload = parse<{
+    generatedAt?: string;
+    datasets?: unknown[];
+    standards?: unknown[];
+    collectionMethods?: unknown[];
+  }>(DATA_PATHS.assets, dataText.assets, {});
+  const peersPayload = parse<{ generatedAt?: string; peers?: Array<{ capabilities?: unknown[] }> }>(
+    DATA_PATHS.peers,
+    dataText.peers,
+    {},
+  );
+  const sources = parse<unknown[]>(DATA_PATHS.sources, dataText.sources, []);
+  const scoutPayload = parse<{ generatedAt?: string; insights?: unknown[] }>(
+    DATA_PATHS.scout,
     dataText.scout,
     {},
   );
-  const product = parse<{ generatedAt?: string }>(dataPaths.product, dataText.product, {});
-  const narratives = parse<{ generatedAt?: string }>(dataPaths.narratives, dataText.narratives, {});
-  const actors = parse<unknown[]>(dataPaths.actors, dataText.actors, []);
-  const sources = parse<unknown[]>(dataPaths.sources, dataText.sources, []);
-  const events = Array.isArray(timeline.events) ? timeline.events : [];
-  const publicSignals = Array.isArray(signals.signals) ? signals.signals : [];
-  const publicScout = Array.isArray(scout.insights) ? scout.insights : [];
-  const generatedAt = typeof timeline.generatedAt === "string" ? timeline.generatedAt : null;
-  if (!generatedAt || !Number.isFinite(Date.parse(generatedAt))) {
-    add("invalid_generated_at", dataPaths.timeline, "Timeline generatedAt is missing or invalid");
+  const productPayload = parse<{ generatedAt?: string }>(DATA_PATHS.product, dataText.product, {});
+
+  const events = Array.isArray(eventsPayload.events) ? eventsPayload.events : [];
+  const stages = Array.isArray(pipelinePayload.stages) ? pipelinePayload.stages : [];
+  const datasets = Array.isArray(assetsPayload.datasets) ? assetsPayload.datasets : [];
+  const standards = Array.isArray(assetsPayload.standards) ? assetsPayload.standards : [];
+  const collectionMethods = Array.isArray(assetsPayload.collectionMethods)
+    ? assetsPayload.collectionMethods
+    : [];
+  const peers = Array.isArray(peersPayload.peers) ? peersPayload.peers : [];
+  const scout = Array.isArray(scoutPayload.insights) ? scoutPayload.insights : [];
+  const generatedAtValue = eventsPayload.generatedAt;
+  const generatedAt = validTimestamp(generatedAtValue) ? generatedAtValue : null;
+  if (!generatedAt) {
+    add("invalid_generated_at", DATA_PATHS.events, "generatedAt is missing or invalid");
   }
   for (const [name, value] of Object.entries({
-    signals: signals.generatedAt,
-    scout: scout.generatedAt,
-    product: product.generatedAt,
-    narratives: narratives.generatedAt,
+    pipeline: pipelinePayload.generatedAt,
+    assets: assetsPayload.generatedAt,
+    peers: peersPayload.generatedAt,
+    scout: scoutPayload.generatedAt,
+    product: productPayload.generatedAt,
   })) {
     if (value !== generatedAt) {
       add(
@@ -125,11 +164,43 @@ export async function validatePublicSite(
     }
   }
 
+  if (JSON.stringify(stages.map((stage) => stage.slug)) !== JSON.stringify(PIPELINE_STAGES)) {
+    add("pipeline_stage_mismatch", DATA_PATHS.pipeline, "Pipeline stages are missing or unordered");
+  }
+  for (const event of events) {
+    const slug = String(event.slug ?? "");
+    if (!slug || !event.dataProfile?.evidenceStatus) {
+      add(
+        "invalid_event",
+        DATA_PATHS.events,
+        `Event ${slug || "unknown"} lacks public data profile`,
+      );
+    }
+    if (!event.evidence?.length || event.evidence.some((item) => !isPublicHttpUrl(item.url))) {
+      add(
+        "invalid_event_evidence",
+        DATA_PATHS.events,
+        `Event ${slug || "unknown"} lacks public evidence`,
+      );
+    }
+  }
+
   const sensitivePattern =
-    /"(?:token|secret|password|cookie|authorization|api[_-]?key)"\s*:|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\/Users\/[^/]+\/|\/home\/runner\//i;
+    /"(?:token|secret|password|cookie|authorization|api[_-]?key|raw[_-]?payload|payload_json|config_json)"\s*:|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\/Users\/[^/]+\/|\/home\/runner\//i;
   for (const [name, text] of Object.entries(dataText)) {
     if (sensitivePattern.test(text)) {
-      add("private_material", `data/${name}.json`, "Public JSON contains a private field or path");
+      add(
+        "private_material",
+        DATA_PATHS[name as keyof typeof DATA_PATHS],
+        "Public JSON contains private material",
+      );
+    }
+    validateNoLegacyLeak(DATA_PATHS[name as keyof typeof DATA_PATHS], text, add, true);
+  }
+
+  for (const path of LEGACY_FILES) {
+    if (await exists(join(distDir, path))) {
+      add("legacy_public_file", path, "Legacy public route or DTO is still exported");
     }
   }
 
@@ -138,109 +209,101 @@ export async function validatePublicSite(
     const titles = new Set<string>();
     const descriptions = new Set<string>();
     for (const route of MAIN_ROUTES) {
-      const path = `${localePrefix}${route}${route ? "index.html" : "index.html"}`;
+      const path = pagePath(localePrefix, route);
       const html = await read(path);
       pageHtml.set(path, html);
       validatePageHead(path, html, add);
-      const title = html.match(/<title>([^<]+)<\/title>/)?.[1];
-      const description = html.match(/<meta name="description" content="([^"]+)"/)?.[1];
-      if (title) {
-        if (titles.has(title)) add("duplicate_title", path, `Duplicate main-page title: ${title}`);
-        titles.add(title);
-      }
-      if (description) {
-        if (descriptions.has(description)) {
-          add("duplicate_description", path, "Duplicate main-page meta description");
-        }
-        descriptions.add(description);
+      validateJsonLd(path, html, add);
+      validateUniqueMetadata(path, html, titles, descriptions, add);
+      validateNoLegacyLeak(path, html, add);
+    }
+    const notFoundPath = `${localePrefix}404.html`;
+    const notFound = await read(notFoundPath);
+    pageHtml.set(notFoundPath, notFound);
+    validatePageHead(notFoundPath, notFound, add);
+    validateJsonLd(notFoundPath, notFound, add);
+  }
+
+  const eventRoutes = events.map((event) => `events/${String(event.slug ?? "")}/`);
+  for (const route of eventRoutes) {
+    for (const localePrefix of ["", "en/"] as const) {
+      const path = pagePath(localePrefix, route);
+      const html = await read(path);
+      pageHtml.set(path, html);
+      validatePageHead(path, html, add);
+      validateJsonLd(path, html, add);
+      validateNoLegacyLeak(path, html, add);
+      if (!html.includes('"@type":"Article"')) {
+        add("missing_article_json_ld", path, "Event page has no Article JSON-LD");
       }
     }
   }
 
-  const timelineZh = pageHtml.get("timeline/index.html") ?? "";
-  const timelineCards = [
-    ...timelineZh.matchAll(/<a class="timeline-card[^>]*href="([^"]+)"[^>]*data-event="([^"]+)"/g),
-  ];
-  if (!timelineCards.length)
-    add("empty_timeline", "timeline/index.html", "No timeline cards found");
-  for (const card of timelineCards) {
-    if (!card[1]?.endsWith(`/events/${card[2]}/`)) {
-      add(
-        "event_link_mismatch",
-        "timeline/index.html",
-        `Timeline card ${card[2]} has no stable URL`,
-      );
-    }
-  }
+  const timelineHtml = pageHtml.get("timeline/index.html") ?? "";
+  const timelineCards = timelineHtml.match(/<article data-event=/g)?.length ?? 0;
+  assertCount("timeline/index.html", timelineCards, events.length, add);
   assertCount(
-    "signals/index.html",
-    pageHtml.get("signals/index.html") ?? "",
-    /class="signal-observation-card/g,
-    Math.min(48, publicSignals.length),
+    "pipeline/index.html",
+    (pageHtml.get("pipeline/index.html") ?? "").match(/<li id="[^"]+" data-pipeline-stage=/g)
+      ?.length ?? 0,
+    stages.length,
     add,
   );
   assertCount(
-    "scout/index.html",
-    pageHtml.get("scout/index.html") ?? "",
-    /class="scout-card"/g,
-    publicScout.length,
+    "assets/index.html",
+    (pageHtml.get("assets/index.html") ?? "").match(/class="asset-card"/g)?.length ?? 0,
+    datasets.length + standards.length + collectionMethods.length,
     add,
   );
   assertCount(
-    "actors/index.html",
-    pageHtml.get("actors/index.html") ?? "",
-    /class="actor-card"/g,
-    actors.length,
+    "peers/index.html",
+    (pageHtml.get("peers/index.html") ?? "").match(/<th scope="row">/g)?.length ?? 0,
+    peers.reduce((sum, peer) => sum + (peer.capabilities?.length ?? 0), 0),
     add,
   );
   assertCount(
     "sources/index.html",
-    pageHtml.get("sources/index.html") ?? "",
-    /data-source-value=/g,
+    (pageHtml.get("sources/index.html") ?? "").match(/class="source-card"/g)?.length ?? 0,
     sources.length,
     add,
   );
-  for (const path of ["index.html", "lines/index.html", "resources/index.html"] as const) {
-    if (!(pageHtml.get(path) ?? "").includes("<article")) {
-      add("empty_main_tab", path, "Main page has no rendered content cards");
-    }
-  }
+  assertCount(
+    "scout/index.html",
+    (pageHtml.get("scout/index.html") ?? "").match(/class="scout-card"/g)?.length ?? 0,
+    scout.length,
+    add,
+  );
 
-  const siteUrl = ensureSlash(typeof timeline.siteUrl === "string" ? timeline.siteUrl : "");
-  if (!/^https:\/\//.test(siteUrl)) {
-    add("invalid_site_url", dataPaths.timeline, "siteUrl must use HTTPS");
-  } else {
-    const llmsText = await read("llms.txt");
-    validateLlmsTxt(llmsText, siteUrl, add);
-  }
+  const siteUrl = normalizeSiteUrl(eventsPayload.siteUrl);
+  if (!siteUrl) add("invalid_site_url", DATA_PATHS.events, "siteUrl must use HTTPS");
+  const llmsText = await read("llms.txt");
+  if (siteUrl) validateLlmsTxt(llmsText, siteUrl, add);
+  validateNoLegacyLeak("llms.txt", llmsText, add, true);
+
+  const feedText = await read("feed.xml");
+  if (siteUrl) validateRss(feedText, events, siteUrl, add);
+  validateNoLegacyLeak("feed.xml", feedText, add, true);
+
   const sitemapText = await read("sitemap.xml");
   const sitemapUrls = new Set(
     [...sitemapText.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => decodeXml(match[1] ?? "")),
   );
-  const expectedRoutes = [
-    ...MAIN_ROUTES,
-    ...STRATEGIC_TRACKS.map((track) => `lines/${track}/`),
-    ...events.map((event) => `events/${String(event.slug ?? "")}/`),
-  ];
-  for (const route of expectedRoutes) {
-    for (const localePrefix of ["", "en/"] as const) {
-      const url = new URL(`${localePrefix}${route}`, siteUrl).toString();
+  if (siteUrl) {
+    const expectedRoutes = [...MAIN_ROUTES, ...eventRoutes];
+    const expectedUrls = new Set(
+      expectedRoutes.flatMap((route) =>
+        ["", "en/"].map((localePrefix) => new URL(`${localePrefix}${route}`, siteUrl).toString()),
+      ),
+    );
+    for (const url of expectedUrls) {
       if (!sitemapUrls.has(url)) add("sitemap_missing_url", "sitemap.xml", url);
-      const path = `${localePrefix}${route}${route ? "index.html" : "index.html"}`;
-      const html = await read(path);
-      if (!html) continue;
-      if (html.includes("<<<<<<<") || html.includes("__PREFIX__") || html.includes("/Users/")) {
-        add(
-          "unsafe_page_output",
-          path,
-          "Page contains a conflict marker, template token, or local path",
-        );
-      }
-      validateJsonLd(path, html, add);
     }
-  }
-  if (sitemapUrls.has(new URL("404.html", siteUrl).toString())) {
-    add("sitemap_404", "sitemap.xml", "404 must not be indexed");
+    for (const url of sitemapUrls) {
+      if (!expectedUrls.has(url)) add("sitemap_unexpected_url", "sitemap.xml", url);
+    }
+    if (sitemapUrls.has(new URL("404.html", siteUrl).toString())) {
+      add("sitemap_404", "sitemap.xml", "404 must not be indexed");
+    }
   }
 
   return {
@@ -249,12 +312,15 @@ export async function validatePublicSite(
     generatedAt,
     counts: {
       events: events.length,
-      signals: publicSignals.length,
-      scout: publicScout.length,
-      actors: actors.length,
+      pipelineStages: stages.length,
+      datasets: datasets.length,
+      standards: standards.length,
+      collectionMethods: collectionMethods.length,
+      peers: peers.length,
       sources: sources.length,
+      scout: scout.length,
       sitemapUrls: sitemapUrls.size,
-      timelineCards: timelineCards.length,
+      timelineCards,
     },
     issues,
   };
@@ -276,10 +342,13 @@ function validatePageHead(
     ["title", /<title>[^<]+<\/title>/g],
     ["description", /<meta name="description" content="[^"]+">/g],
     ["canonical", /<link rel="canonical" href="[^"]+">/g],
+    ["Open Graph title", /<meta property="og:title" content="[^"]+">/g],
+    ["Open Graph description", /<meta property="og:description" content="[^"]+">/g],
+    ["Open Graph URL", /<meta property="og:url" content="[^"]+">/g],
     ["zh-CN hreflang", /hreflang="zh-CN"/g],
     ["en hreflang", /hreflang="en"/g],
     ["x-default hreflang", /hreflang="x-default"/g],
-    ["llms.txt discovery link", /<link rel="alternate" type="text\/plain" href="[^"]*llms\.txt"/g],
+    ["llms.txt discovery", /<link rel="alternate" type="text\/plain" href="[^"]*llms\.txt"/g],
   ];
   for (const [label, pattern] of requirements) {
     const count = html.match(pattern)?.length ?? 0;
@@ -287,61 +356,22 @@ function validatePageHead(
   }
 }
 
-function validateLlmsTxt(
-  text: string,
-  siteUrl: string,
+function validateUniqueMetadata(
+  path: string,
+  html: string,
+  titles: Set<string>,
+  descriptions: Set<string>,
   add: (code: string, path: string, message: string) => void,
 ): void {
-  const path = "llms.txt";
-  if (!text.startsWith("# Agent Pulse\n\n> ")) {
-    add("invalid_llms_txt", path, "Expected an H1 followed by a blockquote summary");
+  const title = html.match(/<title>([^<]+)<\/title>/)?.[1];
+  const description = html.match(/<meta name="description" content="([^"]+)"/)?.[1];
+  if (title) {
+    if (titles.has(title)) add("duplicate_title", path, title);
+    titles.add(title);
   }
-  if ((text.match(/^# /gm) ?? []).length !== 1) {
-    add("invalid_llms_txt", path, "Expected exactly one H1 heading");
-  }
-  for (const section of [
-    "## Start Here",
-    "## Core Machine-Readable Data",
-    "## Provenance and Governance",
-    "## Optional",
-  ]) {
-    if (!text.includes(section)) add("invalid_llms_txt", path, `Missing ${section}`);
-  }
-  for (const boundary of [
-    "published Events",
-    "not as verified facts",
-    "analysis or hypotheses",
-    "original evidence URLs",
-  ]) {
-    if (!text.includes(boundary)) add("invalid_llms_txt", path, `Missing boundary: ${boundary}`);
-  }
-  for (const resource of [
-    "data/timeline.json",
-    "data/tracks.json",
-    "data/narratives.json",
-    "data/product.json",
-    "data/signals.json",
-    "data/sources.json",
-    "sitemap.xml",
-  ]) {
-    const expected = new URL(resource, siteUrl).toString();
-    if (!text.includes(`](${expected})`)) {
-      add("invalid_llms_txt", path, `Missing public resource ${expected}`);
-    }
-  }
-  const links = [...text.matchAll(/\[[^\]]+\]\(([^)]+)\)/g)].map((match) => match[1] ?? "");
-  if (links.length < 12) add("invalid_llms_txt", path, "Expected at least 12 curated links");
-  for (const link of links) {
-    try {
-      if (new URL(link).protocol !== "https:") {
-        add("invalid_llms_txt", path, `Non-HTTPS link: ${link}`);
-      }
-    } catch {
-      add("invalid_llms_txt", path, `Invalid link: ${link}`);
-    }
-  }
-  if (/\/Users\/|\/home\/runner\/|<<<<<<<|__PREFIX__/.test(text)) {
-    add("private_material", path, "llms.txt contains a local path or template marker");
+  if (description) {
+    if (descriptions.has(description)) add("duplicate_description", path, description);
+    descriptions.add(description);
   }
 }
 
@@ -361,20 +391,124 @@ function validateJsonLd(
   }
 }
 
+function validateLlmsTxt(
+  text: string,
+  siteUrl: string,
+  add: (code: string, path: string, message: string) => void,
+): void {
+  const path = "llms.txt";
+  if (!text.startsWith("# Agent Pulse\n\n> ")) {
+    add("invalid_llms_txt", path, "Expected an H1 followed by a blockquote summary");
+  }
+  for (const boundary of [
+    "embodied-data production",
+    "Events are verified facts",
+    "hypotheses, not as verified facts",
+    "original evidence URLs",
+    "raw collector payloads",
+  ]) {
+    if (!text.includes(boundary)) add("invalid_llms_txt", path, `Missing boundary: ${boundary}`);
+  }
+  for (const resource of [...Object.values(DATA_PATHS), "sitemap.xml", "feed.xml"] as const) {
+    const expected = new URL(resource, siteUrl).toString();
+    if (!text.includes(`](${expected})`)) {
+      add("invalid_llms_txt", path, `Missing public resource ${expected}`);
+    }
+  }
+  const links = [...text.matchAll(/\[[^\]]+\]\(([^)]+)\)/g)].map((match) => match[1] ?? "");
+  for (const link of links) {
+    try {
+      if (new URL(link).protocol !== "https:")
+        add("invalid_llms_txt", path, `Non-HTTPS link: ${link}`);
+    } catch {
+      add("invalid_llms_txt", path, `Invalid link: ${link}`);
+    }
+  }
+}
+
+function validateRss(
+  text: string,
+  events: Array<{ slug?: string }>,
+  siteUrl: string,
+  add: (code: string, path: string, message: string) => void,
+): void {
+  if (!text.includes('<rss version="2.0">')) add("invalid_rss", "feed.xml", "Missing RSS root");
+  assertCount("feed.xml", text.match(/<item>/g)?.length ?? 0, events.length, add);
+  for (const event of events) {
+    const url = new URL(`events/${String(event.slug ?? "")}/`, siteUrl).toString();
+    if (!text.includes(`<link>${escapeXml(url)}</link>`)) {
+      add("rss_missing_event", "feed.xml", url);
+    }
+  }
+}
+
+function validateNoLegacyLeak(
+  path: string,
+  text: string,
+  add: (code: string, path: string, message: string) => void,
+  strict = false,
+): void {
+  const routePattern =
+    /(?:href|src)="[^"]*(?:\/lines\/|\/signals\/|\/actors\/|\/resources\/|\/product\/|\/industry-evolution\/)|data\/(?:timeline|tracks|signals|actors|resources|narratives|influencers)\.json/i;
+  const strictPattern =
+    /\/(?:lines|signals|actors|resources|product|industry-evolution)\/|model pricing|模型价格|六个领域趋势|six strategic lines|tech-evolution|agi-progress|commercialization|investing|global-innovation|model-economics|GPT-5\.6/i;
+  if (routePattern.test(text) || (strict && strictPattern.test(text))) {
+    add("legacy_public_leak", path, "Legacy route, DTO, or product framing remains public");
+  }
+  if (/<<<<<<<|__PREFIX__|\/Users\//.test(text)) {
+    add(
+      "unsafe_page_output",
+      path,
+      "Conflict marker, template token, or local path remains public",
+    );
+  }
+}
+
 function assertCount(
   path: string,
-  html: string,
-  pattern: RegExp,
+  actual: number,
   expected: number,
   add: (code: string, path: string, message: string) => void,
 ): void {
-  const actual = html.match(pattern)?.length ?? 0;
   if (actual !== expected)
     add("content_count_mismatch", path, `Expected ${expected}, found ${actual}`);
 }
 
-function ensureSlash(value: string): string {
-  return value.endsWith("/") ? value : `${value}/`;
+function pagePath(localePrefix: string, route: string): string {
+  return `${localePrefix}${route}index.html`;
+}
+
+function normalizeSiteUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:") return null;
+    return url.toString().endsWith("/") ? url.toString() : `${url.toString()}/`;
+  } catch {
+    return null;
+  }
+}
+
+function validTimestamp(value: unknown): value is string {
+  return typeof value === "string" && Number.isFinite(Date.parse(value));
+}
+
+function isPublicHttpUrl(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  try {
+    return ["http:", "https:"].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
+}
+
+async function exists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function decodeXml(value: string): string {
@@ -384,4 +518,13 @@ function decodeXml(value: string): string {
     .replaceAll("&gt;", ">")
     .replaceAll("&quot;", '"')
     .replaceAll("&apos;", "'");
+}
+
+function escapeXml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
 }

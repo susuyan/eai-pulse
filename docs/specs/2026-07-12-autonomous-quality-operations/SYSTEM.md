@@ -82,5 +82,7 @@ repository snapshot
 - `data/reports/system-evaluation.json` 保存最新总分、原始加权分、证据覆盖、完整维度和按加权缺口排序的改进动作；
 - CI 基线来自上一提交，而不是 PR 自己修改后的报告，防止通过下调版本化分数绕过回退门禁；
 - 回退门禁覆盖 overall score、evidence coverage 和各维度 score；维度新增允许进入基线，维度删除视为回退；
+- 来源覆盖的基础样本使用 healthy 且处于 observation 或 active 的去重集合，active 仅作为额外成熟度证据；来源从 observation 晋级 active 不得导致分数下降；
+- Quality Guard 分页读取 Data Refresh 运行态时先保存 `gh api --paginate --slurp` 的页面数组，再由独立 `jq` 归一化，避免依赖互斥的 CLI 输出参数组合；
 - 低于 80 分不是伪造数据或放宽门槛的理由。CI/Quality Guard 只暴露下一步，Data Refresh 只能通过真实审计、采集、证据绑定和用户结果样本改善分数；
 - 静态导出优先读取最近一次评测，不再因为每次页面构建重复制造等价评测记录。

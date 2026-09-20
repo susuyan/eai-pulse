@@ -14,6 +14,7 @@
 
 ### 开发中
 
+- 修复运营评测的非单调来源覆盖：健康来源从 observation 晋级 active 时不再因观察数下降而扣分；Quality Guard 同时兼容新版 GitHub CLI 的分页输出约束，刷新冷却检查不再因互斥参数失败。
 - 修复通用网页来源对链接属性顺序、英文月份缩写和无日期卡片的识别：adapter 只输出具备标题、同站公开 URL 与可信发布日期的对象，并将 Databricks 切换到可用的一方 Feed；来源恢复仍需经过连续健康检查与既有生命周期门禁。
 - 新增具身数据方向的实验性领域基础：受控词表、Event DataProfile、可审计 content scope 和只读迁移预览。公开站、现有数据和发布规则尚未切换。
 - 具身数据实验性领域基础新增 Dataset、Standard、CollectionMethod 与同行能力声明对象，支持严格校验、Event 证据关联和事务性快照恢复；危险证据 URL、缺失引用、未知 schema 版本与事件合并证据丢失会被阻断，对象 fixture 尚未进入当前数据或公开站。

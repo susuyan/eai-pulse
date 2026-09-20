@@ -93,6 +93,26 @@ export function calculateOverallScore(dimensions: EvaluationDimension[]) {
   };
 }
 
+interface SourceCoverageInput {
+  healthyChecks: number;
+  operationallyCoveredHealthy: number;
+  activeHealthy: number;
+  healthyCategories: number;
+  healthyChina: number;
+  checkCoverage: number;
+}
+
+export function calculateSourceCoverageRawScore(input: SourceCoverageInput): number {
+  return (
+    ratio(input.healthyChecks, 100) * 35 +
+    ratio(input.operationallyCoveredHealthy, 100) * 20 +
+    ratio(input.activeHealthy, 100) * 30 +
+    ratio(input.healthyCategories, 12) * 5 +
+    ratio(input.healthyChina, 30) * 5 +
+    input.checkCoverage * 5
+  );
+}
+
 export async function evaluateSystem(db: Kysely<DatabaseSchema>, context: EvaluationContext) {
   const startedAt = new Date().toISOString();
   const [allSources, runs, checks, events, eventEvidence, scout, signalProvenance, readiness] =
@@ -166,6 +186,11 @@ export async function evaluateSystem(db: Kysely<DatabaseSchema>, context: Evalua
   const observingHealthy = sources.filter(
     (source) => source.observation_enabled === 1 && healthySourceIds.has(source.id),
   );
+  const operationallyCoveredHealthy = sources.filter(
+    (source) =>
+      healthySourceIds.has(source.id) &&
+      (source.lifecycle_status === "active" || source.observation_enabled === 1),
+  );
   const checkCoverage = ratio(checkedSources.length, sources.length);
   const auditWindows = new Set(pointInTimeChecks.map((check) => check.finished_at.slice(0, 10)))
     .size;
@@ -219,13 +244,14 @@ export async function evaluateSystem(db: Kysely<DatabaseSchema>, context: Evalua
     calibrateDimension({
       slug: "source-coverage",
       name: "有效来源覆盖",
-      rawScore:
-        ratio(healthyChecks.length, 100) * 35 +
-        ratio(observingHealthy.length, 100) * 20 +
-        ratio(activeHealthy.length, 100) * 30 +
-        ratio(healthyCategories.size, 12) * 5 +
-        ratio(healthyCn, 30) * 5 +
-        checkCoverage * 5,
+      rawScore: calculateSourceCoverageRawScore({
+        healthyChecks: healthyChecks.length,
+        operationallyCoveredHealthy: operationallyCoveredHealthy.length,
+        activeHealthy: activeHealthy.length,
+        healthyCategories: healthyCategories.size,
+        healthyChina: healthyCn,
+        checkCoverage,
+      }),
       weight: 10,
       sufficient: activeHealthy.length >= 20 && auditWindows >= 1,
       sampleSize: activeHealthy.length,
@@ -244,6 +270,7 @@ export async function evaluateSystem(db: Kysely<DatabaseSchema>, context: Evalua
         active: activeSources.length,
         activeHealthy: activeHealthy.length,
         observingHealthy: observingHealthy.length,
+        operationallyCoveredHealthy: operationallyCoveredHealthy.length,
         healthyCategories: healthyCategories.size,
         healthyChina: healthyCn,
       },

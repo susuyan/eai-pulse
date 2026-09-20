@@ -29,6 +29,8 @@
 - evaluation run 经仓库快照写入和恢复后，ID、总分、维度、能力快照和时间不丢失，重复恢复不重复；
 - 版本化评测报告包含 80 分目标、完整维度和按加权缺口排序的改进动作；
 - CI 使用上一提交的报告作为基线，总分、证据覆盖、维度分回退或维度消失时失败；持平或提升时通过并上传报告；
+- healthy 来源从 observation 晋级 active 时，去重后的运营覆盖不变且来源覆盖分不得下降；
+- Quality Guard 的运行态分页与 JSON 归一化分步执行，兼容不允许 `--slurp` 与 `--jq` 同用的 GitHub CLI；
 - 静态导出复用最新评测，不为相同数据库状态追加重复 evaluation run；
 - 自动运营链路不公开 Event、不公开 Scout、不自动激活许可不明来源；
 - workflow YAML 可解析，权限最小化，定时任务具有 concurrency；

@@ -135,6 +135,25 @@ describe("monitor alert decision", () => {
     expect(model.completeJson).not.toHaveBeenCalled();
   });
 
+  it("uses the shared v3 incident fingerprint during cooldown", async () => {
+    const input = report();
+    const fingerprint = monitorFingerprint(input);
+    const decision = await decideMonitorAlert({
+      report: input,
+      now: NOW,
+      incident: {
+        updatedAt: "2026-07-14T03:35:15.000Z",
+        body: `<!-- agent-pulse-monitor:v3 fingerprint=${fingerprint} -->`,
+      },
+    });
+
+    expect(decision).toMatchObject({
+      decision: "suppress",
+      decisionSource: "cooldown",
+      reasonCode: "duplicate_within_cooldown",
+    });
+  });
+
   it("accepts a validated AI suppression for healthy shadow catalog mix", async () => {
     const model = client({
       decision: "suppress",

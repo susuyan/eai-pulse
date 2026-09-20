@@ -174,4 +174,24 @@ describe("system evaluation progress", () => {
       ],
     });
   });
+
+  it("round-trips a v2 operational decision", () => {
+    const report = {
+      ...reportV2("2026-09-20T00:00:00.000Z", "operational"),
+      operationalDecision: {
+        status: "critical",
+        reasonCodes: ["evaluation_stale"],
+        currentScore: 60,
+        persistedEvaluationAsOf: "2026-09-19T00:00:00.000Z",
+        ageMinutes: 1_440,
+        refreshEligible: true,
+        fingerprint: "0123456789abcdef",
+      },
+    };
+
+    expect(normalizeSystemEvaluationReport(report)).toMatchObject({
+      schemaVersion: 2,
+      operationalDecision: report.operationalDecision,
+    });
+  });
 });

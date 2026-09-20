@@ -5,6 +5,7 @@ import {
   type EvaluationGateMode,
   parseEvaluationInstant,
 } from "./evaluation-context.js";
+import type { OperationalEvaluationDecision } from "./evaluation-policy.js";
 
 export const SYSTEM_EVALUATION_SCHEMA_VERSION = 2;
 export const SYSTEM_EVALUATION_TARGET = 80;
@@ -51,6 +52,7 @@ export interface SystemEvaluationReportV2 extends EvaluationResult {
   policy: "measured-evidence-only";
   improvementPlan: EvaluationImprovement[];
   comparison?: EvaluationComparison | undefined;
+  operationalDecision?: OperationalEvaluationDecision | undefined;
 }
 
 export type SystemEvaluationReport = SystemEvaluationReportV2;
@@ -213,6 +215,25 @@ const evaluationComparisonSchema = z
   })
   .strict();
 
+const operationalEvaluationDecisionSchema = z
+  .object({
+    status: z.enum(["ok", "critical"]),
+    reasonCodes: z.array(
+      z.enum([
+        "system_score_below_floor",
+        "evaluation_stale",
+        "evaluation_persistently_stale",
+        "evaluation_report_invalid",
+      ]),
+    ),
+    currentScore: z.number().nullable(),
+    persistedEvaluationAsOf: timestampSchema.nullable(),
+    ageMinutes: z.number().nonnegative().nullable(),
+    refreshEligible: z.boolean(),
+    fingerprint: z.string().regex(/^[a-f0-9]{16}$/),
+  })
+  .strict();
+
 const evaluationReportFields = {
   id: z.string(),
   releaseVersion: z.string(),
@@ -242,6 +263,7 @@ export const systemEvaluationReportV2Schema = z
     ...evaluationReportFields,
     evaluationAsOf: timestampSchema,
     gateMode: z.enum(["change", "operational"]),
+    operationalDecision: operationalEvaluationDecisionSchema.optional(),
   })
   .strict();
 

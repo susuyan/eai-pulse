@@ -222,6 +222,7 @@ describe("GitHub source governance workflows", () => {
       expect(ci).toContain(step);
     }
     expect(ci).not.toContain("run: npm run check");
+    expect(ci).toContain("--gate=change");
     expect(ci).toContain("git show HEAD^:data/reports/system-evaluation.json");
     expect(ci.indexOf("run: npm run db:seed")).toBeLessThan(ci.indexOf("--fail-on-regression"));
     expect(ci.indexOf("--fail-on-regression")).toBeLessThan(
@@ -234,10 +235,11 @@ describe("GitHub source governance workflows", () => {
     );
   });
 
-  it("runs weekly guards and dispatches one cooled-down refresh when quality is below 60", async () => {
-    const [guard, monitor] = await Promise.all([
+  it("runs explicit operational guards and dispatches one bounded refresh", async () => {
+    const [guard, monitor, refresh] = await Promise.all([
       workflow("quality-guard.yml"),
       workflow("monitor.yml"),
+      workflow("data-refresh.yml"),
     ]);
     expect(guard).toContain('cron: "47 0 * * 1"');
     expect(monitor).toContain('cron: "17 0 * * 1"');
@@ -246,13 +248,33 @@ describe("GitHub source governance workflows", () => {
     expect(monitor).toContain("monitor:decide");
     expect(monitor).toContain("monitor-decision.json");
     expect(monitor).toContain("steps.decision.outputs.notify == 'true'");
-    expect(monitor).toContain("agent-pulse-monitor:v2 fingerprint=");
+    expect(monitor).toContain("agent-pulse-monitor:v3 fingerprint=");
     expect(guard).toContain("QUALITY_FLOOR: 60");
     expect(guard).toContain("REFRESH_COOLDOWN_HOURS: 120");
-    expect(guard).toContain("gh run list --workflow data-refresh.yml");
+    expect(guard).toContain("--gate=operational");
+    expect(guard).toContain("agent-pulse-monitor:v3 fingerprint=");
+    expect(guard).toContain("gh run list --workflow data-refresh.yml --status queued");
+    expect(guard).toContain("gh run list --workflow data-refresh.yml --status in_progress");
+    expect(guard).toContain("const active = Boolean(queued.id || inProgress.id);");
+    expect(guard).toContain("if (!refreshEligible || active)");
     expect(guard).toContain("gh workflow run data-refresh.yml --ref main --field mode=incremental");
+    expect(guard).not.toContain("publish_weekly=true");
     expect(guard).toContain("--baseline=data/reports/system-evaluation.json");
     expect(guard).toContain('--summary="$GITHUB_STEP_SUMMARY"');
+    expect(guard.indexOf("Upload evaluation evidence")).toBeLessThan(
+      guard.indexOf("Update the single monitor incident"),
+    );
+    expect(guard.indexOf("Update the single monitor incident")).toBeLessThan(
+      guard.indexOf("Trigger one bounded system update"),
+    );
+    expect(guard.indexOf("Trigger one bounded system update")).toBeLessThan(
+      guard.indexOf("Fail the operational gate"),
+    );
+    expect(refresh).toContain("--gate=operational");
+    expect(refresh).toContain("--persist");
+    for (const content of [guard, monitor, refresh]) {
+      expect(content).toContain("# schedule:");
+    }
   });
 
   it("creates a missing GitHub Release only after CI verifies main", async () => {

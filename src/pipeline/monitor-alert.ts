@@ -305,7 +305,7 @@ function activeCooldown(
 }
 
 function incidentFingerprint(body?: string): string | null {
-  return body?.match(/agent-pulse-monitor:v2 fingerprint=([a-f0-9]{16})/)?.[1] ?? null;
+  return body?.match(/agent-pulse-monitor:v(?:2|3) fingerprint=([a-f0-9]{16})/)?.[1] ?? null;
 }
 
 function normalizeIncident(

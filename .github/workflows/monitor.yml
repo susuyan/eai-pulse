@@ -149,13 +149,16 @@ jobs:
           body="$RUNNER_TEMP/monitor-issue.md"
           decision="$RUNNER_TEMP/monitor-decision.json"
           {
-            echo "<!-- agent-pulse-monitor:v2 fingerprint=$(jq -r '.fingerprint' "$decision") -->"
+            echo "<!-- agent-pulse-monitor:v3 fingerprint=$(jq -r '.fingerprint' "$decision") -->"
             echo '# Agent Pulse 自动监控告警'
             echo
             echo "- 时间：$(jq -r '.timestamp' "$report")"
             echo "- 系统分：$(jq -r '.systemScore' "$report") / 100"
             echo "- 状态：$(jq -r '.status' "$report")"
             echo "- 告警门禁：$(jq -r '.decisionSource' "$decision") · $(jq -r '.reasonCode' "$decision")"
+            echo "- 评测水位：$(jq -r '.checks.freshness.detail.evaluationAsOf // "unknown"' "$report")"
+            echo "- 水位年龄（分钟）：$(jq -r '.checks.freshness.detail.ageMinutes // "unknown"' "$report")"
+            echo "- 新鲜度原因：$(jq -r '.checks.freshness.detail.reasonCode // "none"' "$report")"
             echo
             echo '## 问题'
             jq -r '.issues[]? | "- " + .' "$report"

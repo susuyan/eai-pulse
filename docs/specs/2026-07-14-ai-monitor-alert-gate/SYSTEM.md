@@ -14,6 +14,7 @@ monitor:check
                  -> invalid / unavailable: suppress contextual alert
   -> monitor-decision.json（始终上传）
        -> notify=true: create/update single incident
+       -> resolveIncident=true: append recovery evidence and close the open incident
        -> notify=false: Job Summary only
 ```
 
@@ -30,6 +31,8 @@ monitor:check
 
 - `workflow_dispatch.allow_notification=false`（默认）：执行完整检查和 AI 复核，但 `notify` 强制为 false。
 - `allow_notification=true`：允许决策链在满足门禁后更新 Issue，不等于强制报警。
+- 健康状态为 `ok` 且存在开放 incident 时，决策记录 `wouldResolveIncident=true`；只有非 dry-run 才设置 `resolveIncident=true`，写入恢复证据并以 `completed` 关闭 Issue。
+- `warning`、任意 `critical` 或无开放 incident 时不得自动关闭告警。
 
 ## 回滚
 

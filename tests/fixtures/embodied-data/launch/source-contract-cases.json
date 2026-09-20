@@ -1,0 +1,64 @@
+[
+  {
+    "slug": "droid-project",
+    "category": "dataset-benchmark",
+    "adapter": "web-scraper",
+    "region": "GLOBAL"
+  },
+  {
+    "slug": "bridge-data-v2",
+    "category": "dataset-benchmark",
+    "adapter": "web-scraper",
+    "region": "GLOBAL"
+  },
+  {
+    "slug": "open-x-embodiment",
+    "category": "dataset-benchmark",
+    "adapter": "web-scraper",
+    "region": "GLOBAL"
+  },
+  {
+    "slug": "huggingface-lerobot",
+    "category": "standard-policy",
+    "adapter": "github-releases",
+    "region": "GLOBAL"
+  },
+  {
+    "slug": "ros2-rosbag2",
+    "category": "standard-policy",
+    "adapter": "github-releases",
+    "region": "GLOBAL"
+  },
+  {
+    "slug": "agibot-world",
+    "category": "robot-team",
+    "adapter": "github-releases",
+    "region": "CN"
+  },
+  { "slug": "robomind", "category": "dataset-benchmark", "adapter": "web-scraper", "region": "CN" },
+  {
+    "slug": "universal-manipulation-interface",
+    "category": "capture-tool",
+    "adapter": "github-releases",
+    "region": "GLOBAL"
+  },
+  { "slug": "galaxea-ai", "category": "peer-evidence", "adapter": "web-scraper", "region": "CN" },
+  {
+    "slug": "nexdata-embodied-ai",
+    "category": "data-service",
+    "adapter": "web-scraper",
+    "region": "CN"
+  },
+  {
+    "slug": "discover-robotics-data",
+    "category": "data-service",
+    "adapter": "web-scraper",
+    "region": "CN"
+  },
+  {
+    "slug": "physical-intelligence",
+    "category": "peer-evidence",
+    "adapter": "web-scraper",
+    "region": "GLOBAL"
+  }
+]

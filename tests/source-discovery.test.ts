@@ -47,6 +47,7 @@ async function addSource(
     last_error: null,
     lifecycle_status: patch.lifecycle_status ?? "active",
     source_category: patch.source_category ?? "frontier-lab",
+    content_scope: patch.content_scope ?? "embodied-data",
   });
   return (await repository.getSource(id)) as SourceRow;
 }

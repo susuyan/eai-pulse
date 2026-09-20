@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
+import { sourceCatalog } from "../src/catalog/sources.js";
 import { loadConfig } from "../src/config/env.js";
 import { createDatabase } from "../src/db/database.js";
 import { migrateToLatest } from "../src/db/migrate.js";
@@ -67,7 +68,7 @@ describe("embodied data public switch migration", () => {
     await expect(readEmbodiedDataMigrationBaseline(invalidPath)).rejects.toThrow(/unexpected/);
   });
 
-  it("plans and applies without mutating current rows when no catalog operations exist", async () => {
+  it("plans and applies without mutating seeded rows when no catalog operations exist", async () => {
     const db = await setup();
     const baseline = await readEmbodiedDataMigrationBaseline(baselinePath);
     const before = await db
@@ -78,7 +79,12 @@ describe("embodied data public switch migration", () => {
 
     const planned = await planEmbodiedDataMigration(db, baseline);
 
-    expect(planned.current).toMatchObject({ sources: 0, signals: 0, events: 0, actors: 0 });
+    expect(planned.current).toMatchObject({
+      sources: sourceCatalog.length,
+      signals: 0,
+      events: 0,
+      actors: 0,
+    });
     expect(planned.legacy.sources).toBeGreaterThan(0);
     expect(planned.changes).toEqual({ inserted: 0, updated: 0, relations: 0 });
     expect(

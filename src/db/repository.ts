@@ -196,6 +196,7 @@ export class Repository {
       .updateTable("sources")
       .set({
         name: input.name,
+        owner: input.owner,
         homepage_url: input.homepage_url,
         adapter: input.adapter,
         tier: input.tier,
@@ -210,6 +211,10 @@ export class Repository {
         cadence: input.cadence,
         license_note: input.license_note,
         quality_score: input.quality_score,
+        robots_policy: input.robots_policy,
+        freshness_slo_hours: input.freshness_slo_hours,
+        adapter_version: input.adapter_version,
+        content_scope: input.content_scope,
         updated_at: timestamp,
       })
       .where("id", "=", existing.id)

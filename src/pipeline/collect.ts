@@ -134,11 +134,16 @@ export function planSourceCollection(
   };
 }
 
+export function isCurrentEmbodiedSource(source: Pick<SourceRow, "content_scope">): boolean {
+  return source.content_scope === "embodied-data";
+}
+
 function sourceSkipReason(
   source: SourceRow,
   scope: CollectionScope,
   explicit: boolean,
 ): string | null {
+  if (!isCurrentEmbodiedSource(source)) return `scope:${source.content_scope}`;
   if (!["shadow", "active", "degraded"].includes(source.lifecycle_status)) {
     return `lifecycle:${source.lifecycle_status}`;
   }
@@ -426,6 +431,7 @@ export async function autoActivateQualifiedShadows(
   const shadows = await db
     .selectFrom("sources")
     .selectAll()
+    .where("content_scope", "=", "embodied-data")
     .where("lifecycle_status", "=", "shadow")
     .execute();
 

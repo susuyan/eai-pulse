@@ -124,14 +124,21 @@ describe("autonomous quality operations", () => {
   it("degrades and quarantines production sources from consecutive audit evidence", async () => {
     const { db, repository } = await setup();
     const sources = await repository.listSources();
-    const activeSources = sources.filter((source) => source.lifecycle_status === "active");
-    const active = activeSources[0];
-    const degraded = activeSources[1];
-    const shadow = sources.find((source) => source.lifecycle_status === "shadow");
+    const currentSources = sources.filter((source) => source.content_scope === "embodied-data");
+    const active = currentSources[0];
+    const degraded = currentSources[1];
+    const shadow = currentSources[2];
     expect(active).toBeTruthy();
     expect(degraded).toBeTruthy();
     expect(shadow).toBeTruthy();
-    await repository.updateSource(degraded?.id ?? "missing", { lifecycle_status: "degraded" });
+    await repository.updateSource(active?.id ?? "missing", {
+      lifecycle_status: "active",
+      enabled: 1,
+    });
+    await repository.updateSource(degraded?.id ?? "missing", {
+      lifecycle_status: "degraded",
+      enabled: 1,
+    });
     await addFailedChecks(db, active?.id ?? "missing", 2);
     await addFailedChecks(db, degraded?.id ?? "missing", 5);
     await addFailedChecks(db, shadow?.id ?? "missing", 5);

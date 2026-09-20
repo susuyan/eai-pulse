@@ -138,7 +138,7 @@ describe("SQLite application", () => {
     expect(product.releases[2]).toMatchObject({ version: "0.11.0", status: "released" });
     expect(product.releases[3]).toMatchObject({ version: "0.10.0", status: "released" });
     expect(product.releases[4]).toMatchObject({ version: "0.9.0", status: "released" });
-    expect(product.sourceCoverage.total).toBeGreaterThanOrEqual(100);
+    expect(product.sourceCoverage.total).toBeGreaterThanOrEqual(30);
     expect(product.sourceCoverage.observing).toBe(0);
     expect(product.evaluation).toMatchObject({
       rawWeightedScore: expect.any(Number),
@@ -593,8 +593,8 @@ describe("SQLite application", () => {
     expect(sourcesPage).toContain("重点关注的人");
     expect(sourcesPage).toContain("宝玉");
     expect(sourcesPage).toContain("仅作线索");
-    expect(sourcesPage).toContain("Federal Reserve Economic Data (FRED)");
-    expect(sourcesPage).toContain("SEC EDGAR APIs");
+    expect(sourcesPage).toContain("DROID Dataset");
+    expect(sourcesPage).toContain("LeRobot");
     expect(timelinePage).toContain("inert");
     expect(timelinePage).not.toContain("data-event-panel");
     expect(sourcesPage).toContain("哪些领域还缺信息");
@@ -715,8 +715,9 @@ describe("SQLite application", () => {
       expect(response.statusCode, url).toBe(200);
     }
     const shadowSource = (await new Repository(db).listSources()).find(
-      (source) => source.lifecycle_status === "shadow" && source.acquisition === "rss",
+      (source) => source.lifecycle_status === "shadow" && source.adapter !== "manual",
     );
+    expect(shadowSource).toBeTruthy();
     const prematureObservation = await app.inject({
       method: "POST",
       url: `/api/admin/sources/${shadowSource?.id}/observation`,
@@ -735,7 +736,9 @@ describe("SQLite application", () => {
     await migrateToLatest(db, config);
     await seedDatabase(db);
     const repository = new Repository(db);
-    const source = (await repository.listSources()).find((item) => item.slug === "openai");
+    const source = (await repository.listSources()).find(
+      (item) => item.slug === "physical-intelligence",
+    );
     expect(source).toBeTruthy();
     await repository.updateSource(source?.id ?? "missing", {
       lifecycle_status: "degraded",

@@ -3,7 +3,7 @@ import type { Kysely } from "kysely";
 import { earlyHistoryEvents } from "../catalog/early-history.js";
 import { type CuratedEventSeed, historicalEvents } from "../catalog/history.js";
 import { recentDensityEvents } from "../catalog/recent-density.js";
-import { sourceCatalog } from "../catalog/sources.js";
+import { type CatalogSource, legacySourceCatalog, sourceCatalog } from "../catalog/sources.js";
 import { canonicalizeUrl, sha256 } from "../domain/url.js";
 import { Repository } from "./repository.js";
 import type { DatabaseSchema } from "./types.js";
@@ -681,11 +681,16 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
   const repository = new Repository(db);
   const timestamp = isoNow();
 
-  for (const source of sourceCatalog) {
+  const saveCatalogEntry = async (
+    source: CatalogSource,
+    contentScope: "legacy-ai" | "embodied-data",
+  ) => {
+    const previous = await repository.getSourceByIdOrSlug(source.slug);
     await repository.saveCatalogSource({
       id: stableId("source", source.slug),
       slug: source.slug,
       name: source.name,
+      owner: source.owner ?? source.name,
       homepage_url: source.homepageUrl,
       adapter: source.adapter,
       tier: source.tier,
@@ -694,6 +699,7 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
       language: source.language,
       authority_score: source.authorityScore,
       enabled: source.enabled ? 1 : 0,
+      observation_enabled: 0,
       config_json: JSON.stringify({
         url: source.endpoint,
         take: source.tier === 1 ? 50 : 30,
@@ -717,18 +723,59 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
       license_note: source.licenseNote,
       quality_score: source.qualityScore,
       last_verified_at: null,
+      robots_policy: source.robotsPolicy ?? "Review required before automated collection.",
+      freshness_slo_hours: source.freshnessSloHours ?? 168,
+      adapter_version: source.adapterVersion ?? "1",
+      content_scope: contentScope,
+    });
+    if (
+      contentScope === "embodied-data" &&
+      previous &&
+      previous.content_scope !== "embodied-data"
+    ) {
+      await repository.updateSource(previous.id, {
+        enabled: source.enabled ? 1 : 0,
+        observation_enabled: 0,
+        lifecycle_status: source.lifecycleStatus,
+        maintenance_status: source.maintenanceStatus,
+        content_scope: "embodied-data",
+        retired_at: null,
+      });
+    }
+  };
+
+  const embodiedSlugs = new Set(sourceCatalog.map((source) => source.slug));
+  for (const source of legacySourceCatalog) {
+    if (embodiedSlugs.has(source.slug)) continue;
+    await saveCatalogEntry(source, "legacy-ai");
+    const stored = await repository.getSource(stableId("source", source.slug));
+    await repository.updateSource(stored?.id ?? stableId("source", source.slug), {
+      enabled: 0,
+      observation_enabled: 0,
+      lifecycle_status: "retired",
+      maintenance_status: "retired",
+      content_scope: "legacy-ai",
+      retired_at: stored?.retired_at ?? timestamp,
     });
   }
-  const catalogSlugs = new Set(sourceCatalog.map((source) => source.slug));
+
+  for (const source of sourceCatalog) {
+    await saveCatalogEntry(source, "embodied-data");
+  }
+  const catalogSlugs = new Set(
+    [...legacySourceCatalog, ...sourceCatalog].map((source) => source.slug),
+  );
   const staleSources = (await repository.listSources()).filter(
     (source) => !catalogSlugs.has(source.slug),
   );
   for (const source of staleSources) {
     await repository.updateSource(source.id, {
       enabled: 0,
+      observation_enabled: 0,
       lifecycle_status: "retired",
       maintenance_status: "retired",
-      retired_at: timestamp,
+      content_scope: "legacy-ai",
+      retired_at: source.retired_at ?? timestamp,
     });
   }
 

@@ -24,9 +24,7 @@ async function setup() {
 describe("signal eventability triage", () => {
   it("defers an isolated media commentary instead of creating timeline noise", async () => {
     const { db, repository } = await setup();
-    const media = (await repository.listSources()).find(
-      (source) => source.slug === "techcrunch-ai",
-    );
+    const media = (await repository.listSources()).find((source) => source.slug === "galaxea-ai");
     expect(media).toBeTruthy();
     await repository.updateSource(media?.id ?? "missing", {
       lifecycle_status: "active",
@@ -60,7 +58,13 @@ describe("signal eventability triage", () => {
 
   it("creates a review event for a concrete first-party model launch", async () => {
     const { db, repository } = await setup();
-    const source = (await repository.listSources()).find((item) => item.slug === "openai");
+    const source = (await repository.listSources()).find(
+      (item) => item.slug === "physical-intelligence",
+    );
+    await repository.updateSource(source?.id ?? "missing", {
+      lifecycle_status: "active",
+      enabled: 1,
+    });
     await repository.insertSignal(source?.id ?? "missing", {
       url: "https://openai.com/index/fixture-model-launch/",
       title: "OpenAI launches Fixture-1 model",
@@ -83,7 +87,9 @@ describe("signal eventability triage", () => {
 
   it("keeps healthy shadow-source signals in observation until activation", async () => {
     const { db, repository } = await setup();
-    const source = (await repository.listSources()).find((item) => item.slug === "apple-ml");
+    const source = (await repository.listSources()).find(
+      (item) => item.slug === "nvidia-isaac-lab",
+    );
     expect(source?.lifecycle_status).toBe("shadow");
     const inserted = await repository.insertSignal(source?.id ?? "missing", {
       url: "https://machinelearning.apple.com/research/fixture-observation",
@@ -113,8 +119,12 @@ describe("signal eventability triage", () => {
 
   it("creates a review event for a decision-relevant research contribution", async () => {
     const { db, repository } = await setup();
-    const source = (await repository.listSources()).find((item) => item.slug === "arxiv-ai");
-    expect(source?.lifecycle_status).toBe("active");
+    const source = (await repository.listSources()).find((item) => item.slug === "droid-project");
+    await repository.updateSource(source?.id ?? "missing", {
+      lifecycle_status: "active",
+      enabled: 1,
+    });
+    expect((await repository.getSource(source?.id ?? "missing"))?.lifecycle_status).toBe("active");
     await repository.insertSignal(source?.id ?? "missing", {
       url: "https://arxiv.org/abs/2607.99991",
       title: "FixtureLongBench: A benchmark for difficulty-aware long-context reasoning",

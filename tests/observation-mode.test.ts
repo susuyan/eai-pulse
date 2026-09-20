@@ -21,7 +21,9 @@ describe("shadow observation mode", () => {
     await migrateToLatest(db, config);
     await seedDatabase(db);
     const repository = new Repository(db);
-    const source = (await repository.listSources()).find((item) => item.slug === "apple-ml");
+    const source = (await repository.listSources()).find(
+      (item) => item.slug === "nvidia-isaac-lab",
+    );
     expect(source?.lifecycle_status).toBe("shadow");
 
     await expect(setObservationMode(db, source?.id ?? "missing", true)).rejects.toThrow(

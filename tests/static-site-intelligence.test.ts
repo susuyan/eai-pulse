@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { sourceCatalog } from "../src/catalog/sources.js";
+import { legacySourceCatalog as sourceCatalog } from "../src/catalog/sources.js";
 import { githubReleasesAdapter } from "../src/collectors/github-releases.js";
 import { rssAdapter } from "../src/collectors/rss.js";
 import type { CollectContext } from "../src/collectors/types.js";

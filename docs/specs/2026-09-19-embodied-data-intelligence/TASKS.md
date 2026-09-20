@@ -23,7 +23,7 @@
 
 2026-09-20 本地验收结果记录于 `data/reports/embodied-data-public-switch.json`：
 
-- `npm run check` 通过：77 个测试文件、516 个测试通过；lint 保留 1 个既存的非阻断 CSS `!important` warning，typecheck、导出和公开完整性验证通过。
+- 隔离的 HEAD 归档执行 `npm run check` 通过：77 个测试文件、512 个测试通过；lint 保留 1 个既存的非阻断 CSS `!important` warning，typecheck、导出和公开完整性验证通过。
 - `npm run build` 与 `npm run db:snapshot -- restore` 通过；快照 SHA-256 为 `e71bf0cfef071855bb057664d9439c91dd8e9c98721e26a849b810302dacac06`。
 - `npm run public:validate` 通过且 `issues` 为空；公开指纹为 `19fae253c278d81bbc4d09da78633d9043ea7389a1a3d96d82a6f82209331708`。
 - 36 个 Event 均绑定一手证据和 verified DataProfile；六阶段各覆盖 6 个 Event。22 个数据资产、15 个同行能力声明、36 个来源和 7 条 Scout 建议的公开证据链接覆盖率均为 100%。

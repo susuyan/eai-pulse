@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "switch": "embodied-data-production",
   "version": "0.11.1",
-  "verifiedAt": "2026-09-20T11:06:50.071Z",
+  "verifiedAt": "2026-09-20T11:10:20.781Z",
   "publicSiteUrl": "https://susuyan.github.io/eai-pulse/",
   "snapshot": {
     "path": "data/snapshot/v1.json",
@@ -92,7 +92,7 @@
   "verification": [
     {
       "command": "npm run check",
-      "result": "77 test files and 516 tests passed; export and public validation passed"
+      "result": "77 test files and 512 tests passed in an isolated archive of HEAD; export and public validation passed"
     },
     {
       "command": "npm run build",

@@ -4,6 +4,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
+import { embodiedCollectionMethods } from "../src/catalog/embodied-data/collection-methods.js";
+import { embodiedDatasets } from "../src/catalog/embodied-data/datasets.js";
+import { embodiedLaunchEvents } from "../src/catalog/embodied-data/events.js";
+import { embodiedPeers } from "../src/catalog/embodied-data/peers.js";
+import { embodiedStandards } from "../src/catalog/embodied-data/standards.js";
 import { sourceCatalog } from "../src/catalog/sources.js";
 import { loadConfig } from "../src/config/env.js";
 import { createDatabase } from "../src/db/database.js";
@@ -81,9 +86,14 @@ describe("embodied data public switch migration", () => {
 
     expect(planned.current).toMatchObject({
       sources: sourceCatalog.length,
-      signals: 0,
-      events: 0,
-      actors: 0,
+      signals: embodiedLaunchEvents.length,
+      events: embodiedLaunchEvents.length,
+      actors: embodiedPeers.length,
+      eventDataProfiles: embodiedLaunchEvents.length,
+      datasets: embodiedDatasets.length,
+      standards: embodiedStandards.length,
+      collectionMethods: embodiedCollectionMethods.length,
+      actorDataCapabilities: embodiedPeers.reduce((sum, peer) => sum + peer.capabilities.length, 0),
     });
     expect(planned.legacy.sources).toBeGreaterThan(0);
     expect(planned.changes).toEqual({ inserted: 0, updated: 0, relations: 0 });

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { earlyHistoryEvents } from "../src/catalog/early-history.js";
+import { embodiedLaunchEvents } from "../src/catalog/embodied-data/events.js";
 import { historicalEvents } from "../src/catalog/history.js";
 import { recentDensityEvents } from "../src/catalog/recent-density.js";
 import { loadConfig } from "../src/config/env.js";
@@ -138,7 +139,11 @@ describe("event publication readiness", () => {
     const { db } = await setup();
     const summary = await eventReadinessSummary(db);
     expect(summary.total).toBe(
-      earlyHistoryEvents.length + historicalEvents.length + recentDensityEvents.length + 6,
+      earlyHistoryEvents.length +
+        historicalEvents.length +
+        recentDensityEvents.length +
+        embodiedLaunchEvents.length +
+        6,
     );
     expect(summary.ready).toBeGreaterThan(0);
     expect(summary.ready + summary.blocked).toBe(summary.total);

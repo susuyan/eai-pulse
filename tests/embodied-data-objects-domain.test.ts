@@ -1,6 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { embodiedCollectionMethods } from "../src/catalog/embodied-data/collection-methods.js";
+import { embodiedDatasets } from "../src/catalog/embodied-data/datasets.js";
+import { embodiedStandards } from "../src/catalog/embodied-data/standards.js";
 import {
   ActorDataCapabilitySchema,
   CollectionMethodProfileSchema,
@@ -119,7 +122,7 @@ describe("embodied data domain objects", () => {
     }
   });
 
-  it("keeps private object fixtures out of seed and the current repository snapshot", async () => {
+  it("keeps private fixtures out of seed and separate from production catalogs", async () => {
     const seedSource = await readFile(
       fileURLToPath(new URL("../src/db/seed.ts", import.meta.url)),
       "utf8",
@@ -132,6 +135,26 @@ describe("embodied data domain objects", () => {
       ...standards.map((item) => item.slug),
       ...collectionMethods.map((item) => item.slug),
     ];
+    const productionProfiles = new Map<string, unknown>();
+    for (const item of embodiedDatasets) {
+      productionProfiles.set(`dataset:${item.slug}`, item.profile);
+    }
+    for (const item of embodiedStandards) {
+      productionProfiles.set(`standard:${item.slug}`, item.profile);
+    }
+    for (const item of embodiedCollectionMethods) {
+      productionProfiles.set(`collection-method:${item.slug}`, item.profile);
+    }
+
+    for (const item of datasets) {
+      expect(productionProfiles.get(`dataset:${item.slug}`)).not.toEqual(item.profile);
+    }
+    for (const item of standards) {
+      expect(productionProfiles.get(`standard:${item.slug}`)).not.toEqual(item.profile);
+    }
+    for (const item of collectionMethods) {
+      expect(productionProfiles.get(`collection-method:${item.slug}`)).not.toEqual(item.profile);
+    }
 
     for (const slug of fixtureSlugs) {
       expect(seedSource).not.toContain(`"${slug}"`);

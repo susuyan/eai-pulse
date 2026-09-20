@@ -38,7 +38,7 @@ describe("repository data snapshot", () => {
         release_version: "test",
         status: "partial",
         overall_score: 51,
-        dimensions_json: JSON.stringify([{ slug: "coverage", score: 51 }]),
+        dimensions_json: JSON.stringify([{ slug: "coverage", score: 51, tokenCount: 42 }]),
         capability_snapshot_json: JSON.stringify([{ slug: "snapshot", status: "operational" }]),
         notes: "Measured evidence only.",
         started_at: "2026-07-11T07:59:00.000Z",
@@ -201,6 +201,7 @@ describe("repository data snapshot", () => {
     expect(serialized).not.toMatch(/"(?:rawPayload|raw_payload|privateNote|private_note)"\s*:/i);
     expect(serialized).not.toContain("/Users/");
     expect(serialized).toContain("[local-path]");
+    expect(serialized).toContain('"tokenCount": 42');
     const snapshot = JSON.parse(serialized);
     const persisted = snapshot.signals.find(
       (signal: { title: string }) => signal.title === "Snapshot persistence test signal",
@@ -255,11 +256,195 @@ describe("repository data snapshot", () => {
     expect(first.counts.scoutInsights).toBe(1);
     expect(first.counts.evaluationRuns).toBe(1);
 
+    type ObjectSnapshotFixture = {
+      eventDataProfiles: Array<Record<string, unknown>>;
+      datasets: Array<Record<string, unknown>>;
+      datasetEvents: Array<Record<string, unknown>>;
+      standardEvents: Array<Record<string, unknown>>;
+      collectionMethodEvents: Array<Record<string, unknown>>;
+      actorDataCapabilities: Array<Record<string, unknown>>;
+      actorCapabilityEvidence: Array<Record<string, unknown>>;
+    };
+    const corruptionCases: Array<{
+      name: string;
+      expected: string;
+      mutate(value: ObjectSnapshotFixture): void;
+    }> = [
+      {
+        name: "missing-profile-event",
+        expected: "Snapshot Event reference not found",
+        mutate: (value) => {
+          if (value.eventDataProfiles[0]) {
+            value.eventDataProfiles[0].eventSlug = "missing-profile-event";
+          }
+        },
+      },
+      {
+        name: "unsupported-profile-version",
+        expected: "Unsupported embodied data profile schema version: 2",
+        mutate: (value) => {
+          if (value.eventDataProfiles[0]) value.eventDataProfiles[0].schemaVersion = 2;
+        },
+      },
+      {
+        name: "invalid-profile-updated-at",
+        expected: "Snapshot field updatedAt must be an ISO timestamp",
+        mutate: (value) => {
+          if (value.eventDataProfiles[0]) value.eventDataProfiles[0].updatedAt = "zzzz";
+        },
+      },
+      {
+        name: "missing-dataset",
+        expected: "Snapshot Dataset reference not found",
+        mutate: (value) => {
+          if (value.datasetEvents[0]) value.datasetEvents[0].datasetSlug = "missing-dataset";
+        },
+      },
+      {
+        name: "missing-event",
+        expected: "Snapshot Event reference not found",
+        mutate: (value) => {
+          if (value.datasetEvents[0]) value.datasetEvents[0].eventSlug = "missing-event";
+        },
+      },
+      {
+        name: "missing-standard",
+        expected: "Snapshot Standard reference not found",
+        mutate: (value) => {
+          if (value.standardEvents[0]) value.standardEvents[0].standardSlug = "missing-standard";
+        },
+      },
+      {
+        name: "missing-method",
+        expected: "Snapshot CollectionMethod reference not found",
+        mutate: (value) => {
+          if (value.collectionMethodEvents[0]) {
+            value.collectionMethodEvents[0].collectionMethodSlug = "missing-method";
+          }
+        },
+      },
+      {
+        name: "missing-actor",
+        expected: "Snapshot Actor reference not found",
+        mutate: (value) => {
+          if (value.actorDataCapabilities[0]) {
+            value.actorDataCapabilities[0].actorSlug = "missing-actor";
+          }
+          if (value.actorCapabilityEvidence[0]) {
+            value.actorCapabilityEvidence[0].actorSlug = "missing-actor";
+          }
+        },
+      },
+      {
+        name: "missing-capability",
+        expected: "Snapshot Actor capability reference not found",
+        mutate: (value) => {
+          if (value.actorCapabilityEvidence[0]) {
+            value.actorCapabilityEvidence[0].capabilityKey = "missing-capability";
+          }
+        },
+      },
+      {
+        name: "unsupported-version",
+        expected: "Unsupported embodied data object schema version: 2",
+        mutate: (value) => {
+          if (value.datasets[0]) value.datasets[0].schemaVersion = 2;
+        },
+      },
+      {
+        name: "invalid-updated-at",
+        expected: "Snapshot field updatedAt must be an ISO timestamp",
+        mutate: (value) => {
+          if (value.datasets[0]) value.datasets[0].updatedAt = "zzzz";
+        },
+      },
+    ];
+    const invalidDb = createDatabase(config);
+    databases.push(invalidDb);
+    await migrateToLatest(invalidDb, config);
+    await seedDatabase(invalidDb);
+    for (const corruption of corruptionCases) {
+      const invalidSnapshot = structuredClone(snapshot) as ObjectSnapshotFixture;
+      corruption.mutate(invalidSnapshot);
+      const filename = `${corruption.name}.json`;
+      await writeFile(join(root, filename), `${JSON.stringify(invalidSnapshot)}\n`, "utf8");
+      await expect(restoreRepositorySnapshot(invalidDb, root, filename)).rejects.toThrow(
+        corruption.expected,
+      );
+      expect(
+        Number(
+          (
+            await invalidDb
+              .selectFrom("datasets")
+              .select(({ fn }) => fn.countAll<number>().as("count"))
+              .executeTakeFirstOrThrow()
+          ).count,
+        ),
+      ).toBe(0);
+    }
+
     const targetDb = createDatabase(config);
     databases.push(targetDb);
     await migrateToLatest(targetDb, config);
     await seedDatabase(targetDb);
     const targetRepository = new Repository(targetDb);
+    const targetObjectIds = {
+      dataset: "00000000-0000-4000-8000-000000000101",
+      standard: "00000000-0000-4000-8000-000000000102",
+      method: "00000000-0000-4000-8000-000000000103",
+      capability: "00000000-0000-4000-8000-000000000104",
+    };
+    const preexistingCreatedAt = "2020-01-01T00:00:00.000Z";
+    const targetCapabilityActor = await targetDb
+      .selectFrom("actors")
+      .select("id")
+      .where("slug", "=", capabilityActor.slug)
+      .executeTakeFirstOrThrow();
+    await targetDb
+      .insertInto("datasets")
+      .values({
+        id: targetObjectIds.dataset,
+        slug: datasetFixture.slug,
+        profile_json: JSON.stringify(datasetFixture.profile),
+        schema_version: 1,
+        created_at: preexistingCreatedAt,
+        updated_at: preexistingCreatedAt,
+      })
+      .execute();
+    await targetDb
+      .insertInto("standards")
+      .values({
+        id: targetObjectIds.standard,
+        slug: standardFixture.slug,
+        profile_json: JSON.stringify(standardFixture.profile),
+        schema_version: 1,
+        created_at: preexistingCreatedAt,
+        updated_at: preexistingCreatedAt,
+      })
+      .execute();
+    await targetDb
+      .insertInto("collection_methods")
+      .values({
+        id: targetObjectIds.method,
+        slug: methodFixture.slug,
+        profile_json: JSON.stringify(methodFixture.profile),
+        schema_version: 1,
+        created_at: preexistingCreatedAt,
+        updated_at: preexistingCreatedAt,
+      })
+      .execute();
+    await targetDb
+      .insertInto("actor_data_capabilities")
+      .values({
+        id: targetObjectIds.capability,
+        actor_id: targetCapabilityActor.id,
+        capability_key: capabilityFixture.capabilityKey,
+        profile_json: JSON.stringify(capabilityFixture),
+        schema_version: 1,
+        created_at: preexistingCreatedAt,
+        updated_at: preexistingCreatedAt,
+      })
+      .execute();
     const targetOpenai = (await targetRepository.listSources()).find(
       (source) => source.slug === "openai",
     );
@@ -389,7 +574,7 @@ describe("repository data snapshot", () => {
         .executeTakeFirst(),
     ).toEqual({
       overall_score: 51,
-      dimensions_json: JSON.stringify([{ slug: "coverage", score: 51 }]),
+      dimensions_json: JSON.stringify([{ slug: "coverage", score: 51, tokenCount: 42 }]),
       capability_snapshot_json: JSON.stringify([{ slug: "snapshot", status: "operational" }]),
     });
     await restoreRepositorySnapshot(targetDb, root);
@@ -431,6 +616,13 @@ describe("repository data snapshot", () => {
     expect((await targetRepository.getDatasetBySlug(datasetFixture.slug))?.profile).toEqual(
       datasetFixture.profile,
     );
+    expect(
+      await targetDb
+        .selectFrom("datasets")
+        .select(["id", "created_at"])
+        .where("slug", "=", datasetFixture.slug)
+        .executeTakeFirstOrThrow(),
+    ).toEqual({ id: targetObjectIds.dataset, created_at: preexistingCreatedAt });
     expect((await targetRepository.getStandardBySlug(standardFixture.slug))?.profile).toEqual(
       standardFixture.profile,
     );
@@ -445,23 +637,34 @@ describe("repository data snapshot", () => {
     expect(await targetRepository.listActorDataCapabilities(restoredCapabilityActor.id)).toEqual([
       capabilityFixture,
     ]);
-    for (const table of [
-      "dataset_events",
-      "standard_events",
-      "collection_method_events",
-      "actor_capability_evidence",
-    ] as const) {
-      expect(
-        Number(
-          (
-            await targetDb
-              .selectFrom(table)
-              .select(({ fn }) => fn.countAll<number>().as("count"))
-              .executeTakeFirstOrThrow()
-          ).count,
-        ),
-      ).toBe(1);
-    }
+    expect(await targetDb.selectFrom("dataset_events").selectAll().execute()).toEqual([
+      expect.objectContaining({
+        dataset_id: targetObjectIds.dataset,
+        event_id: restoredProfileEvent.id,
+        relation_role: "release",
+      }),
+    ]);
+    expect(await targetDb.selectFrom("standard_events").selectAll().execute()).toEqual([
+      expect.objectContaining({
+        standard_id: targetObjectIds.standard,
+        event_id: restoredProfileEvent.id,
+        relation_role: "publication",
+      }),
+    ]);
+    expect(await targetDb.selectFrom("collection_method_events").selectAll().execute()).toEqual([
+      expect.objectContaining({
+        collection_method_id: targetObjectIds.method,
+        event_id: restoredProfileEvent.id,
+        relation_role: "demonstration",
+      }),
+    ]);
+    expect(await targetDb.selectFrom("actor_capability_evidence").selectAll().execute()).toEqual([
+      expect.objectContaining({
+        capability_id: targetObjectIds.capability,
+        event_id: restoredProfileEvent.id,
+        evidence_role: "claim",
+      }),
+    ]);
 
     const legacyRoot = await mkdtemp(join(tmpdir(), "agent-pulse-legacy-snapshot-"));
     const legacySnapshot = structuredClone(snapshot);
@@ -506,8 +709,11 @@ describe("repository data snapshot", () => {
     expect(await legacyRepository.listDatasets()).toEqual([]);
     expect(await legacyRepository.listStandards()).toEqual([]);
     expect(await legacyRepository.listCollectionMethods()).toEqual([]);
-    expect(await legacyRepository.listActorDataCapabilities(restoredCapabilityActor.id)).toEqual(
-      [],
-    );
+    const legacyCapabilityActor = await legacyDb
+      .selectFrom("actors")
+      .select("id")
+      .where("slug", "=", capabilityActor.slug)
+      .executeTakeFirstOrThrow();
+    expect(await legacyRepository.listActorDataCapabilities(legacyCapabilityActor.id)).toEqual([]);
   });
 });

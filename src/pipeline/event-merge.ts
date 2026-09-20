@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Kysely } from "kysely";
+import type { Kysely, Selectable } from "kysely";
 import { now, Repository } from "../db/repository.js";
 import type { DatabaseSchema, EventRow } from "../db/types.js";
 import {
@@ -121,12 +121,50 @@ export async function mergeEventCandidates(
 
   await db.transaction().execute(async (trx) => {
     for (const source of sources) {
-      const [signals, tracks, actors] = await Promise.all([
+      const [
+        signals,
+        tracks,
+        actors,
+        datasetEvents,
+        standardEvents,
+        collectionMethodEvents,
+        actorCapabilityEvidence,
+        eventDataProfile,
+        scoutEvidence,
+      ] = await Promise.all([
         trx.selectFrom("event_signals").selectAll().where("event_id", "=", source.id).execute(),
         trx.selectFrom("event_tracks").selectAll().where("event_id", "=", source.id).execute(),
         trx.selectFrom("event_actors").selectAll().where("event_id", "=", source.id).execute(),
+        trx.selectFrom("dataset_events").selectAll().where("event_id", "=", source.id).execute(),
+        trx.selectFrom("standard_events").selectAll().where("event_id", "=", source.id).execute(),
+        trx
+          .selectFrom("collection_method_events")
+          .selectAll()
+          .where("event_id", "=", source.id)
+          .execute(),
+        trx
+          .selectFrom("actor_capability_evidence")
+          .selectAll()
+          .where("event_id", "=", source.id)
+          .execute(),
+        trx
+          .selectFrom("event_data_profiles")
+          .selectAll()
+          .where("event_id", "=", source.id)
+          .executeTakeFirst(),
+        trx.selectFrom("scout_evidence").selectAll().where("event_id", "=", source.id).execute(),
       ]);
-      await copyAssociations(trx, input.targetEventId, signals, tracks, actors);
+      await copyEventDataProfile(trx, input.targetEventId, eventDataProfile);
+      await copyAssociations(trx, input.targetEventId, {
+        signals,
+        tracks,
+        actors,
+        datasetEvents,
+        standardEvents,
+        collectionMethodEvents,
+        actorCapabilityEvidence,
+        scoutEvidence,
+      });
       await trx
         .insertInto("event_merges")
         .values({
@@ -138,6 +176,12 @@ export async function mergeEventCandidates(
             signalIds: signals.map((item) => item.signal_id),
             trackIds: tracks.map((item) => item.track_id),
             actorIds: actors.map((item) => item.actor_id),
+            datasetEvents,
+            standardEvents,
+            collectionMethodEvents,
+            actorCapabilityEvidence,
+            eventDataProfile: eventDataProfile ?? null,
+            scoutEvidence,
           }),
           reason: input.reason.slice(0, 80),
           merged_by: input.mergedBy.slice(0, 80),
@@ -154,11 +198,18 @@ export async function mergeEventCandidates(
 async function copyAssociations(
   db: Kysely<DatabaseSchema>,
   targetEventId: string,
-  signals: Array<DatabaseSchema["event_signals"]>,
-  tracks: Array<DatabaseSchema["event_tracks"]>,
-  actors: Array<DatabaseSchema["event_actors"]>,
+  associations: {
+    signals: Array<DatabaseSchema["event_signals"]>;
+    tracks: Array<DatabaseSchema["event_tracks"]>;
+    actors: Array<DatabaseSchema["event_actors"]>;
+    datasetEvents: Array<DatabaseSchema["dataset_events"]>;
+    standardEvents: Array<DatabaseSchema["standard_events"]>;
+    collectionMethodEvents: Array<DatabaseSchema["collection_method_events"]>;
+    actorCapabilityEvidence: Array<DatabaseSchema["actor_capability_evidence"]>;
+    scoutEvidence: Array<DatabaseSchema["scout_evidence"]>;
+  },
 ): Promise<void> {
-  for (const signal of signals) {
+  for (const signal of associations.signals) {
     const exists = await db
       .selectFrom("event_signals")
       .select("signal_id")
@@ -171,7 +222,7 @@ async function copyAssociations(
         .values({ ...signal, event_id: targetEventId })
         .execute();
   }
-  for (const track of tracks) {
+  for (const track of associations.tracks) {
     const exists = await db
       .selectFrom("event_tracks")
       .select("track_id")
@@ -184,7 +235,7 @@ async function copyAssociations(
         .values({ ...track, event_id: targetEventId })
         .execute();
   }
-  for (const actor of actors) {
+  for (const actor of associations.actors) {
     const exists = await db
       .selectFrom("event_actors")
       .select("actor_id")
@@ -196,6 +247,84 @@ async function copyAssociations(
         .insertInto("event_actors")
         .values({ ...actor, event_id: targetEventId })
         .execute();
+  }
+  for (const link of associations.datasetEvents) {
+    await db
+      .insertInto("dataset_events")
+      .values({ ...link, event_id: targetEventId })
+      .onConflict((conflict) =>
+        conflict.columns(["dataset_id", "event_id", "relation_role"]).doNothing(),
+      )
+      .execute();
+  }
+  for (const link of associations.standardEvents) {
+    await db
+      .insertInto("standard_events")
+      .values({ ...link, event_id: targetEventId })
+      .onConflict((conflict) =>
+        conflict.columns(["standard_id", "event_id", "relation_role"]).doNothing(),
+      )
+      .execute();
+  }
+  for (const link of associations.collectionMethodEvents) {
+    await db
+      .insertInto("collection_method_events")
+      .values({ ...link, event_id: targetEventId })
+      .onConflict((conflict) =>
+        conflict.columns(["collection_method_id", "event_id", "relation_role"]).doNothing(),
+      )
+      .execute();
+  }
+  for (const link of associations.actorCapabilityEvidence) {
+    await db
+      .insertInto("actor_capability_evidence")
+      .values({ ...link, event_id: targetEventId })
+      .onConflict((conflict) =>
+        conflict.columns(["capability_id", "event_id", "evidence_role"]).doNothing(),
+      )
+      .execute();
+  }
+  for (const link of associations.scoutEvidence) {
+    const target = await db
+      .selectFrom("scout_evidence")
+      .select(["evidence_role", "weight"])
+      .where("insight_id", "=", link.insight_id)
+      .where("event_id", "=", targetEventId)
+      .executeTakeFirst();
+    if (!target) {
+      await db
+        .insertInto("scout_evidence")
+        .values({ ...link, event_id: targetEventId })
+        .execute();
+    } else if (target.evidence_role !== link.evidence_role || target.weight !== link.weight) {
+      throw new Error("Conflicting Scout evidence must be reconciled before merge");
+    }
+  }
+}
+
+async function copyEventDataProfile(
+  db: Kysely<DatabaseSchema>,
+  targetEventId: string,
+  source: Selectable<DatabaseSchema["event_data_profiles"]> | undefined,
+): Promise<void> {
+  if (!source) return;
+  const target = await db
+    .selectFrom("event_data_profiles")
+    .selectAll()
+    .where("event_id", "=", targetEventId)
+    .executeTakeFirst();
+  if (!target) {
+    await db
+      .insertInto("event_data_profiles")
+      .values({ ...source, event_id: targetEventId })
+      .execute();
+    return;
+  }
+  if (
+    target.schema_version !== source.schema_version ||
+    target.profile_json !== source.profile_json
+  ) {
+    throw new Error("Conflicting Event DataProfiles must be reconciled before merge");
   }
 }
 

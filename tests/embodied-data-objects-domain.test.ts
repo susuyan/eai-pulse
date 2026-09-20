@@ -78,6 +78,32 @@ describe("embodied data domain objects", () => {
     expect(DatasetProfileSchema.safeParse({ ...dataset, unexpected: true }).success).toBe(false);
   });
 
+  it("rejects credentials and sensitive query parameters in evidence URLs", () => {
+    const dataset = datasets[0]?.profile;
+    const standard = standards[0]?.profile;
+    const method = collectionMethods[0]?.profile;
+    const capability = actorCapabilities[0];
+    if (!dataset || !standard || !method || !capability) throw new Error("Missing fixture");
+
+    for (const canonicalUrl of [
+      "https://user:password@example.com/dataset",
+      "https://example.com/dataset?api_key=secret",
+      "https://example.com/dataset?access-token=secret",
+      "https://example.com/dataset?accessToken=secret",
+      "https://example.com/dataset?authorization=secret",
+      "https://example.com/dataset#access_token=secret",
+    ]) {
+      expect(DatasetProfileSchema.safeParse({ ...dataset, canonicalUrl }).success).toBe(false);
+      expect(StandardProfileSchema.safeParse({ ...standard, canonicalUrl }).success).toBe(false);
+      expect(CollectionMethodProfileSchema.safeParse({ ...method, canonicalUrl }).success).toBe(
+        false,
+      );
+      expect(
+        ActorDataCapabilitySchema.safeParse({ ...capability, sourceUrl: canonicalUrl }).success,
+      ).toBe(false);
+    }
+  });
+
   it("covers every real fixture with an HTTPS primary-source manifest", () => {
     const expected = new Set([
       ...datasets.map((item) => `dataset:${item.slug}`),

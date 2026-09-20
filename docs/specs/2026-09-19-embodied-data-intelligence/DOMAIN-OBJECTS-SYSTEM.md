@@ -17,7 +17,7 @@
 - `ActorDataCapabilitySchema`
 - `PeerCompanyProfileSchema`
 
-共用 `EvidenceStatusSchema`、管线阶段、本体、任务、模态和采集方式枚举。所有来源 URL 必须为 HTTPS。所有带数值的规模、吞吐和成本声明必须包含 `metric`、`value`、`unit` 和 `sourceUrl`。
+共用 `EvidenceStatusSchema`、管线阶段、本体、任务、模态、采集方式和安全证据 URL Schema。证据 URL 必须为 HTTPS，且不得包含 userinfo、查询参数或 fragment。所有带数值的规模、吞吐和成本声明必须包含 `metric`、`value`、`unit` 和 `sourceUrl`。
 
 ## 3. 持久化
 
@@ -70,7 +70,7 @@ linkActorCapabilityEvidence(capabilityId, eventId, evidenceRole)
 getPeerCompanyProfile(actorId)
 ```
 
-所有写入在数据库操作前执行 Schema 校验；所有读取在返回前再次校验。Upsert 保留 `created_at`，更新 `updated_at`。
+所有写入在数据库操作前执行 Schema 校验；所有读取在返回前再次校验。Upsert 使用数据库原子冲突处理，保留 `created_at`，更新 `updated_at`。
 
 ## 5. 快照
 
@@ -85,7 +85,9 @@ getPeerCompanyProfile(actorId)
 - `actorDataCapabilities`
 - `actorCapabilityEvidence`
 
-恢复顺序为主对象、能力声明、Event 关系、能力证据。每个 JSON profile 在写出和恢复时都必须通过对应 Schema。关系使用 slug 或稳定 capability key 解析，不依赖不同数据库中的随机 ID。
+快照读取在一个一致性事务中完成，并在写文件前验证引用闭包。恢复顺序为主对象、能力声明、Event 关系、能力证据。每个 JSON profile 在写出和恢复时都必须通过对应 Schema、版本和 ISO 时间戳校验；关系使用 slug 或稳定 capability key 解析，不依赖不同数据库中的随机 ID。任一引用缺失时整个事务回滚，更新既有对象时不改写 `created_at`。
+
+Event 合并必须把四类对象关系、能力证据、DataProfile 和 Scout evidence 迁移到目标 Event，并把源关系写入合并审计。源与目标 DataProfile 或同一 Scout insight 的证据角色、权重不一致时停止合并，要求先显式协调。
 
 ## 6. Fixture
 

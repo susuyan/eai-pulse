@@ -71,10 +71,15 @@ export type AcquisitionMethod = z.infer<typeof AcquisitionMethodSchema>;
 export const EvidenceStatusSchema = z.enum(["claimed", "verified", "conflicting"]);
 export type EvidenceStatus = z.infer<typeof EvidenceStatusSchema>;
 
-const httpsUrl = z
+export const EMBODIED_DATA_PROFILE_SCHEMA_VERSION = 1;
+
+export const EvidenceUrlSchema = z
   .string()
   .url()
-  .refine((value) => new URL(value).protocol === "https:", "https_url_required");
+  .refine((value) => {
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password && !url.search && !url.hash;
+  }, "safe_https_evidence_url_required");
 
 export const EventDataProfileSchema = z
   .object({
@@ -93,7 +98,7 @@ export const EventDataProfileSchema = z
             metric: z.string().trim().min(2).max(80),
             value: z.number().finite().nonnegative(),
             unit: z.string().trim().min(1).max(40),
-            sourceUrl: httpsUrl,
+            sourceUrl: EvidenceUrlSchema,
           })
           .strict(),
       )

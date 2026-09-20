@@ -87,5 +87,47 @@ describe("embodied data database foundation", () => {
     const invalidProfile = { ...profile, pipelineStages: [] };
     await expect(repository.upsertEventDataProfile(event.id, invalidProfile)).rejects.toThrow();
     expect(await repository.getEventDataProfile(event.id)).toEqual(profile);
+
+    for (const sourceUrl of [
+      "https://example.com/evidence?sig=secret",
+      "https://example.com/evidence#access_token=secret",
+    ]) {
+      const unsafeProfile = structuredClone(profile);
+      if (!unsafeProfile?.scaleClaims[0]) throw new Error("Missing scale claim fixture");
+      unsafeProfile.scaleClaims[0].sourceUrl = sourceUrl;
+      await expect(repository.upsertEventDataProfile(event.id, unsafeProfile)).rejects.toThrow();
+    }
+  });
+
+  it("upserts DataProfiles atomically and rejects unsupported stored schema versions", async () => {
+    const db = await setup();
+    const repository = new Repository(db);
+    const event = await db.selectFrom("events").select("id").executeTakeFirstOrThrow();
+    const profile = profiles.valid[0];
+    if (!profile) throw new Error("Missing profile fixture");
+
+    await Promise.all(
+      Array.from({ length: 4 }, () => repository.upsertEventDataProfile(event.id, profile)),
+    );
+    expect(
+      Number(
+        (
+          await db
+            .selectFrom("event_data_profiles")
+            .select(({ fn }) => fn.countAll<number>().as("count"))
+            .where("event_id", "=", event.id)
+            .executeTakeFirstOrThrow()
+        ).count,
+      ),
+    ).toBe(1);
+
+    await db
+      .updateTable("event_data_profiles")
+      .set({ schema_version: 2 })
+      .where("event_id", "=", event.id)
+      .execute();
+    await expect(repository.getEventDataProfile(event.id)).rejects.toThrow(
+      "Unsupported embodied data profile schema version: 2",
+    );
   });
 });

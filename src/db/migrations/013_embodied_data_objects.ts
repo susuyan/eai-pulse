@@ -100,6 +100,27 @@ export async function up(db: Kysely<unknown>): Promise<void> {
       "evidence_role",
     ])
     .execute();
+
+  await db.schema
+    .createIndex("dataset_events_event_idx")
+    .on("dataset_events")
+    .column("event_id")
+    .execute();
+  await db.schema
+    .createIndex("standard_events_event_idx")
+    .on("standard_events")
+    .column("event_id")
+    .execute();
+  await db.schema
+    .createIndex("collection_method_events_event_idx")
+    .on("collection_method_events")
+    .column("event_id")
+    .execute();
+  await db.schema
+    .createIndex("actor_capability_evidence_event_idx")
+    .on("actor_capability_evidence")
+    .column("event_id")
+    .execute();
 }
 
 export async function down(db: Kysely<unknown>): Promise<void> {

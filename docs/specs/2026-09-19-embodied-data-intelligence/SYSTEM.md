@@ -89,6 +89,7 @@ var/embodied-data-preview.json
 - 增加可选 `eventDataProfiles` 数组。
 - 缺少新字段的旧快照按 `legacy-ai` 恢复。
 - 新快照中的每个 DataProfile 在恢复前必须通过 Schema。
+- 快照读取使用一致性事务；DataProfile 的 Event 引用、schema version 和 ISO 时间戳必须完整有效，恢复既有 Profile 时保留 `created_at`。
 
 本包不重写版本化快照。快照文件只在后续人工确认的内容迁移阶段生成。
 
@@ -103,6 +104,6 @@ var/embodied-data-preview.json
 ## 8. 安全与隐私
 
 - 预览不读取或输出 `raw_meta_json`。
-- 规模声明必须使用公开 URL。
+- 规模声明必须使用不含 userinfo、查询参数与 fragment 的公开 HTTPS URL。
 - 输出路径位于 `.gitignore` 已覆盖的 `var/`。
 - 不修改公开 DTO、Pages、sitemap、`llms.txt` 或 Changelog 页面以外的公开内容。

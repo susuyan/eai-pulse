@@ -4,6 +4,7 @@ import { titleSimilarity } from "../domain/clustering.js";
 import {
   type ContentScope,
   ContentScopeSchema,
+  EMBODIED_DATA_PROFILE_SCHEMA_VERSION,
   type EventDataProfile,
   EventDataProfileSchema,
 } from "../domain/embodied-data.js";
@@ -17,6 +18,7 @@ import {
   DatasetEventRoleSchema,
   type DatasetProfile,
   DatasetProfileSchema,
+  EMBODIED_DATA_OBJECT_SCHEMA_VERSION,
   type PeerCompanyProfile,
   PeerCompanyProfileSchema,
   StandardEventRoleSchema,
@@ -1068,70 +1070,62 @@ export class Repository {
   async upsertEventDataProfile(eventId: string, profile: unknown): Promise<void> {
     const parsed = EventDataProfileSchema.parse(profile);
     const timestamp = now();
-    const existing = await this.db
-      .selectFrom("event_data_profiles")
-      .select("event_id")
-      .where("event_id", "=", eventId)
-      .executeTakeFirst();
-    if (existing) {
-      await this.db
-        .updateTable("event_data_profiles")
-        .set({ profile_json: json(parsed), schema_version: 1, updated_at: timestamp })
-        .where("event_id", "=", eventId)
-        .execute();
-      return;
-    }
     await this.db
       .insertInto("event_data_profiles")
       .values({
         event_id: eventId,
         profile_json: json(parsed),
-        schema_version: 1,
+        schema_version: EMBODIED_DATA_PROFILE_SCHEMA_VERSION,
         created_at: timestamp,
         updated_at: timestamp,
       })
+      .onConflict((conflict) =>
+        conflict.column("event_id").doUpdateSet({
+          profile_json: json(parsed),
+          schema_version: EMBODIED_DATA_PROFILE_SCHEMA_VERSION,
+          updated_at: timestamp,
+        }),
+      )
       .execute();
   }
 
   async getEventDataProfile(eventId: string): Promise<EventDataProfile | undefined> {
     const row = await this.db
       .selectFrom("event_data_profiles")
-      .select("profile_json")
+      .select(["profile_json", "schema_version"])
       .where("event_id", "=", eventId)
       .executeTakeFirst();
     if (!row) return undefined;
+    if (row.schema_version !== EMBODIED_DATA_PROFILE_SCHEMA_VERSION) {
+      throw new Error(`Unsupported embodied data profile schema version: ${row.schema_version}`);
+    }
     return EventDataProfileSchema.parse(JSON.parse(row.profile_json));
   }
 
   async upsertDataset(slug: string, profile: unknown): Promise<string> {
     const parsed = DatasetProfileSchema.parse(profile);
-    const existing = await this.db
-      .selectFrom("datasets")
-      .select("id")
-      .where("slug", "=", slug)
-      .executeTakeFirst();
-    if (existing) {
-      await this.db
-        .updateTable("datasets")
-        .set({ profile_json: json(parsed), schema_version: 1, updated_at: now() })
-        .where("id", "=", existing.id)
-        .execute();
-      return existing.id;
-    }
     const id = randomUUID();
     const timestamp = now();
-    await this.db
+    const row = await this.db
       .insertInto("datasets")
       .values({
         id,
         slug,
         profile_json: json(parsed),
-        schema_version: 1,
+        schema_version: EMBODIED_DATA_OBJECT_SCHEMA_VERSION,
         created_at: timestamp,
         updated_at: timestamp,
       })
-      .execute();
-    return id;
+      .onConflict((conflict) =>
+        conflict.column("slug").doUpdateSet({
+          profile_json: json(parsed),
+          schema_version: EMBODIED_DATA_OBJECT_SCHEMA_VERSION,
+          updated_at: timestamp,
+        }),
+      )
+      .returning("id")
+      .executeTakeFirstOrThrow();
+    return row.id;
   }
 
   async getDatasetBySlug(slug: string): Promise<DomainObjectRecord<DatasetProfile> | undefined> {
@@ -1165,33 +1159,28 @@ export class Repository {
 
   async upsertStandard(slug: string, profile: unknown): Promise<string> {
     const parsed = StandardProfileSchema.parse(profile);
-    const existing = await this.db
-      .selectFrom("standards")
-      .select("id")
-      .where("slug", "=", slug)
-      .executeTakeFirst();
-    if (existing) {
-      await this.db
-        .updateTable("standards")
-        .set({ profile_json: json(parsed), schema_version: 1, updated_at: now() })
-        .where("id", "=", existing.id)
-        .execute();
-      return existing.id;
-    }
     const id = randomUUID();
     const timestamp = now();
-    await this.db
+    const row = await this.db
       .insertInto("standards")
       .values({
         id,
         slug,
         profile_json: json(parsed),
-        schema_version: 1,
+        schema_version: EMBODIED_DATA_OBJECT_SCHEMA_VERSION,
         created_at: timestamp,
         updated_at: timestamp,
       })
-      .execute();
-    return id;
+      .onConflict((conflict) =>
+        conflict.column("slug").doUpdateSet({
+          profile_json: json(parsed),
+          schema_version: EMBODIED_DATA_OBJECT_SCHEMA_VERSION,
+          updated_at: timestamp,
+        }),
+      )
+      .returning("id")
+      .executeTakeFirstOrThrow();
+    return row.id;
   }
 
   async getStandardBySlug(slug: string): Promise<DomainObjectRecord<StandardProfile> | undefined> {
@@ -1229,33 +1218,28 @@ export class Repository {
 
   async upsertCollectionMethod(slug: string, profile: unknown): Promise<string> {
     const parsed = CollectionMethodProfileSchema.parse(profile);
-    const existing = await this.db
-      .selectFrom("collection_methods")
-      .select("id")
-      .where("slug", "=", slug)
-      .executeTakeFirst();
-    if (existing) {
-      await this.db
-        .updateTable("collection_methods")
-        .set({ profile_json: json(parsed), schema_version: 1, updated_at: now() })
-        .where("id", "=", existing.id)
-        .execute();
-      return existing.id;
-    }
     const id = randomUUID();
     const timestamp = now();
-    await this.db
+    const row = await this.db
       .insertInto("collection_methods")
       .values({
         id,
         slug,
         profile_json: json(parsed),
-        schema_version: 1,
+        schema_version: EMBODIED_DATA_OBJECT_SCHEMA_VERSION,
         created_at: timestamp,
         updated_at: timestamp,
       })
-      .execute();
-    return id;
+      .onConflict((conflict) =>
+        conflict.column("slug").doUpdateSet({
+          profile_json: json(parsed),
+          schema_version: EMBODIED_DATA_OBJECT_SCHEMA_VERSION,
+          updated_at: timestamp,
+        }),
+      )
+      .returning("id")
+      .executeTakeFirstOrThrow();
+    return row.id;
   }
 
   async getCollectionMethodBySlug(
@@ -1299,45 +1283,42 @@ export class Repository {
 
   async upsertActorDataCapability(actorId: string, capability: unknown): Promise<string> {
     const parsed = ActorDataCapabilitySchema.parse(capability);
-    const existing = await this.db
-      .selectFrom("actor_data_capabilities")
-      .select("id")
-      .where("actor_id", "=", actorId)
-      .where("capability_key", "=", parsed.capabilityKey)
-      .executeTakeFirst();
-    if (existing) {
-      await this.db
-        .updateTable("actor_data_capabilities")
-        .set({ profile_json: json(parsed), schema_version: 1, updated_at: now() })
-        .where("id", "=", existing.id)
-        .execute();
-      return existing.id;
-    }
     const id = randomUUID();
     const timestamp = now();
-    await this.db
+    const row = await this.db
       .insertInto("actor_data_capabilities")
       .values({
         id,
         actor_id: actorId,
         capability_key: parsed.capabilityKey,
         profile_json: json(parsed),
-        schema_version: 1,
+        schema_version: EMBODIED_DATA_OBJECT_SCHEMA_VERSION,
         created_at: timestamp,
         updated_at: timestamp,
       })
-      .execute();
-    return id;
+      .onConflict((conflict) =>
+        conflict.columns(["actor_id", "capability_key"]).doUpdateSet({
+          profile_json: json(parsed),
+          schema_version: EMBODIED_DATA_OBJECT_SCHEMA_VERSION,
+          updated_at: timestamp,
+        }),
+      )
+      .returning("id")
+      .executeTakeFirstOrThrow();
+    return row.id;
   }
 
   async listActorDataCapabilities(actorId: string): Promise<ActorDataCapability[]> {
     const rows = await this.db
       .selectFrom("actor_data_capabilities")
-      .select("profile_json")
+      .select(["profile_json", "schema_version"])
       .where("actor_id", "=", actorId)
       .orderBy("capability_key")
       .execute();
-    return rows.map((row) => ActorDataCapabilitySchema.parse(JSON.parse(row.profile_json)));
+    return rows.map((row) => {
+      assertSupportedEmbodiedDataObjectSchemaVersion(row.schema_version);
+      return ActorDataCapabilitySchema.parse(JSON.parse(row.profile_json));
+    });
   }
 
   async linkActorCapabilityEvidence(
@@ -1903,6 +1884,7 @@ function domainObjectFromRow<T>(
   row: DomainObjectRowLike,
   schema: { parse(value: unknown): T },
 ): DomainObjectRecord<T> {
+  assertSupportedEmbodiedDataObjectSchemaVersion(row.schema_version);
   return {
     id: row.id,
     slug: row.slug,
@@ -1911,6 +1893,12 @@ function domainObjectFromRow<T>(
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+function assertSupportedEmbodiedDataObjectSchemaVersion(value: number): void {
+  if (value !== EMBODIED_DATA_OBJECT_SCHEMA_VERSION) {
+    throw new Error(`Unsupported embodied data object schema version: ${value}`);
+  }
 }
 
 export { json, now, parseJson };

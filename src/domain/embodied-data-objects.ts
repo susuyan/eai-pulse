@@ -7,23 +7,22 @@ import {
   EmbodiedTaskSchema,
   EmbodimentSchema,
   EvidenceStatusSchema,
+  EvidenceUrlSchema,
 } from "./embodied-data.js";
 
 const shortText = z.string().trim().min(1).max(160);
 const detailText = z.string().trim().min(3).max(800);
-const httpsUrl = z
-  .string()
-  .url()
-  .refine((value) => new URL(value).protocol === "https:", "https_url_required");
 const nullableDate = z.string().date().nullable();
 const isoTimestamp = z.string().datetime({ offset: true });
+
+export const EMBODIED_DATA_OBJECT_SCHEMA_VERSION = 1;
 
 export const SourcedMetricClaimSchema = z
   .object({
     metric: z.string().trim().min(2).max(120),
     value: z.number().finite().nonnegative(),
     unit: z.string().trim().min(1).max(60),
-    sourceUrl: httpsUrl,
+    sourceUrl: EvidenceUrlSchema,
   })
   .strict();
 export type SourcedMetricClaim = z.infer<typeof SourcedMetricClaimSchema>;
@@ -31,7 +30,7 @@ export type SourcedMetricClaim = z.infer<typeof SourcedMetricClaimSchema>;
 const SourcedResultSchema = z
   .object({
     claim: z.string().trim().min(20).max(800),
-    sourceUrl: httpsUrl,
+    sourceUrl: EvidenceUrlSchema,
   })
   .strict();
 
@@ -41,7 +40,7 @@ export const DatasetProfileSchema = z
     version: z.string().trim().min(1).max(80).nullable(),
     publisher: shortText,
     releaseDate: nullableDate,
-    canonicalUrl: httpsUrl,
+    canonicalUrl: EvidenceUrlSchema,
     pipelineStages: z.array(EmbodiedPipelineStageSchema).min(1).max(6),
     scenarios: z.array(shortText).max(20),
     embodiments: z.array(EmbodimentSchema).max(12),
@@ -55,11 +54,11 @@ export const DatasetProfileSchema = z
     calibration: z.array(shortText).max(16),
     annotations: z.array(shortText).max(20),
     qualityMethods: z.array(shortText).max(20),
-    license: z.object({ name: shortText, url: httpsUrl }).strict().nullable(),
+    license: z.object({ name: shortText, url: EvidenceUrlSchema }).strict().nullable(),
     access: z
       .object({
         mode: z.enum(["open", "registration", "restricted", "paid"]),
-        url: httpsUrl,
+        url: EvidenceUrlSchema,
       })
       .strict(),
     useCases: z.array(shortText).max(20),
@@ -89,7 +88,7 @@ export const StandardProfileSchema = z
     organization: shortText,
     version: z.string().trim().min(1).max(80).nullable(),
     lifecycle: StandardLifecycleSchema,
-    canonicalUrl: httpsUrl,
+    canonicalUrl: EvidenceUrlSchema,
     pipelineStages: z.array(EmbodiedPipelineStageSchema).min(1).max(6),
     areas: z.array(StandardAreaSchema).min(1).max(7),
     implementations: z.array(shortText).max(20),
@@ -113,7 +112,7 @@ export const CollectionMethodProfileSchema = z
   .object({
     name: shortText,
     methodKind: AcquisitionMethodSchema,
-    canonicalUrl: httpsUrl,
+    canonicalUrl: EvidenceUrlSchema,
     pipelineStages: z.array(EmbodiedPipelineStageSchema).min(1).max(6),
     scenarios: z.array(shortText).max(20),
     embodiments: z.array(EmbodimentSchema).max(12),
@@ -152,7 +151,7 @@ export const ActorDataCapabilitySchema = z
     pipelineStages: z.array(EmbodiedPipelineStageSchema).min(1).max(6),
     claimText: z.string().trim().min(20).max(1_200),
     claimant: z.enum(["company", "independent"]),
-    sourceUrl: httpsUrl,
+    sourceUrl: EvidenceUrlSchema,
     claimedAt: isoTimestamp,
     verificationStatus: ActorCapabilityVerificationStatusSchema,
     verifiedAt: isoTimestamp.nullable(),

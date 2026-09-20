@@ -15,7 +15,7 @@
 npm test -- --run tests/embodied-data-domain.test.ts
 ```
 
-验收：合法 scope、管线阶段、模态和采集方式通过；未知值、空管线阶段、非法 URL 和额外字段失败。
+验收：合法 scope、管线阶段、模态和采集方式通过；未知值、空管线阶段、非 HTTPS、带 userinfo 或查询参数的证据 URL 和额外字段失败。
 
 ### 相关性 golden set
 
@@ -37,6 +37,7 @@ npm test -- --run tests/snapshot.test.ts
 - 四个 scope 列默认 `legacy-ai`；
 - DataProfile 外键级联删除；
 - Repository 写入与读取执行双向 Schema 校验；
+- DataProfile upsert 并发幂等，未知 schema version、缺失 Event 引用和非法时间戳失败；
 - 新字段完成 snapshot round-trip；
 - 旧快照缺少新字段时仍可恢复。
 

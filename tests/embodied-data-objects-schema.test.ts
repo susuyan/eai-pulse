@@ -350,6 +350,48 @@ describe("embodied data object persistence", () => {
     );
   });
 
+  it("performs object upserts atomically and rejects unsupported stored schema versions", async () => {
+    const db = await setup();
+    const repository = new Repository(db);
+    const actor = await db.selectFrom("actors").select("id").executeTakeFirstOrThrow();
+    const datasetFixture = datasets[0];
+    const standardFixture = standards[0];
+    const methodFixture = collectionMethods[0];
+    const capability = actorCapabilities[0];
+    if (!datasetFixture || !standardFixture || !methodFixture || !capability) {
+      throw new Error("Missing fixture");
+    }
+
+    const [datasetIds, standardIds, methodIds, capabilityIds] = await Promise.all([
+      Promise.all(
+        Array.from({ length: 4 }, () =>
+          repository.upsertDataset(datasetFixture.slug, datasetFixture.profile),
+        ),
+      ),
+      Promise.all(
+        Array.from({ length: 4 }, () =>
+          repository.upsertStandard(standardFixture.slug, standardFixture.profile),
+        ),
+      ),
+      Promise.all(
+        Array.from({ length: 4 }, () =>
+          repository.upsertCollectionMethod(methodFixture.slug, methodFixture.profile),
+        ),
+      ),
+      Promise.all(
+        Array.from({ length: 4 }, () => repository.upsertActorDataCapability(actor.id, capability)),
+      ),
+    ]);
+
+    for (const ids of [datasetIds, standardIds, methodIds, capabilityIds]) {
+      expect(new Set(ids).size).toBe(1);
+    }
+    await db.updateTable("datasets").set({ schema_version: 2 }).execute();
+    await expect(repository.getDatasetBySlug(datasetFixture.slug)).rejects.toThrow(
+      "Unsupported embodied data object schema version: 2",
+    );
+  });
+
   it("derives PeerCompanyProfile without treating Actor collection as capability proof", async () => {
     const db = await setup();
     const repository = new Repository(db);

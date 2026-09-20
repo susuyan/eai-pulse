@@ -6,6 +6,7 @@ import type { DatabaseSchema, EventRow } from "../db/types.js";
 import {
   type ContentScope,
   ContentScopeSchema,
+  EMBODIED_DATA_PROFILE_SCHEMA_VERSION,
   EventDataProfileSchema,
 } from "../domain/embodied-data.js";
 import {
@@ -15,10 +16,16 @@ import {
   CollectionMethodProfileSchema,
   DatasetEventRoleSchema,
   DatasetProfileSchema,
+  EMBODIED_DATA_OBJECT_SCHEMA_VERSION,
   StandardEventRoleSchema,
   StandardProfileSchema,
 } from "../domain/embodied-data-objects.js";
-import { canonicalizeUrl, sha256 } from "../domain/url.js";
+import {
+  canonicalizeUrl,
+  isSensitiveObjectKey,
+  isSensitiveParameterName,
+  sha256,
+} from "../domain/url.js";
 
 export const SNAPSHOT_SCHEMA_VERSION = 1;
 export const DEFAULT_SNAPSHOT_PATH = join("data", "snapshot", "v1.json");
@@ -57,7 +64,10 @@ export async function writeRepositorySnapshot(
   rootDir: string,
   relativePath = DEFAULT_SNAPSHOT_PATH,
 ) {
-  const snapshot = await buildRepositorySnapshot(db);
+  const snapshot = await db
+    .transaction()
+    .execute((transaction) => buildRepositorySnapshot(transaction));
+  validateEmbodiedDataObjectReferences(snapshot);
   const serialized = `${JSON.stringify(snapshot, null, 2)}\n`;
   assertSnapshotSafe(serialized);
   const path = snapshotPath(rootDir, relativePath);
@@ -483,7 +493,7 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
       .map((profile) => ({
         eventSlug: profile.eventSlug,
         profile: EventDataProfileSchema.parse(JSON.parse(profile.profile_json)),
-        schemaVersion: profile.schema_version,
+        schemaVersion: supportedEmbodiedDataProfileSchemaVersion(profile.schema_version),
         createdAt: profile.created_at,
         updatedAt: profile.updated_at,
       }))
@@ -493,7 +503,7 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
         id: dataset.id,
         slug: dataset.slug,
         profile: DatasetProfileSchema.parse(JSON.parse(dataset.profile_json)),
-        schemaVersion: dataset.schema_version,
+        schemaVersion: supportedEmbodiedDataObjectSchemaVersion(dataset.schema_version),
         createdAt: dataset.created_at,
         updatedAt: dataset.updated_at,
       }))
@@ -515,7 +525,7 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
         id: standard.id,
         slug: standard.slug,
         profile: StandardProfileSchema.parse(JSON.parse(standard.profile_json)),
-        schemaVersion: standard.schema_version,
+        schemaVersion: supportedEmbodiedDataObjectSchemaVersion(standard.schema_version),
         createdAt: standard.created_at,
         updatedAt: standard.updated_at,
       }))
@@ -537,7 +547,7 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
         id: method.id,
         slug: method.slug,
         profile: CollectionMethodProfileSchema.parse(JSON.parse(method.profile_json)),
-        schemaVersion: method.schema_version,
+        schemaVersion: supportedEmbodiedDataObjectSchemaVersion(method.schema_version),
         createdAt: method.created_at,
         updatedAt: method.updated_at,
       }))
@@ -560,7 +570,7 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
         actorSlug: capability.actorSlug,
         capabilityKey: capability.capability_key,
         profile: ActorDataCapabilitySchema.parse(JSON.parse(capability.profile_json)),
-        schemaVersion: capability.schema_version,
+        schemaVersion: supportedEmbodiedDataObjectSchemaVersion(capability.schema_version),
         createdAt: capability.created_at,
         updatedAt: capability.updated_at,
       }))
@@ -1080,26 +1090,44 @@ async function restoreSnapshot(
   }
 
   for (const value of snapshot.eventDataProfiles ?? []) {
-    const eventId = eventIdMap.get(requiredString(value, "eventSlug"));
-    if (!eventId) continue;
+    const eventId = requiredSnapshotReference(
+      eventIdMap,
+      requiredString(value, "eventSlug"),
+      "Event",
+    );
     const profile = EventDataProfileSchema.parse(value.profile);
-    await db
-      .insertInto("event_data_profiles")
-      .values({
-        event_id: eventId,
-        profile_json: JSON.stringify(profile),
-        schema_version: requiredNumber(value, "schemaVersion"),
-        created_at: requiredString(value, "createdAt"),
-        updated_at: requiredString(value, "updatedAt"),
-      })
-      .onConflict((conflict) =>
-        conflict.column("event_id").doUpdateSet({
+    const schemaVersion = requiredEmbodiedDataProfileSchemaVersion(value, "schemaVersion");
+    const createdAt = requiredTimestamp(value, "createdAt");
+    const updatedAt = requiredTimestamp(value, "updatedAt");
+    const existing = await db
+      .selectFrom("event_data_profiles")
+      .select("updated_at")
+      .where("event_id", "=", eventId)
+      .executeTakeFirst();
+    if (existing) {
+      if (compareTimestamp(updatedAt, existing.updated_at) >= 0) {
+        await db
+          .updateTable("event_data_profiles")
+          .set({
+            profile_json: JSON.stringify(profile),
+            schema_version: schemaVersion,
+            updated_at: updatedAt,
+          })
+          .where("event_id", "=", eventId)
+          .execute();
+      }
+    } else {
+      await db
+        .insertInto("event_data_profiles")
+        .values({
+          event_id: eventId,
           profile_json: JSON.stringify(profile),
-          schema_version: requiredNumber(value, "schemaVersion"),
-          updated_at: requiredString(value, "updatedAt"),
-        }),
-      )
-      .execute();
+          schema_version: schemaVersion,
+          created_at: createdAt,
+          updated_at: updatedAt,
+        })
+        .execute();
+    }
   }
 
   const datasetIdBySlug = new Map<string, string>();
@@ -1112,17 +1140,26 @@ async function restoreSnapshot(
       .where("slug", "=", slug)
       .executeTakeFirst();
     const id = existing?.id ?? requiredString(value, "id");
-    const updatedAt = requiredString(value, "updatedAt");
+    const createdAt = requiredTimestamp(value, "createdAt");
+    const updatedAt = requiredTimestamp(value, "updatedAt");
     const row = {
       slug,
       profile_json: JSON.stringify(profile),
-      schema_version: requiredNumber(value, "schemaVersion"),
-      created_at: requiredString(value, "createdAt"),
+      schema_version: requiredEmbodiedDataObjectSchemaVersion(value, "schemaVersion"),
+      created_at: createdAt,
       updated_at: updatedAt,
     };
     if (existing) {
       if (compareTimestamp(updatedAt, existing.updated_at) >= 0) {
-        await db.updateTable("datasets").set(row).where("id", "=", id).execute();
+        await db
+          .updateTable("datasets")
+          .set({
+            profile_json: row.profile_json,
+            schema_version: row.schema_version,
+            updated_at: row.updated_at,
+          })
+          .where("id", "=", id)
+          .execute();
       }
     } else {
       await db
@@ -1133,16 +1170,23 @@ async function restoreSnapshot(
     datasetIdBySlug.set(slug, id);
   }
   for (const value of snapshot.datasetEvents ?? []) {
-    const datasetId = datasetIdBySlug.get(requiredString(value, "datasetSlug"));
-    const eventId = eventIdMap.get(requiredString(value, "eventSlug"));
-    if (!datasetId || !eventId) continue;
+    const datasetId = requiredSnapshotReference(
+      datasetIdBySlug,
+      requiredString(value, "datasetSlug"),
+      "Dataset",
+    );
+    const eventId = requiredSnapshotReference(
+      eventIdMap,
+      requiredString(value, "eventSlug"),
+      "Event",
+    );
     await db
       .insertInto("dataset_events")
       .values({
         dataset_id: datasetId,
         event_id: eventId,
         relation_role: DatasetEventRoleSchema.parse(value.relationRole),
-        created_at: requiredString(value, "createdAt"),
+        created_at: requiredTimestamp(value, "createdAt"),
       })
       .onConflict((conflict) =>
         conflict.columns(["dataset_id", "event_id", "relation_role"]).doNothing(),
@@ -1160,17 +1204,26 @@ async function restoreSnapshot(
       .where("slug", "=", slug)
       .executeTakeFirst();
     const id = existing?.id ?? requiredString(value, "id");
-    const updatedAt = requiredString(value, "updatedAt");
+    const createdAt = requiredTimestamp(value, "createdAt");
+    const updatedAt = requiredTimestamp(value, "updatedAt");
     const row = {
       slug,
       profile_json: JSON.stringify(profile),
-      schema_version: requiredNumber(value, "schemaVersion"),
-      created_at: requiredString(value, "createdAt"),
+      schema_version: requiredEmbodiedDataObjectSchemaVersion(value, "schemaVersion"),
+      created_at: createdAt,
       updated_at: updatedAt,
     };
     if (existing) {
       if (compareTimestamp(updatedAt, existing.updated_at) >= 0) {
-        await db.updateTable("standards").set(row).where("id", "=", id).execute();
+        await db
+          .updateTable("standards")
+          .set({
+            profile_json: row.profile_json,
+            schema_version: row.schema_version,
+            updated_at: row.updated_at,
+          })
+          .where("id", "=", id)
+          .execute();
       }
     } else {
       await db
@@ -1181,16 +1234,23 @@ async function restoreSnapshot(
     standardIdBySlug.set(slug, id);
   }
   for (const value of snapshot.standardEvents ?? []) {
-    const standardId = standardIdBySlug.get(requiredString(value, "standardSlug"));
-    const eventId = eventIdMap.get(requiredString(value, "eventSlug"));
-    if (!standardId || !eventId) continue;
+    const standardId = requiredSnapshotReference(
+      standardIdBySlug,
+      requiredString(value, "standardSlug"),
+      "Standard",
+    );
+    const eventId = requiredSnapshotReference(
+      eventIdMap,
+      requiredString(value, "eventSlug"),
+      "Event",
+    );
     await db
       .insertInto("standard_events")
       .values({
         standard_id: standardId,
         event_id: eventId,
         relation_role: StandardEventRoleSchema.parse(value.relationRole),
-        created_at: requiredString(value, "createdAt"),
+        created_at: requiredTimestamp(value, "createdAt"),
       })
       .onConflict((conflict) =>
         conflict.columns(["standard_id", "event_id", "relation_role"]).doNothing(),
@@ -1208,17 +1268,26 @@ async function restoreSnapshot(
       .where("slug", "=", slug)
       .executeTakeFirst();
     const id = existing?.id ?? requiredString(value, "id");
-    const updatedAt = requiredString(value, "updatedAt");
+    const createdAt = requiredTimestamp(value, "createdAt");
+    const updatedAt = requiredTimestamp(value, "updatedAt");
     const row = {
       slug,
       profile_json: JSON.stringify(profile),
-      schema_version: requiredNumber(value, "schemaVersion"),
-      created_at: requiredString(value, "createdAt"),
+      schema_version: requiredEmbodiedDataObjectSchemaVersion(value, "schemaVersion"),
+      created_at: createdAt,
       updated_at: updatedAt,
     };
     if (existing) {
       if (compareTimestamp(updatedAt, existing.updated_at) >= 0) {
-        await db.updateTable("collection_methods").set(row).where("id", "=", id).execute();
+        await db
+          .updateTable("collection_methods")
+          .set({
+            profile_json: row.profile_json,
+            schema_version: row.schema_version,
+            updated_at: row.updated_at,
+          })
+          .where("id", "=", id)
+          .execute();
       }
     } else {
       await db
@@ -1229,18 +1298,23 @@ async function restoreSnapshot(
     collectionMethodIdBySlug.set(slug, id);
   }
   for (const value of snapshot.collectionMethodEvents ?? []) {
-    const collectionMethodId = collectionMethodIdBySlug.get(
+    const collectionMethodId = requiredSnapshotReference(
+      collectionMethodIdBySlug,
       requiredString(value, "collectionMethodSlug"),
+      "CollectionMethod",
     );
-    const eventId = eventIdMap.get(requiredString(value, "eventSlug"));
-    if (!collectionMethodId || !eventId) continue;
+    const eventId = requiredSnapshotReference(
+      eventIdMap,
+      requiredString(value, "eventSlug"),
+      "Event",
+    );
     await db
       .insertInto("collection_method_events")
       .values({
         collection_method_id: collectionMethodId,
         event_id: eventId,
         relation_role: CollectionMethodEventRoleSchema.parse(value.relationRole),
-        created_at: requiredString(value, "createdAt"),
+        created_at: requiredTimestamp(value, "createdAt"),
       })
       .onConflict((conflict) =>
         conflict.columns(["collection_method_id", "event_id", "relation_role"]).doNothing(),
@@ -1253,8 +1327,7 @@ async function restoreSnapshot(
   const capabilityIdByActorAndKey = new Map<string, string>();
   for (const value of snapshot.actorDataCapabilities ?? []) {
     const actorSlug = requiredString(value, "actorSlug");
-    const actorId = actorIdBySlug.get(actorSlug);
-    if (!actorId) continue;
+    const actorId = requiredSnapshotReference(actorIdBySlug, actorSlug, "Actor");
     const capabilityKey = requiredString(value, "capabilityKey");
     const profile = ActorDataCapabilitySchema.parse(value.profile);
     if (profile.capabilityKey !== capabilityKey) {
@@ -1267,18 +1340,27 @@ async function restoreSnapshot(
       .where("capability_key", "=", capabilityKey)
       .executeTakeFirst();
     const id = existing?.id ?? requiredString(value, "id");
-    const updatedAt = requiredString(value, "updatedAt");
+    const createdAt = requiredTimestamp(value, "createdAt");
+    const updatedAt = requiredTimestamp(value, "updatedAt");
     const row = {
       actor_id: actorId,
       capability_key: capabilityKey,
       profile_json: JSON.stringify(profile),
-      schema_version: requiredNumber(value, "schemaVersion"),
-      created_at: requiredString(value, "createdAt"),
+      schema_version: requiredEmbodiedDataObjectSchemaVersion(value, "schemaVersion"),
+      created_at: createdAt,
       updated_at: updatedAt,
     };
     if (existing) {
       if (compareTimestamp(updatedAt, existing.updated_at) >= 0) {
-        await db.updateTable("actor_data_capabilities").set(row).where("id", "=", id).execute();
+        await db
+          .updateTable("actor_data_capabilities")
+          .set({
+            profile_json: row.profile_json,
+            schema_version: row.schema_version,
+            updated_at: row.updated_at,
+          })
+          .where("id", "=", id)
+          .execute();
       }
     } else {
       await db
@@ -1291,16 +1373,23 @@ async function restoreSnapshot(
   for (const value of snapshot.actorCapabilityEvidence ?? []) {
     const actorSlug = requiredString(value, "actorSlug");
     const capabilityKey = requiredString(value, "capabilityKey");
-    const capabilityId = capabilityIdByActorAndKey.get(`${actorSlug}:${capabilityKey}`);
-    const eventId = eventIdMap.get(requiredString(value, "eventSlug"));
-    if (!capabilityId || !eventId) continue;
+    const capabilityId = requiredSnapshotReference(
+      capabilityIdByActorAndKey,
+      `${actorSlug}:${capabilityKey}`,
+      "Actor capability",
+    );
+    const eventId = requiredSnapshotReference(
+      eventIdMap,
+      requiredString(value, "eventSlug"),
+      "Event",
+    );
     await db
       .insertInto("actor_capability_evidence")
       .values({
         capability_id: capabilityId,
         event_id: eventId,
         evidence_role: ActorCapabilityEvidenceRoleSchema.parse(value.evidenceRole),
-        created_at: requiredString(value, "createdAt"),
+        created_at: requiredTimestamp(value, "createdAt"),
       })
       .onConflict((conflict) =>
         conflict.columns(["capability_id", "event_id", "evidence_role"]).doNothing(),
@@ -1635,11 +1724,7 @@ function snapshotUrl(value: string): string {
   url.username = "";
   url.password = "";
   for (const key of [...url.searchParams.keys()]) {
-    if (
-      /(?:^|_)(?:token|secret|password|signature|credential|api[_-]?key|auth)(?:$|_)/i.test(key)
-    ) {
-      url.searchParams.delete(key);
-    }
+    if (isSensitiveParameterName(key)) url.searchParams.delete(key);
   }
   url.searchParams.sort();
   return canonicalizeUrl(url.toString());
@@ -1654,6 +1739,17 @@ function assertSnapshotSafe(serialized: string): void {
   ];
   const violation = forbidden.find((pattern) => pattern.test(serialized));
   if (violation) throw new Error(`Snapshot privacy check failed: ${violation.source}`);
+  if (containsSensitiveKey(JSON.parse(serialized))) {
+    throw new Error("Snapshot privacy check failed: sensitive object key");
+  }
+}
+
+function containsSensitiveKey(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some(containsSensitiveKey);
+  if (!value || typeof value !== "object") return false;
+  return Object.entries(value as Record<string, unknown>).some(
+    ([key, item]) => isSensitiveObjectKey(key) || containsSensitiveKey(item),
+  );
 }
 
 function validateSnapshot(value: RepositorySnapshot): void {
@@ -1678,6 +1774,54 @@ function validateSnapshot(value: RepositorySnapshot): void {
       throw new Error(`Invalid repository snapshot field: ${key}`);
     }
   }
+  validateEmbodiedDataObjectReferences(value);
+}
+
+function validateEmbodiedDataObjectReferences(snapshot: RepositorySnapshot): void {
+  const eventSlugs = new Set(snapshot.events.map((value) => requiredString(value, "slug")));
+  const datasetSlugs = new Set(
+    (snapshot.datasets ?? []).map((value) => requiredString(value, "slug")),
+  );
+  const standardSlugs = new Set(
+    (snapshot.standards ?? []).map((value) => requiredString(value, "slug")),
+  );
+  const collectionMethodSlugs = new Set(
+    (snapshot.collectionMethods ?? []).map((value) => requiredString(value, "slug")),
+  );
+  const capabilityKeys = new Set(
+    (snapshot.actorDataCapabilities ?? []).map(
+      (value) => `${requiredString(value, "actorSlug")}:${requiredString(value, "capabilityKey")}`,
+    ),
+  );
+
+  for (const value of snapshot.eventDataProfiles ?? []) {
+    requiredSnapshotReference(eventSlugs, requiredString(value, "eventSlug"), "Event");
+  }
+
+  for (const value of snapshot.datasetEvents ?? []) {
+    requiredSnapshotReference(datasetSlugs, requiredString(value, "datasetSlug"), "Dataset");
+    requiredSnapshotReference(eventSlugs, requiredString(value, "eventSlug"), "Event");
+  }
+  for (const value of snapshot.standardEvents ?? []) {
+    requiredSnapshotReference(standardSlugs, requiredString(value, "standardSlug"), "Standard");
+    requiredSnapshotReference(eventSlugs, requiredString(value, "eventSlug"), "Event");
+  }
+  for (const value of snapshot.collectionMethodEvents ?? []) {
+    requiredSnapshotReference(
+      collectionMethodSlugs,
+      requiredString(value, "collectionMethodSlug"),
+      "CollectionMethod",
+    );
+    requiredSnapshotReference(eventSlugs, requiredString(value, "eventSlug"), "Event");
+  }
+  for (const value of snapshot.actorCapabilityEvidence ?? []) {
+    requiredSnapshotReference(
+      capabilityKeys,
+      `${requiredString(value, "actorSlug")}:${requiredString(value, "capabilityKey")}`,
+      "Actor capability",
+    );
+    requiredSnapshotReference(eventSlugs, requiredString(value, "eventSlug"), "Event");
+  }
 }
 
 function requiredString(value: Record<string, unknown>, key: string): string {
@@ -1692,6 +1836,57 @@ function requiredNumber(value: Record<string, unknown>, key: string): number {
     throw new Error(`Snapshot field ${key} must be a number`);
   }
   return result;
+}
+
+function requiredTimestamp(value: Record<string, unknown>, key: string): string {
+  const result = requiredString(value, key);
+  const timestamp = Date.parse(result);
+  if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString() !== result) {
+    throw new Error(`Snapshot field ${key} must be an ISO timestamp`);
+  }
+  return result;
+}
+
+function requiredEmbodiedDataObjectSchemaVersion(
+  value: Record<string, unknown>,
+  key: string,
+): number {
+  return supportedEmbodiedDataObjectSchemaVersion(requiredNumber(value, key));
+}
+
+function requiredEmbodiedDataProfileSchemaVersion(
+  value: Record<string, unknown>,
+  key: string,
+): number {
+  return supportedEmbodiedDataProfileSchemaVersion(requiredNumber(value, key));
+}
+
+function supportedEmbodiedDataProfileSchemaVersion(value: number): number {
+  if (value !== EMBODIED_DATA_PROFILE_SCHEMA_VERSION) {
+    throw new Error(`Unsupported embodied data profile schema version: ${value}`);
+  }
+  return value;
+}
+
+function supportedEmbodiedDataObjectSchemaVersion(value: number): number {
+  if (value !== EMBODIED_DATA_OBJECT_SCHEMA_VERSION) {
+    throw new Error(`Unsupported embodied data object schema version: ${value}`);
+  }
+  return value;
+}
+
+function requiredSnapshotReference(
+  references: ReadonlyMap<string, string> | ReadonlySet<string>,
+  key: string,
+  kind: string,
+): string {
+  if (references instanceof Map) {
+    const id = references.get(key);
+    if (id) return id;
+  } else if (references.has(key)) {
+    return key;
+  }
+  throw new Error(`Snapshot ${kind} reference not found: ${key}`);
 }
 
 function optionalString(value: unknown): string | null {
@@ -1716,7 +1911,7 @@ function compareTimestamp(left: string | null, right: string | null): number {
   if (left === right) return 0;
   if (!left) return -1;
   if (!right) return 1;
-  return left.localeCompare(right);
+  return Date.parse(left) - Date.parse(right);
 }
 
 function latestTimestamp(...values: Array<string | null>): string | null {

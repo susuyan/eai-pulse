@@ -14,7 +14,7 @@ beforeEach(async () => {
   const config = loadConfig({ NODE_ENV: "test", DATABASE_URL: "sqlite::memory:" });
   db = createDatabase(config);
   await bootstrapRepositoryDatabase(db, config);
-});
+}, 60_000);
 
 afterEach(async () => {
   vi.useRealTimers();

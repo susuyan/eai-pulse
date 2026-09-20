@@ -1,4 +1,4 @@
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join } from "node:path";
 import type { Kysely, Transaction } from "kysely";
 import { parseJson } from "../db/repository.js";
@@ -65,22 +65,64 @@ export async function writeRepositorySnapshot(
   rootDir: string,
   relativePath = DEFAULT_SNAPSHOT_PATH,
 ) {
+  const artifact = await buildSnapshotArtifact(db);
+  const { serialized, sha256: snapshotSha256, counts } = artifact;
+  const path = snapshotPath(rootDir, relativePath);
+  const previous = await readFile(path, "utf8").catch(() => "");
+  if (previous === serialized) {
+    return { path, changed: false, sha256: snapshotSha256, counts };
+  }
+  await mkdir(dirname(path), { recursive: true });
+  const temporary = `${path}.tmp`;
+  await writeFile(temporary, serialized, { encoding: "utf8", mode: 0o600 });
+  await rename(temporary, path);
+  return { path, changed: true, sha256: snapshotSha256, counts };
+}
+
+export async function writeVerifiedRepositorySnapshot(
+  db: Kysely<DatabaseSchema>,
+  rootDir: string,
+  relativePath: string,
+  verify: (candidate: {
+    path: string;
+    sha256: string;
+    counts: ReturnType<typeof snapshotCounts>;
+  }) => Promise<void>,
+) {
+  const artifact = await buildSnapshotArtifact(db);
+  const path = snapshotPath(rootDir, relativePath);
+  const previous = await readFile(path, "utf8").catch(() => "");
+  const candidatePath = `${path}.candidate`;
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(candidatePath, artifact.serialized, { encoding: "utf8", mode: 0o600 });
+  try {
+    await verify({ path: candidatePath, sha256: artifact.sha256, counts: artifact.counts });
+    await rename(candidatePath, path);
+  } catch (error) {
+    await unlink(candidatePath).catch(() => undefined);
+    throw error;
+  }
+  return {
+    path,
+    changed: previous !== artifact.serialized,
+    sha256: artifact.sha256,
+    counts: artifact.counts,
+    verified: true,
+  };
+}
+
+async function buildSnapshotArtifact(db: Kysely<DatabaseSchema>) {
   const snapshot = await db
     .transaction()
     .execute((transaction) => buildRepositorySnapshot(transaction));
   validateEmbodiedDataObjectReferences(snapshot);
   const serialized = `${JSON.stringify(snapshot)}\n`;
   assertSnapshotSafe(serialized);
-  const path = snapshotPath(rootDir, relativePath);
-  const previous = await readFile(path, "utf8").catch(() => "");
-  if (previous === serialized) {
-    return { path, changed: false, sha256: sha256(serialized), counts: snapshotCounts(snapshot) };
-  }
-  await mkdir(dirname(path), { recursive: true });
-  const temporary = `${path}.tmp`;
-  await writeFile(temporary, serialized, { encoding: "utf8", mode: 0o600 });
-  await rename(temporary, path);
-  return { path, changed: true, sha256: sha256(serialized), counts: snapshotCounts(snapshot) };
+  return {
+    serialized,
+    sha256: sha256(serialized),
+    counts: snapshotCounts(snapshot),
+  };
 }
 
 export async function restoreRepositorySnapshot(
@@ -486,6 +528,7 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
         manualOverride: event.manual_override,
         happenedAt: event.happened_at,
         publishedAt: event.published_at,
+        readinessBlockers: parseJson(event.readiness_blockers_json, []),
         createdAt: event.created_at,
         updatedAt: event.updated_at,
       }))
@@ -1075,15 +1118,22 @@ async function restoreSnapshot(
       manual_override: requiredNumber(value, "manualOverride"),
       happened_at: requiredString(value, "happenedAt"),
       published_at: optionalString(value.publishedAt),
+      readiness_blockers_json: JSON.stringify(value.readinessBlockers ?? []),
       created_at: requiredString(value, "createdAt"),
       updated_at: optionalString(value.updatedAt) ?? requiredString(value, "createdAt"),
     };
     if (existing && shouldReplaceEvent(existing, value, row.updated_at)) {
       await db.updateTable("events").set(row).where("id", "=", id).execute();
-    } else if (existing && value.contentScope !== undefined) {
+    } else if (
+      existing &&
+      (value.contentScope !== undefined || value.readinessBlockers !== undefined)
+    ) {
       await db
         .updateTable("events")
-        .set({ content_scope: row.content_scope })
+        .set({
+          content_scope: row.content_scope,
+          readiness_blockers_json: row.readiness_blockers_json,
+        })
         .where("id", "=", id)
         .execute();
     } else if (!existing)

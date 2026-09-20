@@ -5,7 +5,7 @@ import { earlyHistoryEvents } from "../src/catalog/early-history.js";
 import { ecosystemHistoryEvents } from "../src/catalog/ecosystem-history-2026-07.js";
 import { historicalEvents, industryNarratives } from "../src/catalog/history.js";
 import { recentDensityEvents } from "../src/catalog/recent-density.js";
-import { sourceCatalog } from "../src/catalog/sources.js";
+import { legacySourceCatalog as sourceCatalog } from "../src/catalog/sources.js";
 import { eventsForVendor, priorityVendorCoverage } from "../src/catalog/vendor-coverage.js";
 import { vendorHistoryEvents } from "../src/catalog/vendor-history-2026-07.js";
 

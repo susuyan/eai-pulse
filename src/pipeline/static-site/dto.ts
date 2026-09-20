@@ -1,5 +1,96 @@
+import type { EmbodiedPipelineStage, EventDataProfile } from "../../domain/embodied-data.js";
+import type {
+  ActorDataCapability,
+  CollectionMethodProfile,
+  DatasetProfile,
+  StandardProfile,
+} from "../../domain/embodied-data-objects.js";
 import type { PublicEvent } from "../../domain/types.js";
 import type { ResearchImpactAssessment } from "../research-impact.js";
+
+export interface PublicEventRelation {
+  slug: string;
+  title: string;
+  role: string;
+}
+
+export type PublicEventDataProfile = EventDataProfile;
+
+export interface PublicPipelineStage {
+  slug: EmbodiedPipelineStage;
+  name: string;
+  description: string;
+  nameEn: string;
+  descriptionEn: string;
+  color: string;
+  icon: string;
+  order: number;
+  milestones: PublicPipelineMilestone[];
+  peerComparisons: PublicPipelinePeerComparison[];
+  counterEvidence: PublicPipelineMilestone[];
+  nextSignals: PublicPipelineNextSignal[];
+}
+
+export interface PublicPipelineMilestone {
+  eventSlug: string;
+  title: string;
+  happenedAt: string;
+  deliveryImpact: string;
+  evidenceStatus: EventDataProfile["evidenceStatus"];
+  evidence: PublicEvent["evidence"];
+}
+
+export interface PublicPipelinePeerComparison {
+  peerSlug: string;
+  peerName: string;
+  claimText: string;
+  verificationStatus: ActorDataCapability["verificationStatus"];
+  sourceUrl: string;
+}
+
+export interface PublicPipelineNextSignal {
+  eventSlug: string;
+  eventTitle: string;
+  signal: string;
+}
+
+export type PublicEmbodiedEvent = Omit<PublicEvent, "id"> & {
+  pipelineStages: EmbodiedPipelineStage[];
+  dataProfile: PublicEventDataProfile;
+  tracks: EventTrack[];
+  datasets: PublicEventRelation[];
+  standards: PublicEventRelation[];
+  collectionMethods: PublicEventRelation[];
+  peers: PublicEventRelation[];
+};
+
+export type PublicDataset = DatasetProfile & {
+  slug: string;
+  relatedEvents: PublicEventRelation[];
+};
+
+export type PublicStandard = StandardProfile & {
+  slug: string;
+  relatedEvents: PublicEventRelation[];
+};
+
+export type PublicCollectionMethod = CollectionMethodProfile & {
+  slug: string;
+  relatedEvents: PublicEventRelation[];
+};
+
+export type PublicPeerCapability = ActorDataCapability & {
+  evidence: PublicEventRelation[];
+};
+
+export interface PublicPeer {
+  slug: string;
+  name: string;
+  actorType: string;
+  region: string;
+  websiteUrl: string;
+  capabilities: PublicPeerCapability[];
+}
 
 export interface PublicTrack {
   slug: string;
@@ -299,4 +390,10 @@ export interface StaticSiteModel {
   narratives: IndustryNarratives;
   product: ProductData;
   github: GithubData;
+  embodiedEvents: PublicEmbodiedEvent[];
+  pipelineStages: PublicPipelineStage[];
+  datasets: PublicDataset[];
+  standards: PublicStandard[];
+  collectionMethods: PublicCollectionMethod[];
+  peers: PublicPeer[];
 }

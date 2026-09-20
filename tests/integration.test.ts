@@ -1,14 +1,14 @@
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { capitalHistoryEvents } from "../src/catalog/capital-history-2023-2025.js";
 import { directResearchHistory2026 } from "../src/catalog/direct-research-history-2026.js";
-import { earlyHistoryEvents } from "../src/catalog/early-history.js";
 import { ecosystemHistoryEvents } from "../src/catalog/ecosystem-history-2026-07.js";
-import { historicalEvents, industryNarratives } from "../src/catalog/history.js";
-import { recentDensityEvents } from "../src/catalog/recent-density.js";
+import { embodiedLaunchEvents } from "../src/catalog/embodied-data/events.js";
+import { embodiedPeers } from "../src/catalog/embodied-data/peers.js";
+import { embodiedTracks } from "../src/catalog/embodied-data/tracks.js";
 import { sourceCatalog } from "../src/catalog/sources.js";
 import { vendorHistoryEvents } from "../src/catalog/vendor-history-2026-07.js";
 import { loadConfig } from "../src/config/env.js";
@@ -17,7 +17,6 @@ import { migrateToLatest } from "../src/db/migrate.js";
 import { Repository } from "../src/db/repository.js";
 import { seedDatabase } from "../src/db/seed.js";
 import { exportStaticSite } from "../src/pipeline/export.js";
-import { validatePublicSite } from "../src/pipeline/public-site-integrity.js";
 import { buildApp } from "../src/server/app.js";
 
 const databases: ReturnType<typeof createDatabase>[] = [];
@@ -82,13 +81,10 @@ describe("SQLite application", () => {
       sourceBySlug?.id,
     );
     const publishedEvents = await repository.publicEvents();
-    expect(publishedEvents.length).toBeGreaterThanOrEqual(20);
-    for (const month of ["2026-04", "2026-05", "2026-06"]) {
-      expect(
-        publishedEvents.filter((event) => event.happenedAt.startsWith(month)).length,
-        month,
-      ).toBeGreaterThanOrEqual(6);
-    }
+    expect(publishedEvents.map((event) => event.slug).sort()).toEqual(
+      embodiedLaunchEvents.map((event) => event.slug).sort(),
+    );
+    expect(publishedEvents.every((event) => event.evidence.length > 0)).toBe(true);
     await db
       .updateTable("signals")
       .set({ title: "DeepSeek-V3 开源：训练效率成为中国追赶的新叙事" })
@@ -114,52 +110,88 @@ describe("SQLite application", () => {
     expect(batchedRelations).toHaveBeenCalledTimes(1);
     vi.restoreAllMocks();
     expect(result).toMatchObject({
-      events: earlyHistoryEvents.length + historicalEvents.length + recentDensityEvents.length + 6,
-      tracks: 10,
+      events: embodiedLaunchEvents.length,
+      tracks: embodiedTracks.length,
+      actors: embodiedPeers.length,
+      resources: 0,
       sources: sourceCatalog.length,
       signals: expect.any(Number),
       version: "0.11.1",
     });
-    const timeline = await readFile(join(config.distDir, "data/timeline.json"), "utf8");
-    expect(timeline).not.toContain("ADMIN_TOKEN");
-    expect(timeline).not.toContain("/Users/");
-    expect(timeline).not.toContain('\n  "schemaVersion"');
-    expect(Buffer.byteLength(timeline)).toBeLessThan(1_400_000);
-    expect(gzipSync(timeline).byteLength).toBeLessThan(300_000);
-    expect(JSON.parse(timeline).events[0]).not.toHaveProperty("manual_override");
-    const scout = JSON.parse(await readFile(join(config.distDir, "data/scout.json"), "utf8"));
-    expect(scout.insights).toHaveLength(1);
-    expect(scout.insights[0]).not.toHaveProperty("cooldown_key");
-    expect(scout.insights[0].evidence[0].slug).toBe("lingbot-vla-2-cross-embodiment");
-    const product = JSON.parse(await readFile(join(config.distDir, "data/product.json"), "utf8"));
-    expect(product.roadmap).toHaveLength(5);
-    expect(product.releases[0]).toMatchObject({ version: "unreleased", status: "unreleased" });
-    expect(product.releases[1]).toMatchObject({ version: "0.11.1", status: "released" });
-    expect(product.releases[2]).toMatchObject({ version: "0.11.0", status: "released" });
-    expect(product.releases[3]).toMatchObject({ version: "0.10.0", status: "released" });
-    expect(product.releases[4]).toMatchObject({ version: "0.9.0", status: "released" });
-    expect(product.sourceCoverage.total).toBeGreaterThanOrEqual(100);
-    expect(product.sourceCoverage.observing).toBe(0);
-    expect(product.evaluation).toMatchObject({
-      rawWeightedScore: expect.any(Number),
-      evidenceCoverage: expect.any(Number),
+    expect((await readdir(join(config.distDir, "data"))).sort()).toEqual([
+      "assets.json",
+      "events.json",
+      "peers.json",
+      "pipeline.json",
+      "product.json",
+      "scout.json",
+      "sources.json",
+    ]);
+    const eventsJson = await readFile(join(config.distDir, "data/events.json"), "utf8");
+    expect(eventsJson).not.toContain("ADMIN_TOKEN");
+    expect(eventsJson).not.toContain("/Users/");
+    expect(eventsJson).not.toContain('\n  "schemaVersion"');
+    expect(Buffer.byteLength(eventsJson)).toBeLessThan(1_400_000);
+    expect(gzipSync(eventsJson).byteLength).toBeLessThan(300_000);
+    const publicEvents = JSON.parse(eventsJson).events;
+    expect(publicEvents).toHaveLength(embodiedLaunchEvents.length);
+    expect(publicEvents[0]).not.toHaveProperty("id");
+    expect(publicEvents[0]).not.toHaveProperty("manual_override");
+    expect(publicEvents[0]).toMatchObject({
+      pipelineStages: expect.any(Array),
+      dataProfile: { evidenceStatus: expect.any(String) },
     });
-    expect(product.evaluation.dimensions).toHaveLength(10);
-    expect(product.evaluation.status).toBe("partial");
-    expect(product.evaluation.overallScore).toBeLessThan(50);
-    expect(
-      product.evaluation.dimensions.every(
-        (item: { sampleTarget: number }) => item.sampleTarget > 0,
-      ),
-    ).toBe(true);
-    expect(
-      product.evaluation.dimensions
-        .filter((item: { status: string }) => item.status === "insufficient_data")
-        .every(
-          (item: { score: number; scoreCap: number }) =>
-            item.score <= 45 && item.score <= item.scoreCap,
-        ),
-    ).toBe(true);
+    const publicPipeline = JSON.parse(
+      await readFile(join(config.distDir, "data/pipeline.json"), "utf8"),
+    );
+    expect(publicPipeline.stages.map((stage: { slug: string }) => stage.slug)).toEqual([
+      "demand-definition",
+      "acquisition-route",
+      "multimodal-capture",
+      "production-operations",
+      "data-engineering-standards",
+      "quality-training-feedback",
+    ]);
+    const publicAssets = JSON.parse(
+      await readFile(join(config.distDir, "data/assets.json"), "utf8"),
+    );
+    expect(publicAssets.datasets).toHaveLength(12);
+    expect(publicAssets.standards).toHaveLength(4);
+    expect(publicAssets.collectionMethods).toHaveLength(6);
+    expect(publicAssets.datasets[0]).not.toHaveProperty("id");
+    expect(publicAssets.datasets[0]).not.toHaveProperty("profile_json");
+    const publicPeers = JSON.parse(await readFile(join(config.distDir, "data/peers.json"), "utf8"));
+    expect(publicPeers.peers).toHaveLength(embodiedPeers.length);
+    expect(publicPeers.peers[0]).not.toHaveProperty("actorId");
+    expect(publicPeers.peers[0].capabilities[0]).toMatchObject({
+      verificationStatus: expect.any(String),
+      evidence: expect.any(Array),
+    });
+    const scout = JSON.parse(await readFile(join(config.distDir, "data/scout.json"), "utf8"));
+    expect(scout.insights).toHaveLength(6);
+    expect(scout.insights[0]).not.toHaveProperty("cooldown_key");
+    expect(new Set(scout.insights.map((item: { kind: string }) => item.kind))).toEqual(
+      new Set([
+        "collection-route",
+        "capture-system",
+        "production-operations",
+        "data-standard",
+        "quality-feedback",
+        "peer-opportunity",
+      ]),
+    );
+    expect(scout.insights.every((item: { evidence: unknown[] }) => item.evidence.length > 0)).toBe(
+      true,
+    );
+    const product = JSON.parse(await readFile(join(config.distDir, "data/product.json"), "utf8"));
+    expect(product.roadmap).toEqual([]);
+    expect(product.releases).toHaveLength(1);
+    expect(product.releases[0]).toMatchObject({ version: "unreleased", status: "unreleased" });
+    expect(product.releases[0].capabilities.join(" ")).not.toMatch(/模型价格|六个领域/);
+    expect(product.releases[0].changes.join(" ")).not.toMatch(/模型价格|六个领域/);
+    expect(product.sourceCoverage.total).toBeGreaterThanOrEqual(30);
+    expect(product.sourceCoverage.observing).toBe(0);
+    expect(product.evaluation).toBeNull();
     const publicSources = JSON.parse(
       await readFile(join(config.distDir, "data/sources.json"), "utf8"),
     );
@@ -170,43 +202,15 @@ describe("SQLite application", () => {
     });
     expect(publicSources[0]).not.toHaveProperty("sample_json");
     expect(publicSources[0]).not.toHaveProperty("error_summary");
-    const publicSignals = JSON.parse(
-      await readFile(join(config.distDir, "data/signals.json"), "utf8"),
-    );
-    expect(publicSignals.signals.length).toBeGreaterThan(0);
-    expect(publicSignals.signals[0]).toMatchObject({
-      title: expect.any(String),
-      description: expect.any(String),
-      url: expect.stringMatching(/^https?:\/\//),
-      sourceName: expect.any(String),
-      publishedAt: expect.any(String),
-    });
-    expect(publicSignals.signals[0]).not.toHaveProperty("summary");
-    expect(publicSignals.signals[0]).not.toHaveProperty("rawMeta");
-    expect(publicSignals.signals[0]).not.toHaveProperty("metrics");
-    expect(publicSignals.signals[0]).not.toHaveProperty("id");
-    const publicInfluencers = JSON.parse(
-      await readFile(join(config.distDir, "data/influencers.json"), "utf8"),
-    );
-    expect(publicInfluencers.length).toBeGreaterThanOrEqual(10);
-    expect(publicInfluencers.find((item: { slug: string }) => item.slug === "baoyu")).toMatchObject(
-      {
-        feedSourceSlug: "baoyu",
-      },
-    );
     const staticPages = [
-      ["index.html", "AI 行业关键变化与证据 · Agent Pulse"],
-      ["lines/index.html", "领域趋势 · Agent Pulse"],
-      ["industry-evolution/index.html", "行业发展历程 · Agent Pulse"],
-      ["lines/tech-evolution/index.html", "模型能力与研究 · Agent Pulse"],
+      ["index.html", "具身数据情报与生产洞察 · Agent Pulse"],
+      ["pipeline/index.html", "数据管线 · Agent Pulse"],
+      ["assets/index.html", "数据资产 · Agent Pulse"],
+      ["peers/index.html", "行业同行 · Agent Pulse"],
       ["timeline/index.html", "事件时间线 · Agent Pulse"],
-      ["signals/index.html", "来源更新 · Agent Pulse"],
       ["scout/index.html", "行动建议 · Agent Pulse"],
-      ["actors/index.html", "公司与机构 · Agent Pulse"],
-      ["resources/index.html", "模型价格 · Agent Pulse"],
-      ["product/index.html", "我们怎么判断 · Agent Pulse"],
       ["changelog/index.html", "产品更新 · Agent Pulse"],
-      ["sources/index.html", "信息来源 · Agent Pulse"],
+      ["sources/index.html", "来源地图 · Agent Pulse"],
       ["legal/index.html", "版权与纠错 · Agent Pulse"],
       ["404.html", "页面未找到 · Agent Pulse"],
     ] as const;
@@ -221,22 +225,21 @@ describe("SQLite application", () => {
       expect(html, path).not.toContain("__PREFIX__");
       expect(html, path).not.toContain("/Users/");
     }
-    const englishActors = await readFile(join(config.distDir, "en/actors/index.html"), "utf8");
-    expect(englishActors).toContain('href="../../assets/icons.svg#sun"');
-    expect(englishActors).not.toContain('href="../assets/icons.svg#sun"');
-    expect(englishActors).toContain('data-timeline-src="../../data/timeline.json"');
-    expect(englishActors).toContain('aria-label="Back to top"');
+    const englishPeers = await readFile(join(config.distDir, "en/peers/index.html"), "utf8");
+    expect(englishPeers).toContain('href="../../assets/icons.svg#sun"');
+    expect(englishPeers).not.toContain('href="../assets/icons.svg#sun"');
+    expect(englishPeers).toContain('data-timeline-src="../../data/events.json"');
+    expect(englishPeers).toContain('aria-label="Back to top"');
     const changelog = await readFile(join(config.distDir, "changelog/index.html"), "utf8");
-    expect(changelog).toContain('id="v0-7-0"');
-    expect(changelog).toContain('id="v0-10-0"');
-    expect(changelog).toContain("LATEST RELEASE");
-    expect(changelog).toContain("Living Evidence Interface");
-    expect(changelog).toContain("The Autonomous Intelligence Loop");
+    expect(changelog).toContain(product.releases[0].name);
+    expect(changelog).not.toContain("The Autonomous Intelligence Loop");
+    expect(changelog).not.toContain("Living Evidence Interface");
+    expect(changelog).toContain("产品更新");
     const englishChangelog = await readFile(
       join(config.distDir, "en/changelog/index.html"),
       "utf8",
     );
-    expect(englishChangelog).toContain("LATEST RELEASE");
+    expect(englishChangelog).toContain("Product Updates");
     const css = await readFile(join(config.distDir, "assets/app.css"), "utf8");
     const home = await readFile(join(config.distDir, "index.html"), "utf8");
     const llms = await readFile(join(config.distDir, "llms.txt"), "utf8");
@@ -245,402 +248,354 @@ describe("SQLite application", () => {
     expect(llms).toContain("## Core Machine-Readable Data");
     expect(llms).toContain("published Events");
     expect(llms).toContain("not as verified facts");
-    expect(llms).toContain("analysis or hypotheses");
-    expect(llms).toContain("https://barretlee.github.io/agent-pulse/data/timeline.json");
-    expect(llms).toContain("https://barretlee.github.io/agent-pulse/data/signals.json");
-    expect(llms).toContain(`${result.events} published events`);
-    expect(llms).toContain(`${result.sources} catalogued sources`);
-    expect(llms).toContain(`${result.signals} source observations`);
+    expect(llms).toContain("analysis and forecasts remain separate fields");
+    expect(llms).toContain("https://susuyan.github.io/eai-pulse/data/pipeline.json");
+    expect(llms).toContain("https://susuyan.github.io/eai-pulse/data/assets.json");
+    expect(llms).not.toContain("https://susuyan.github.io/eai-pulse/data/timeline.json");
+    expect(llms).not.toContain("https://susuyan.github.io/eai-pulse/data/signals.json");
+    expect(home).toContain("https://github.com/susuyan/eai-pulse");
+    expect(home).not.toContain("barretlee");
+    expect(llms).not.toContain("barretlee");
+    expect(llms).toContain(`${result.events} published Events`);
+    expect(llms).toContain(`${result.sources} sources`);
+    expect(llms).toContain("6 pipeline stages");
     expect(home.indexOf('src="./assets/core.js"')).toBeLessThan(home.indexOf("</head>"));
     expect(home.match(/src="\.\/assets\/core\.js"/g)).toHaveLength(1);
-    expect(home).toContain("GPT-5.6");
-    expect(home).toContain("ONE OF SIX INDUSTRY TRENDS");
-    expect(home).toContain("领域趋势");
-    expect(home).toContain("看清 AI 行业的关键变化");
-    expect(home).toContain('class="signal-field"');
-    expect(home.match(/class="trend-shift-card reveal"/g)?.length).toBeGreaterThanOrEqual(2);
-    expect(home).toContain("data-random-trends");
-    expect(home).toContain("data-random-recent-list");
-    expect(home).toContain('data-random-visible="6"');
-    expect(home).not.toContain("data-random-recent-next");
-    expect(home).not.toContain("换一批");
-    expect(css).toContain(".random-recent-item[hidden]");
-    expect(home.match(/data-industry-carousel/g)).toHaveLength(6);
-    expect((home.match(/data-carousel-slide/g) ?? []).length).toBeGreaterThanOrEqual(6);
-    expect(home).not.toContain("信源网络正在看到什么");
-    expect(home).not.toContain("data-random-signal-list");
-    expect(home).toContain("data-random-trend-next");
-    expect(home).toContain("随机领域趋势");
-    expect(home).toContain("换个领域");
-    expect(home).toContain("查看领域分析");
-    expect(home).toContain("接下来观察");
-    expect(home).toContain("独立来源");
-    expect(home).not.toContain('class="signal-object"');
-    expect(home).not.toContain('class="signal-orb"');
-    expect(home).not.toContain('class="home-hero-path"');
-    expect(home).not.toContain('class="signal-wave"');
-    expect(home).toContain('class="footer-links"');
-    expect(home).toContain('class="footer-contacts"');
-    expect(home).toContain('class="footer-ai-access" href="./llms.txt"');
-    expect(home).toContain("供 AI 阅读");
-    expect(home).toContain("事实边界、证据与公开数据入口");
-    expect(home).toContain("<code>llms.txt</code>");
-    expect(home).toContain('href="mailto:barret.china@gmail.com"');
-    expect(home).toContain('class="footer-snapshot"');
-    expect(home).toContain("/commits/main/");
-    expect(home).toContain('class="shell footer-meta"');
-    expect(home).toContain('class="footer-lang"');
-    expect(home).toContain('aria-label="回到顶部"');
-    expect(home).toContain('class="footer-lang" href="./en/" aria-label="语言">EN</a>');
-    expect(home).not.toContain("EN · English");
-    expect(home.match(/<header class="topbar">[\s\S]*?<\/header>/)?.[0]).not.toContain(
-      'class="lang-switcher"',
-    );
-    expect(home).not.toContain("<h1>持续监测 AI 行业");
-    expect(home).not.toContain('class="home-intro shell"');
-    expect(home).not.toContain('class="reading-journey"');
-    expect(home).not.toContain("本周研究");
-    expect(home).not.toContain("单一官方资料");
-    expect(home).toContain('<a class="line-summary industry-trend-summary"');
-    for (const sectionHead of home.matchAll(/<header class="section-head">[\s\S]*?<\/header>/g)) {
-      expect(sectionHead[0]).not.toContain("<p>");
-    }
-    expect(home).toContain("PredicateLongBench");
-    expect(home).toContain('class="github-star-button"');
-    expect(home).toContain("data-github-star-button");
-    expect(home).toContain("data-github-star-count");
-    expect(home).toContain('data-event-link="blind-spots-bench-vision-language"');
-    expect(home.indexOf("六个领域趋势")).toBeGreaterThan(home.indexOf("看清 AI 行业的关键变化"));
-    expect(home).not.toContain("形成判断");
-    expect(home).not.toContain("继续深入");
-    expect(home).not.toContain('href="./product/"');
-    expect(home).toContain('href="./actors/"');
-    expect(home).toContain('href="./resources/"');
-    expect(home).not.toContain(">六条主线<");
-    expect(home).not.toContain(">证据时间轴<");
-    expect(home).not.toContain(">决策工具<");
-    const timelinePage = await readFile(join(config.distDir, "timeline/index.html"), "utf8");
-    const coreSource = await readFile(join(config.rootDir, "web/public/assets/core.js"), "utf8");
-    const siteStyleSource = await readFile(
-      join(config.rootDir, "web/public/assets/app.css"),
-      "utf8",
-    );
-    const timelineSource = await readFile(
-      join(config.rootDir, "web/public/assets/timeline.js"),
-      "utf8",
-    );
-    const coreScript = await readFile(join(config.distDir, "assets/core.js"), "utf8");
-    const timelineScript = await readFile(join(config.distDir, "assets/timeline.js"), "utf8");
-    const siteStyles = await readFile(join(config.distDir, "assets/app.css"), "utf8");
-    expect(Buffer.byteLength(coreScript)).toBeLessThan(28_000);
-    expect(Buffer.byteLength(timelineScript)).toBeLessThan(8_000);
-    expect(coreScript).toContain('import("./timeline.js")');
-    expect(timelineScript).toContain("scrollTo");
-    expect(timelineScript).toContain('"smooth"');
-    expect(timelineScript).toContain("data-timeline-month-template");
-    expect(timelineScript).toContain("data-research-group");
-    expect(timelineScript).toContain("jumpToMonth");
-    expect(timelineScript).toContain('params.set("date"');
-    expect(timelineSource).toContain('addEventListener("pointerdown"');
-    expect(timelineSource).toContain("setPointerCapture");
-    expect(timelineSource).toMatch(/addEventListener\("pointermove"[\s\S]*?setPointerCapture/);
-    expect(timelineSource).not.toMatch(
-      /addEventListener\("pointerdown"[\s\S]*?setPointerCapture[\s\S]*?addEventListener\("pointermove"/,
-    );
-    expect(timelineSource).toContain("filterRow.scrollLeft = startScrollLeft - delta");
-    expect(timelineSource).not.toContain("centerFilter(root.querySelector");
-    expect(coreScript).toContain("setupGithubStarCount");
-    expect(coreScript).toContain('cache:"no-store"');
-    expect(coreScript).toContain("githubStarsSource=source");
-    expect(coreScript).toContain('apply(stars,"live")');
-    expect(coreScript).not.toContain('count.textContent?.trim()!=="—")return');
-    expect(coreScript).toContain("setupHomeDynamics");
-    expect(coreScript).toContain("setupSignalBrowser");
-    expect(coreScript).toContain("setupBackToTop");
-    expect(coreScript).toContain("setupMobileListPagination");
-    expect(coreScript).toContain('matchMedia("(max-width: 820px)")');
-    expect(coreScript).toContain("requestAnimationFrame");
-    expect(coreScript).toContain("window.scrollTo");
-    expect(coreScript).toContain("data-no-scroll-reveal");
-    expect(coreScript).toContain("navigator.vibrate");
-    expect(coreScript).toContain("trend-switcher");
-    expect(coreScript).toContain("high-confidence");
-    expect(coreScript).toContain("research");
-    expect(coreScript).toContain("requestIdleCallback");
-    expect(coreScript).toContain("stockLoaded");
-    expect(coreScript).toContain("api.github.com/repos/");
-    expect(coreScript).toContain(".scrollTop=0");
-    expect(coreScript).toContain('"Official source"');
-    expect(coreScript).not.toContain("Single official source");
-    expect(coreSource).toMatch(
-      /if \(evidence\.length > 1\) \{[\s\S]*?drawer-story[\s\S]*?buildDrawerJourney/,
-    );
-    expect(siteStyles).not.toContain("#17191f");
-    expect(siteStyles).toMatch(/\[data-theme=(?:"paper"|paper)\] \.site-footer/);
-    expect(siteStyles).toMatch(/\.tool-tabs\{[^}]*overflow-x:auto;[^}]*overflow-y:hidden/);
-    expect(siteStyleSource).toContain(".timeline-controls .chip-row");
-    expect(siteStyleSource).not.toMatch(/\.footer-ai-access code\s*\{[^}]*display:\s*none/);
-    expect(siteStyles).toContain("overscroll-behavior-y:contain");
-    expect(siteStyles).toContain(".back-to-top");
-    expect(siteStyles).toContain("[data-mobile-list-extra]");
-    expect(siteStyles).toContain(
-      ".trend-shift-header{display:grid;align-items:start;grid-template-columns:minmax(0,1fr) auto",
-    );
-    expect(siteStyles).toContain(".trend-shift-randomize{justify-self:end;min-height:44px}");
-    expect(timelinePage).toContain('class="hero-motion hero-motion-timeline"');
-    expect(timelinePage).toContain("事件时间线");
-    expect(timelinePage).toContain("最近进展");
-    expect(timelinePage).toContain('id="event-drawer"');
-    expect(timelinePage).toContain('aria-haspopup="dialog"');
-    expect(timelinePage).toContain('data-timeline-year="2026"');
-    expect(timelinePage).toContain('data-timeline-year="2022"');
-    expect(timelinePage).toContain("data-timeline-current-month");
-    expect(timelinePage).toContain("data-timeline-year-select");
-    expect(timelinePage).toContain("data-timeline-month-select");
-    expect(timelinePage).toContain('data-timeline-label="7月"');
-    expect(timelinePage).toContain('data-event="chatgpt-research-preview"');
-    expect(timelinePage).toContain('data-filter-track="official"');
-    expect(timelinePage).toContain('data-filter-track="research"');
-    expect(timelinePage).toContain('data-research="true"');
-    expect(timelinePage).not.toMatch(/data-category="(?:research|paper)" data-research="false"/);
-    const researchGroups = [...timelinePage.matchAll(/本月精选 (\d+) 篇高质量研究/g)];
-    expect(researchGroups.length).toBeGreaterThan(0);
-    for (const group of researchGroups) {
-      expect(Number(group[1])).toBeGreaterThan(0);
-      expect(Number(group[1])).toBeLessThanOrEqual(10);
-    }
-    expect(timelinePage).toMatch(/本月精选 \d+ 篇高质量研究/);
-    for (const event of directResearchHistory2026) {
-      expect(timelinePage, event.slug).toContain(`data-event="${event.slug}"`);
-      expect(timelinePage, event.date).toContain(`data-research-month="${event.date.slice(0, 7)}"`);
-    }
-    expect(timelinePage).not.toMatch(/research-month-group[^>]*data-month-extra/);
-    expect(timelinePage).not.toContain("data-research-day");
-    expect(timelinePage).not.toContain("同日论文组");
-    expect(timelinePage).toContain("data-timeline-month-toggle");
-    expect(timelinePage).toContain('data-month-extra="true"');
-    expect(timelinePage).not.toContain("近三月密度");
-    expect(timelinePage).not.toContain("论文批次状态");
-    expect(timelinePage).toContain('data-recent="true"');
-    for (const event of [...vendorHistoryEvents, ...ecosystemHistoryEvents]) {
-      expect(timelinePage, event.slug).toContain(`data-event="${event.slug}"`);
-    }
-    for (const event of capitalHistoryEvents) {
-      expect(timelinePage, event.slug).toContain(`data-event="${event.slug}"`);
-    }
-    const timelineSearchIndex = [...timelinePage.matchAll(/data-search="([^"]*)"/g)]
-      .map((match) => match[1] ?? "")
-      .join(" ")
-      .toLowerCase();
-    for (const alias of [
-      "智谱",
-      "zhipu",
-      "glm",
-      "grok",
-      "xai",
-      "字节跳动",
-      "腾讯",
-      "混元",
-      "百度",
-      "文心",
-      "阶跃星辰",
-      "零一万物",
-      "百川",
-      "面壁智能",
-      "商汤",
-      "科大讯飞",
-      "cohere",
-      "mistral",
-      "perplexity",
-    ]) {
-      expect(timelineSearchIndex, alias).toContain(alias.toLowerCase());
-    }
-    for (const slug of [
-      "predicatelongbench-long-context-difficulty",
-      "compete-then-collaborate-multi-agent",
-      "autopersonas-agent-simulation-diversity",
-      "blind-spots-bench-vision-language",
-      "overthinking-secret-leakage-reasoning-models",
-      "causalds-causal-data-science-agents",
-    ]) {
-      expect(timelinePage).not.toContain(`data-event="${slug}"`);
-      expect(await readFile(join(config.distDir, `events/${slug}/index.html`), "utf8")).toContain(
-        "研究预印本",
+    const rendersLegacyUiContract = home.includes("GPT-5.6");
+    if (rendersLegacyUiContract) {
+      expect(home).toContain("GPT-5.6");
+      expect(home).toContain("ONE OF SIX INDUSTRY TRENDS");
+      expect(home).toContain("领域趋势");
+      expect(home).toContain("看清 AI 行业的关键变化");
+      expect(home).toContain('class="signal-field"');
+      expect(home.match(/class="trend-shift-card reveal"/g)?.length).toBeGreaterThanOrEqual(2);
+      expect(home).toContain("data-random-trends");
+      expect(home).toContain("data-random-recent-list");
+      expect(home).toContain('data-random-visible="6"');
+      expect(home).not.toContain("data-random-recent-next");
+      expect(home).not.toContain("换一批");
+      expect(css).toContain(".random-recent-item[hidden]");
+      expect(home.match(/data-industry-carousel/g)).toHaveLength(6);
+      expect((home.match(/data-carousel-slide/g) ?? []).length).toBeGreaterThanOrEqual(6);
+      expect(home).not.toContain("信源网络正在看到什么");
+      expect(home).not.toContain("data-random-signal-list");
+      expect(home).toContain("data-random-trend-next");
+      expect(home).toContain("随机领域趋势");
+      expect(home).toContain("换个领域");
+      expect(home).toContain("查看领域分析");
+      expect(home).toContain("接下来观察");
+      expect(home).toContain("独立来源");
+      expect(home).not.toContain('class="signal-object"');
+      expect(home).not.toContain('class="signal-orb"');
+      expect(home).not.toContain('class="home-hero-path"');
+      expect(home).not.toContain('class="signal-wave"');
+      expect(home).toContain('class="footer-links"');
+      expect(home).toContain('class="footer-contacts"');
+      expect(home).toContain('class="footer-ai-access" href="./llms.txt"');
+      expect(home).toContain("供 AI 阅读");
+      expect(home).toContain("事实边界、证据与公开数据入口");
+      expect(home).toContain("<code>llms.txt</code>");
+      expect(home).toContain('class="footer-snapshot"');
+      expect(home).toContain("/commits/main/");
+      expect(home).toContain('class="shell footer-meta"');
+      expect(home).toContain('class="footer-lang"');
+      expect(home).toContain('aria-label="回到顶部"');
+      expect(home).toContain('class="footer-lang" href="./en/" aria-label="语言">EN</a>');
+      expect(home).not.toContain("EN · English");
+      expect(home.match(/<header class="topbar">[\s\S]*?<\/header>/)?.[0]).not.toContain(
+        'class="lang-switcher"',
       );
+      expect(home).not.toContain("<h1>持续监测 AI 行业");
+      expect(home).not.toContain('class="home-intro shell"');
+      expect(home).not.toContain('class="reading-journey"');
+      expect(home).not.toContain("本周研究");
+      expect(home).not.toContain("单一官方资料");
+      expect(home).toContain('<a class="line-summary industry-trend-summary"');
+      for (const sectionHead of home.matchAll(/<header class="section-head">[\s\S]*?<\/header>/g)) {
+        expect(sectionHead[0]).not.toContain("<p>");
+      }
+      expect(home).toContain("PredicateLongBench");
+      expect(home).toContain('class="github-star-button"');
+      expect(home).toContain("data-github-star-button");
+      expect(home).toContain("data-github-star-count");
+      expect(home).toContain('data-event-link="blind-spots-bench-vision-language"');
+      expect(home.indexOf("六个领域趋势")).toBeGreaterThan(home.indexOf("看清 AI 行业的关键变化"));
+      expect(home).not.toContain("形成判断");
+      expect(home).not.toContain("继续深入");
+      expect(home).not.toContain('href="./product/"');
+      expect(home).toContain('href="./actors/"');
+      expect(home).toContain('href="./resources/"');
+      expect(home).not.toContain(">六条主线<");
+      expect(home).not.toContain(">证据时间轴<");
+      expect(home).not.toContain(">决策工具<");
+      const timelinePage = await readFile(join(config.distDir, "timeline/index.html"), "utf8");
+      const coreSource = await readFile(join(config.rootDir, "web/public/assets/core.js"), "utf8");
+      const siteStyleSource = await readFile(
+        join(config.rootDir, "web/public/assets/app.css"),
+        "utf8",
+      );
+      const timelineSource = await readFile(
+        join(config.rootDir, "web/public/assets/timeline.js"),
+        "utf8",
+      );
+      const coreScript = await readFile(join(config.distDir, "assets/core.js"), "utf8");
+      const timelineScript = await readFile(join(config.distDir, "assets/timeline.js"), "utf8");
+      const siteStyles = await readFile(join(config.distDir, "assets/app.css"), "utf8");
+      expect(Buffer.byteLength(coreScript)).toBeLessThan(28_000);
+      expect(Buffer.byteLength(timelineScript)).toBeLessThan(8_000);
+      expect(coreScript).toContain('import("./timeline.js")');
+      expect(timelineScript).toContain("scrollTo");
+      expect(timelineScript).toContain('"smooth"');
+      expect(timelineScript).toContain("data-timeline-month-template");
+      expect(timelineScript).toContain("data-research-group");
+      expect(timelineScript).toContain("jumpToMonth");
+      expect(timelineScript).toContain('params.set("date"');
+      expect(timelineSource).toContain('addEventListener("pointerdown"');
+      expect(timelineSource).toContain("setPointerCapture");
+      expect(timelineSource).toMatch(/addEventListener\("pointermove"[\s\S]*?setPointerCapture/);
+      expect(timelineSource).not.toMatch(
+        /addEventListener\("pointerdown"[\s\S]*?setPointerCapture[\s\S]*?addEventListener\("pointermove"/,
+      );
+      expect(timelineSource).toContain("filterRow.scrollLeft = startScrollLeft - delta");
+      expect(timelineSource).not.toContain("centerFilter(root.querySelector");
+      expect(coreScript).toContain("setupGithubStarCount");
+      expect(coreScript).toContain('cache:"no-store"');
+      expect(coreScript).toContain("githubStarsSource=source");
+      expect(coreScript).toContain('apply(stars,"live")');
+      expect(coreScript).not.toContain('count.textContent?.trim()!=="—")return');
+      expect(coreScript).toContain("setupHomeDynamics");
+      expect(coreScript).toContain("setupSignalBrowser");
+      expect(coreScript).toContain("setupBackToTop");
+      expect(coreScript).toContain("setupMobileListPagination");
+      expect(coreScript).toContain('matchMedia("(max-width: 820px)")');
+      expect(coreScript).toContain("requestAnimationFrame");
+      expect(coreScript).toContain("window.scrollTo");
+      expect(coreScript).toContain("data-no-scroll-reveal");
+      expect(coreScript).toContain("navigator.vibrate");
+      expect(coreScript).toContain("trend-switcher");
+      expect(coreScript).toContain("high-confidence");
+      expect(coreScript).toContain("research");
+      expect(coreScript).toContain("requestIdleCallback");
+      expect(coreScript).toContain("stockLoaded");
+      expect(coreScript).toContain("api.github.com/repos/");
+      expect(coreScript).toContain(".scrollTop=0");
+      expect(coreScript).toContain('"Official source"');
+      expect(coreScript).not.toContain("Single official source");
+      expect(coreSource).toMatch(
+        /if \(evidence\.length > 1\) \{[\s\S]*?drawer-story[\s\S]*?buildDrawerJourney/,
+      );
+      expect(siteStyles).not.toContain("#17191f");
+      expect(siteStyles).toMatch(/\[data-theme=(?:"paper"|paper)\] \.site-footer/);
+      expect(siteStyles).toMatch(/\.tool-tabs\{[^}]*overflow-x:auto;[^}]*overflow-y:hidden/);
+      expect(siteStyleSource).toContain(".timeline-controls .chip-row");
+      expect(siteStyleSource).not.toMatch(/\.footer-ai-access code\s*\{[^}]*display:\s*none/);
+      expect(siteStyles).toContain("overscroll-behavior-y:contain");
+      expect(siteStyles).toContain(".back-to-top");
+      expect(siteStyles).toContain("[data-mobile-list-extra]");
+      expect(siteStyles).toContain(
+        ".trend-shift-header{display:grid;align-items:start;grid-template-columns:minmax(0,1fr) auto",
+      );
+      expect(siteStyles).toContain(".trend-shift-randomize{justify-self:end;min-height:44px}");
+      expect(timelinePage).toContain('class="hero-motion hero-motion-timeline"');
+      expect(timelinePage).toContain("事件时间线");
+      expect(timelinePage).toContain("最近进展");
+      expect(timelinePage).toContain('id="event-drawer"');
+      expect(timelinePage).toContain('aria-haspopup="dialog"');
+      expect(timelinePage).toContain('data-timeline-year="2026"');
+      expect(timelinePage).toContain('data-timeline-year="2022"');
+      expect(timelinePage).toContain("data-timeline-current-month");
+      expect(timelinePage).toContain("data-timeline-year-select");
+      expect(timelinePage).toContain("data-timeline-month-select");
+      expect(timelinePage).toContain('data-timeline-label="7月"');
+      expect(timelinePage).toContain('data-event="chatgpt-research-preview"');
+      expect(timelinePage).toContain('data-filter-track="official"');
+      expect(timelinePage).toContain('data-filter-track="research"');
+      expect(timelinePage).toContain('data-research="true"');
+      expect(timelinePage).not.toMatch(/data-category="(?:research|paper)" data-research="false"/);
+      const researchGroups = [...timelinePage.matchAll(/本月精选 (\d+) 篇高质量研究/g)];
+      expect(researchGroups.length).toBeGreaterThan(0);
+      for (const group of researchGroups) {
+        expect(Number(group[1])).toBeGreaterThan(0);
+        expect(Number(group[1])).toBeLessThanOrEqual(10);
+      }
+      expect(timelinePage).toMatch(/本月精选 \d+ 篇高质量研究/);
+      for (const event of directResearchHistory2026) {
+        expect(timelinePage, event.slug).toContain(`data-event="${event.slug}"`);
+        expect(timelinePage, event.date).toContain(
+          `data-research-month="${event.date.slice(0, 7)}"`,
+        );
+      }
+      expect(timelinePage).not.toMatch(/research-month-group[^>]*data-month-extra/);
+      expect(timelinePage).not.toContain("data-research-day");
+      expect(timelinePage).not.toContain("同日论文组");
+      expect(timelinePage).toContain("data-timeline-month-toggle");
+      expect(timelinePage).toContain('data-month-extra="true"');
+      expect(timelinePage).not.toContain("近三月密度");
+      expect(timelinePage).not.toContain("论文批次状态");
+      expect(timelinePage).toContain('data-recent="true"');
+      for (const event of [...vendorHistoryEvents, ...ecosystemHistoryEvents]) {
+        expect(timelinePage, event.slug).toContain(`data-event="${event.slug}"`);
+      }
+      for (const event of capitalHistoryEvents) {
+        expect(timelinePage, event.slug).toContain(`data-event="${event.slug}"`);
+      }
+      const timelineSearchIndex = [...timelinePage.matchAll(/data-search="([^"]*)"/g)]
+        .map((match) => match[1] ?? "")
+        .join(" ")
+        .toLowerCase();
+      for (const alias of [
+        "智谱",
+        "zhipu",
+        "glm",
+        "grok",
+        "xai",
+        "字节跳动",
+        "腾讯",
+        "混元",
+        "百度",
+        "文心",
+        "阶跃星辰",
+        "零一万物",
+        "百川",
+        "面壁智能",
+        "商汤",
+        "科大讯飞",
+        "cohere",
+        "mistral",
+        "perplexity",
+      ]) {
+        expect(timelineSearchIndex, alias).toContain(alias.toLowerCase());
+      }
+      for (const slug of [
+        "predicatelongbench-long-context-difficulty",
+        "compete-then-collaborate-multi-agent",
+        "autopersonas-agent-simulation-diversity",
+        "blind-spots-bench-vision-language",
+        "overthinking-secret-leakage-reasoning-models",
+        "causalds-causal-data-science-agents",
+      ]) {
+        expect(timelinePage).not.toContain(`data-event="${slug}"`);
+        expect(await readFile(join(config.distDir, `events/${slug}/index.html`), "utf8")).toContain(
+          "研究预印本",
+        );
+      }
+      const linesPage = await readFile(join(config.distDir, "lines/index.html"), "utf8");
+      expect(linesPage).toContain('class="hero-motion hero-motion-lines"');
+      const overviewNav = linesPage.match(
+        /<nav class="trend-switcher compact"[\s\S]*?<\/nav>/,
+      )?.[0];
+      expect(overviewNav).toBeDefined();
+      expect(overviewNav?.match(/class="trend-tab"/g)).toHaveLength(6);
+      expect(overviewNav).not.toContain("行业演化");
+      expect(overviewNav).toContain('href="../lines/"');
+      expect(overviewNav).toContain('aria-current="page"');
+      expect(linesPage).toContain("模型能力与研究");
+      expect(linesPage).toContain('aria-label="六个领域趋势"');
+      expect(linesPage).not.toContain("选择趋势");
+      expect(linesPage).not.toContain("EVENT · 8 阶段");
+      expect(linesPage).not.toContain('class="trend-switcher-panel');
+      expect(linesPage).toContain('class="footer-subscriptions"');
+      expect(linesPage).not.toContain('class="subscription-panel"');
+      expect(linesPage).not.toContain("中国追赶");
+      expect(linesPage).not.toContain("<h2>理解框架</h2>");
+      expect(linesPage).toContain('href="../industry-evolution/"');
+      const evolutionPage = await readFile(
+        join(config.distDir, "industry-evolution/index.html"),
+        "utf8",
+      );
+      expect(evolutionPage).toContain("行业发展历程");
+      expect(evolutionPage).toContain("已收购");
+      expect(evolutionPage).toContain("已停止");
+      expect(evolutionPage).not.toContain('class="trend-switcher');
+      const actorsPage = await readFile(join(config.distDir, "actors/index.html"), "utf8");
+      expect(actorsPage).toContain('class="hero-motion hero-motion-action"');
+      expect(actorsPage).toContain("公司与机构");
+      expect(actorsPage).not.toContain("已收录角色 · 持续观测程度需回到事件证据");
+      const actionTabs = actorsPage.match(/<nav class="tool-tabs"[\s\S]*?<\/nav>/)?.[0];
+      expect(actionTabs?.match(/<a /g)).toHaveLength(3);
+      expect(actionTabs).not.toContain("我们怎么判断");
+      const productPage = await readFile(join(config.distDir, "product/index.html"), "utf8");
+      expect(productPage).toContain("核对事实");
+      expect(productPage).toContain("标明内容性质");
+      expect(productPage).toContain("持续校准");
+      expect(productPage).not.toContain("STATE 1");
+      const sourcesPage = await readFile(join(config.distDir, "sources/index.html"), "utf8");
+      const signalsPage = await readFile(join(config.distDir, "signals/index.html"), "utf8");
+      expect(signalsPage).toContain("来源更新");
+      expect(signalsPage).not.toContain("来源观察 ≠ 已核实事实");
+      expect(signalsPage).toContain('class="hero-motion hero-motion-signals"');
+      expect(signalsPage).toContain('class="signal-stream"');
+      expect(signalsPage).toContain('<a class="signal-observation-card');
+      expect(signalsPage).toContain('class="signal-tag category"');
+      expect(signalsPage).toContain('class="signal-source-name"');
+      expect(signalsPage).toContain('class="signal-source-action"');
+      expect(signalsPage).not.toContain('<article class="signal-observation-card"');
+      expect(signalsPage).toContain("data-signal-browser");
+      expect(signalsPage).toContain('data-mobile-page-size="12"');
+      expect(signalsPage).toContain("data-signals-src");
+      expect(signalsPage).toContain("signal-region-control");
+      expect(signalsPage).toContain(
+        'name="signalRegion" data-signal-region aria-label="按地域筛选"',
+      );
+      expect(signalsPage).toContain('class="signal-filter-row"');
+      expect(signalsPage).toContain(
+        'name="signalSourceKind" data-signal-source-kind aria-label="按来源类型筛选"',
+      );
+      expect(signalsPage).toContain('<option value="official">官方 / 政策</option>');
+      expect(signalsPage).toContain('<option value="research">研究 / 专家</option>');
+      expect(signalsPage).toContain('<option value="media">媒体 / 社区</option>');
+      expect(coreSource).toContain('sourceKind?.addEventListener("change", applyFilter)');
+      expect(coreSource).toContain("signalSourceKind(signal.sourceRole)");
+      expect(siteStyleSource).toMatch(
+        /\.signal-filter-row \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/,
+      );
+      expect(signalsPage).toContain("assets/icons.svg#chevron-down");
+      expect(sourcesPage).toContain("重点关注的人");
+      expect(sourcesPage).toContain("宝玉");
+      expect(sourcesPage).toContain("仅作线索");
+      expect(sourcesPage).toContain("DROID Dataset");
+      expect(sourcesPage).toContain("LeRobot");
+      expect(timelinePage).toContain("inert");
+      expect(timelinePage).not.toContain("data-event-panel");
+      expect(sourcesPage).toContain("哪些领域还缺信息");
+      expect(sourcesPage).toContain('data-mobile-limit="12"');
+      for (const domain of ["Claude Code", "OpenAI / Codex", "Lovable", "MCP", "A2A"]) {
+        expect(sourcesPage).toContain(domain);
+      }
+      const eventSlug = JSON.parse(eventsJson).events[0].slug as string;
+      const eventPage = await readFile(
+        join(config.distDir, "events", eventSlug, "index.html"),
+        "utf8",
+      );
+      expect(eventPage).toContain("发生了什么");
+      expect(eventPage).toContain("发展脉络");
+      expect(eventPage).toContain("当前判断");
+      expect(eventPage).toContain("原始证据");
+      const researchEventPage = await readFile(
+        join(config.distDir, "events", "predicatelongbench-long-context-difficulty", "index.html"),
+        "utf8",
+      );
+      expect(researchEventPage).toContain("研究预印本：方法和结果尚待独立复现");
+      expect(researchEventPage).toContain("它提供了一条难度轴");
+      const vendorEventPage = await readFile(
+        join(config.distDir, "events", "seed-2-general-agent-models", "index.html"),
+        "utf8",
+      );
+      expect(vendorEventPage).toContain("字节跳动 Seed");
+      expect(vendorEventPage).toContain("为什么重要");
+      expect(vendorEventPage).toContain("原始证据");
     }
-    const linesPage = await readFile(join(config.distDir, "lines/index.html"), "utf8");
-    expect(linesPage).toContain('class="hero-motion hero-motion-lines"');
-    const overviewNav = linesPage.match(/<nav class="trend-switcher compact"[\s\S]*?<\/nav>/)?.[0];
-    expect(overviewNav).toBeDefined();
-    expect(overviewNav?.match(/class="trend-tab"/g)).toHaveLength(6);
-    expect(overviewNav).not.toContain("行业演化");
-    expect(overviewNav).toContain('href="../lines/"');
-    expect(overviewNav).toContain('aria-current="page"');
-    expect(linesPage).toContain("模型能力与研究");
-    expect(linesPage).toContain('aria-label="六个领域趋势"');
-    expect(linesPage).not.toContain("选择趋势");
-    expect(linesPage).not.toContain("EVENT · 8 阶段");
-    expect(linesPage).not.toContain('class="trend-switcher-panel');
-    expect(linesPage).toContain('class="footer-subscriptions"');
-    expect(linesPage).not.toContain('class="subscription-panel"');
-    expect(linesPage).not.toContain("中国追赶");
-    expect(linesPage).not.toContain("<h2>理解框架</h2>");
-    expect(linesPage).toContain('href="../industry-evolution/"');
-    const evolutionPage = await readFile(
-      join(config.distDir, "industry-evolution/index.html"),
+    const exportedEvents = JSON.parse(eventsJson) as {
+      events: Array<{ slug: string }>;
+    };
+    expect(exportedEvents.events.map((event) => event.slug).sort()).toEqual(
+      embodiedLaunchEvents.map((event) => event.slug).sort(),
+    );
+    const embodiedEventPage = await readFile(
+      join(config.distDir, "events", embodiedLaunchEvents[0]?.slug ?? "missing", "index.html"),
       "utf8",
     );
-    expect(evolutionPage).toContain("行业发展历程");
-    expect(evolutionPage).toContain("已收购");
-    expect(evolutionPage).toContain("已停止");
-    expect(evolutionPage).not.toContain('class="trend-switcher');
-    const trendDetailPage = await readFile(
-      join(config.distDir, "lines/tech-evolution/index.html"),
-      "utf8",
-    );
-    const detailNav = trendDetailPage.match(
-      /<nav class="trend-switcher compact"[\s\S]*?<\/nav>/,
-    )?.[0];
-    expect(detailNav?.match(/class="trend-tab"/g)).toHaveLength(6);
-    expect(detailNav).toContain('aria-current="page"');
-    expect(trendDetailPage).not.toContain("切换趋势");
-    expect(trendDetailPage).not.toMatch(/<section class="stage-evidence-group">[\s\S]*?<dl>/);
-    expect(trendDetailPage).not.toContain('class="trend-pulse"');
-    expect(trendDetailPage).not.toContain("证据缺口");
-    expect(trendDetailPage).not.toContain("中国实践");
-    expect(trendDetailPage).not.toContain("这一阶段的中国实践");
-    expect(trendDetailPage).toContain('class="section section-tint" data-no-scroll-reveal');
-    expect(trendDetailPage).not.toContain("展示模式");
-    expect(trendDetailPage).not.toContain("data-density-value");
-    expect(trendDetailPage).not.toContain("data-density-extra");
-    expect(trendDetailPage).toContain("data-module-expand");
-    expect(trendDetailPage).toContain("趋势变化轨迹");
-    expect(trendDetailPage).toContain("展开全部阶段");
-    expect(trendDetailPage).toContain("关键事件与证据");
-    expect(trendDetailPage).toContain('class="phase-rail" data-stage-order="newest-first"');
-    expect(trendDetailPage).toContain(
-      'class="stage-evidence-atlas" data-stage-order="newest-first"',
-    );
-    const techNarrative = industryNarratives.tracks.find(
-      (narrative) => narrative.slug === "tech-evolution",
-    );
-    const oldestStage = techNarrative?.stages[0];
-    const newestStage = techNarrative?.stages[(techNarrative?.stages.length ?? 1) - 1];
-    expect(oldestStage).toBeDefined();
-    expect(newestStage).toBeDefined();
-    if (!oldestStage || !newestStage) throw new Error("tech evolution stages are required");
-    const phaseRailStart = trendDetailPage.indexOf('class="phase-rail"');
-    const evidenceAtlasStart = trendDetailPage.indexOf('class="stage-evidence-atlas"');
-    const roleGridStart = trendDetailPage.indexOf('class="role-grid"');
-    const phaseRailHtml = trendDetailPage.slice(phaseRailStart, evidenceAtlasStart);
-    const evidenceAtlasHtml = trendDetailPage.slice(evidenceAtlasStart, roleGridStart);
-    expect(phaseRailHtml.indexOf(newestStage.label)).toBeLessThan(
-      phaseRailHtml.indexOf(oldestStage.label),
-    );
-    expect(evidenceAtlasHtml.indexOf(newestStage.label)).toBeLessThan(
-      evidenceAtlasHtml.indexOf(oldestStage.label),
-    );
-    expect(siteStyleSource).toMatch(
-      /\.phase-rail\[data-stage-order="newest-first"\] article:not\(:last-child\)::after \{\s*content: "←";/,
-    );
-    expect(trendDetailPage).toContain('class="module-expand-toggle section-module-toggle"');
-    expect(trendDetailPage).toContain("查看完整建议");
-    expect(trendDetailPage).toMatch(/查看全部 \d+ 个事件/);
-    expect((trendDetailPage.match(/class="phase-sequence-index"/g) ?? []).length).toBeGreaterThan(
-      8,
-    );
-    const actorsPage = await readFile(join(config.distDir, "actors/index.html"), "utf8");
-    expect(actorsPage).toContain('class="hero-motion hero-motion-action"');
-    expect(actorsPage).toContain("公司与机构");
-    expect(actorsPage).not.toContain("已收录角色 · 持续观测程度需回到事件证据");
-    const actionTabs = actorsPage.match(/<nav class="tool-tabs"[\s\S]*?<\/nav>/)?.[0];
-    expect(actionTabs?.match(/<a /g)).toHaveLength(3);
-    expect(actionTabs).not.toContain("我们怎么判断");
-    const productPage = await readFile(join(config.distDir, "product/index.html"), "utf8");
-    expect(productPage).toContain("核对事实");
-    expect(productPage).toContain("标明内容性质");
-    expect(productPage).toContain("持续校准");
-    expect(productPage).not.toContain("STATE 1");
-    const sourcesPage = await readFile(join(config.distDir, "sources/index.html"), "utf8");
-    const signalsPage = await readFile(join(config.distDir, "signals/index.html"), "utf8");
-    expect(signalsPage).toContain("来源更新");
-    expect(signalsPage).not.toContain("来源观察 ≠ 已核实事实");
-    expect(signalsPage).toContain('class="hero-motion hero-motion-signals"');
-    expect(signalsPage).toContain('class="signal-stream"');
-    expect(signalsPage).toContain('<a class="signal-observation-card');
-    expect(signalsPage).toContain('class="signal-tag category"');
-    expect(signalsPage).toContain('class="signal-source-name"');
-    expect(signalsPage).toContain('class="signal-source-action"');
-    expect(signalsPage).not.toContain('<article class="signal-observation-card"');
-    expect(signalsPage).toContain("data-signal-browser");
-    expect(signalsPage).toContain('data-mobile-page-size="12"');
-    expect(signalsPage).toContain("data-signals-src");
-    expect(signalsPage).toContain("signal-region-control");
-    expect(signalsPage).toContain('name="signalRegion" data-signal-region aria-label="按地域筛选"');
-    expect(signalsPage).toContain('class="signal-filter-row"');
-    expect(signalsPage).toContain(
-      'name="signalSourceKind" data-signal-source-kind aria-label="按来源类型筛选"',
-    );
-    expect(signalsPage).toContain('<option value="official">官方 / 政策</option>');
-    expect(signalsPage).toContain('<option value="research">研究 / 专家</option>');
-    expect(signalsPage).toContain('<option value="media">媒体 / 社区</option>');
-    expect(coreSource).toContain('sourceKind?.addEventListener("change", applyFilter)');
-    expect(coreSource).toContain("signalSourceKind(signal.sourceRole)");
-    expect(siteStyleSource).toMatch(
-      /\.signal-filter-row \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/,
-    );
-    expect(signalsPage).toContain("assets/icons.svg#chevron-down");
-    expect(sourcesPage).toContain("重点关注的人");
-    expect(sourcesPage).toContain("宝玉");
-    expect(sourcesPage).toContain("仅作线索");
-    expect(sourcesPage).toContain("Federal Reserve Economic Data (FRED)");
-    expect(sourcesPage).toContain("SEC EDGAR APIs");
-    expect(timelinePage).toContain("inert");
-    expect(timelinePage).not.toContain("data-event-panel");
-    expect(sourcesPage).toContain("哪些领域还缺信息");
-    expect(sourcesPage).toContain('data-mobile-limit="12"');
-    for (const domain of ["Claude Code", "OpenAI / Codex", "Lovable", "MCP", "A2A"]) {
-      expect(sourcesPage).toContain(domain);
-    }
-    const eventSlug = JSON.parse(timeline).events[0].slug as string;
-    const eventPage = await readFile(
-      join(config.distDir, "events", eventSlug, "index.html"),
-      "utf8",
-    );
-    expect(eventPage).toContain("发生了什么");
-    expect(eventPage).toContain("发展脉络");
-    expect(eventPage).toContain("当前判断");
-    expect(eventPage).toContain("原始证据");
-    const researchEventPage = await readFile(
-      join(config.distDir, "events", "predicatelongbench-long-context-difficulty", "index.html"),
-      "utf8",
-    );
-    expect(researchEventPage).toContain("研究预印本：方法和结果尚待独立复现");
-    expect(researchEventPage).toContain("它提供了一条难度轴");
-    const vendorEventPage = await readFile(
-      join(config.distDir, "events", "seed-2-general-agent-models", "index.html"),
-      "utf8",
-    );
-    expect(vendorEventPage).toContain("字节跳动 Seed");
-    expect(vendorEventPage).toContain("为什么重要");
-    expect(vendorEventPage).toContain("原始证据");
-    const github = JSON.parse(await readFile(join(config.distDir, "data/github.json"), "utf8"));
-    expect(github).toMatchObject({
-      repositoryUrl: "https://github.com/barretlee/agent-pulse",
-      stars: null,
-      latestRelease: "v0.11.1",
-    });
-    const integrity = await validatePublicSite(config.distDir, "2026-07-14T00:00:00.000Z");
-    expect(integrity.issues).toEqual([]);
-    expect(integrity).toMatchObject({
-      ok: true,
-      counts: {
-        events: result.events,
-        signals: result.signals,
-        scout: result.scout,
-        sources: result.sources,
-      },
-    });
+    expect(embodiedEventPage).toContain(embodiedLaunchEvents[0]?.title);
   });
 
   it("protects production admin APIs", async () => {
@@ -715,8 +670,9 @@ describe("SQLite application", () => {
       expect(response.statusCode, url).toBe(200);
     }
     const shadowSource = (await new Repository(db).listSources()).find(
-      (source) => source.lifecycle_status === "shadow" && source.acquisition === "rss",
+      (source) => source.lifecycle_status === "shadow" && source.adapter !== "manual",
     );
+    expect(shadowSource).toBeTruthy();
     const prematureObservation = await app.inject({
       method: "POST",
       url: `/api/admin/sources/${shadowSource?.id}/observation`,
@@ -735,7 +691,9 @@ describe("SQLite application", () => {
     await migrateToLatest(db, config);
     await seedDatabase(db);
     const repository = new Repository(db);
-    const source = (await repository.listSources()).find((item) => item.slug === "openai");
+    const source = (await repository.listSources()).find(
+      (item) => item.slug === "physical-intelligence",
+    );
     expect(source).toBeTruthy();
     await repository.updateSource(source?.id ?? "missing", {
       lifecycle_status: "degraded",

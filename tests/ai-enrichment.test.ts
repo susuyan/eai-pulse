@@ -31,20 +31,20 @@ function validClient(): JsonModelClient {
         usage: { promptTokens: 120, completionTokens: 180, totalTokens: 300 },
         value: {
           factSummary:
-            "OpenAI published an official model update and documented the supported product workflow.",
+            "DROID published a robot teleoperation dataset and documented the distributed collection workflow.",
           summary:
-            "The official release connects the model update with a bounded product workflow and public technical documentation.",
+            "The original release connects robot demonstrations with a bounded multi-site collection workflow and public documentation.",
           technicalInsight:
-            "The release moves more task state into the model workflow while keeping tool execution behind explicit product controls.",
+            "The release aligns robot hardware, operator procedures, calibration, and dataset records across collection sites.",
           industryInsight:
-            "Competition may shift from isolated model access toward reliable task execution, distribution and governance.",
+            "Distributed collection can expand environment coverage while making hardware consistency and site operations measurable.",
           futureOutlook:
             "Verify independent completion rates, task cost, permission controls and recovery from interrupted runs.",
           businessValue:
-            "Teams should test one reversible workflow with explicit success, cost and human takeover thresholds before expanding.",
-          company: "OpenAI",
-          category: "model-release",
-          keywords: ["OpenAI", "model release", "agent workflow"],
+            "Teams should test one collection site with explicit calibration, throughput and acceptance thresholds before expanding.",
+          company: "DROID Consortium",
+          category: "dataset-update",
+          keywords: ["robot", "teleoperation", "dataset"],
           trackSlugs: [input.availableTracks[0].slug],
           usedEvidenceUrls: [input.evidence[0].url],
         },
@@ -59,7 +59,7 @@ describe("AI event enrichment", () => {
     const event = await db
       .selectFrom("events")
       .selectAll()
-      .where("slug", "=", "gemma-4-open-model-efficiency")
+      .where("slug", "=", "droid-distributed-collection")
       .executeTakeFirstOrThrow();
     await db
       .updateTable("events")
@@ -86,8 +86,8 @@ describe("AI event enrichment", () => {
       .executeTakeFirstOrThrow();
     expect(updated).toMatchObject({
       status: "review",
-      company: "OpenAI",
-      category: "model-release",
+      company: "DROID Consortium",
+      category: "dataset-update",
     });
     expect(updated.technical_insight).not.toContain("待编辑");
     expect((await evaluateEventReadiness(db, event.id)).status).toBe("ready");
@@ -98,7 +98,7 @@ describe("AI event enrichment", () => {
     const event = await db
       .selectFrom("events")
       .select("id")
-      .where("slug", "=", "gemma-4-open-model-efficiency")
+      .where("slug", "=", "droid-distributed-collection")
       .executeTakeFirstOrThrow();
     await db
       .updateTable("events")
@@ -133,7 +133,7 @@ describe("AI event enrichment", () => {
     const event = await db
       .selectFrom("events")
       .selectAll()
-      .where("slug", "=", "gemma-4-open-model-efficiency")
+      .where("slug", "=", "droid-distributed-collection")
       .executeTakeFirstOrThrow();
     await db
       .updateTable("events")

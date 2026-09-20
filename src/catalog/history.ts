@@ -5,6 +5,11 @@ import { researchHistory2022To2025 } from "./research-history-2022-2025.js";
 import { researchHistory2026 } from "./research-history-2026.js";
 import { vendorHistoryEvents } from "./vendor-history-2026-07.js";
 
+export {
+  type EmbodiedLaunchEventSeed,
+  embodiedLaunchEvents,
+} from "./embodied-data/events.js";
+
 export interface CuratedEventSeed {
   slug: string;
   title: string;

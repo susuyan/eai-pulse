@@ -365,7 +365,7 @@ export function generateAlertEmail(report: MonitorReport): { subject: string; bo
   if (failedChecks > 0) {
     push("- Run `npm run sources:audit -- --concurrency=4` for detailed per-source diagnostics.");
   }
-  push("- Review the full health report at: https://github.com/barretlee/agent-pulse/actions");
+  push("- Review the full health report at: https://github.com/susuyan/eai-pulse/actions");
   push("");
 
   push("=== End of Alert ===");

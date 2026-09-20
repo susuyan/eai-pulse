@@ -4,7 +4,7 @@ Agent Pulse treats data sources as governed production assets, not as a list of 
 
 ## Before proposing a source
 
-Check the current [Source Catalog and Ranking Policy](SOURCES.md) and search existing [Issues](https://github.com/barretlee/agent-pulse/issues) for the publisher, domain, feed, repository, and public handle.
+Check the current [Source Catalog and Ranking Policy](SOURCES.md) and search existing [Issues](https://github.com/susuyan/eai-pulse/issues) for the publisher, domain, feed, repository, and public handle.
 
 A useful source should have a clear owner, relevant AI-industry content, a stable public acquisition path, and enough original information to justify its maintenance cost. Preference is given to:
 
@@ -18,7 +18,7 @@ Aggregators can identify candidates and propagation clusters, but they cannot be
 
 ## Information to provide
 
-Use the repository's source proposal form from the [New Issue chooser](https://github.com/barretlee/agent-pulse/issues/new/choose). Provide only public, verifiable information:
+Use the repository's source proposal form from the [New Issue chooser](https://github.com/susuyan/eai-pulse/issues/new/choose). Provide only public, verifiable information:
 
 - source or publisher name;
 - official homepage;
@@ -69,7 +69,7 @@ Repeated content, mirrored media accounts, and shared publishing groups do not c
 
 ## Corrections and source-owner requests
 
-For a factual correction, attribution problem, copyright concern, privacy issue, or removal request, use the [Content correction or removal form](https://github.com/barretlee/agent-pulse/issues/new?template=content-correction.yml). Do not put confidential or security-sensitive material in a public Issue; use the private process described in [SECURITY.md](../SECURITY.md).
+For a factual correction, attribution problem, copyright concern, privacy issue, or removal request, use the [Content correction or removal form](https://github.com/susuyan/eai-pulse/issues/new?template=content-correction.yml). Do not put confidential or security-sensitive material in a public Issue; use the private process described in [SECURITY.md](../SECURITY.md).
 
 The public content boundary is documented in [Copyright, Sources, and Responsible Use](LEGAL.md).
 

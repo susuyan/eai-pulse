@@ -196,6 +196,7 @@ export class Repository {
       .updateTable("sources")
       .set({
         name: input.name,
+        owner: input.owner,
         homepage_url: input.homepage_url,
         adapter: input.adapter,
         tier: input.tier,
@@ -210,6 +211,10 @@ export class Repository {
         cadence: input.cadence,
         license_note: input.license_note,
         quality_score: input.quality_score,
+        robots_policy: input.robots_policy,
+        freshness_slo_hours: input.freshness_slo_hours,
+        adapter_version: input.adapter_version,
+        content_scope: input.content_scope,
         updated_at: timestamp,
       })
       .where("id", "=", existing.id)
@@ -355,6 +360,8 @@ export class Repository {
         "sources.role as sourceRole",
         "sources.region as sourceRegion",
       ])
+      .where("signals.content_scope", "=", "embodied-data")
+      .where("sources.content_scope", "=", "embodied-data")
       .where("sources.role", "!=", "aggregator")
       .where("sources.source_category", "!=", "aggregator")
       .orderBy("signals.published_at", "desc")
@@ -424,7 +431,22 @@ export class Repository {
   }
 
   async publicScoutInsights() {
-    const insights = await this.listScoutInsights("published");
+    const embodiedInsightIds = new Set(
+      (
+        await this.db
+          .selectFrom("scout_insights")
+          .innerJoin("scout_evidence", "scout_evidence.insight_id", "scout_insights.id")
+          .innerJoin("events", "events.id", "scout_evidence.event_id")
+          .select("scout_insights.id")
+          .where("scout_insights.status", "=", "published")
+          .where("events.content_scope", "=", "embodied-data")
+          .groupBy("scout_insights.id")
+          .execute()
+      ).map((row) => row.id),
+    );
+    const insights = (await this.listScoutInsights("published")).filter((insight) =>
+      embodiedInsightIds.has(insight.id),
+    );
     const uniqueInsights = [...insights]
       .sort(
         (left, right) =>
@@ -448,6 +470,7 @@ export class Repository {
           .innerJoin("events", "events.id", "scout_evidence.event_id")
           .select(["events.slug", "events.title", "events.fact_summary as factSummary"])
           .where("scout_evidence.insight_id", "=", insight.id)
+          .where("events.content_scope", "=", "embodied-data")
           .execute();
         return {
           slug: insight.slug,
@@ -849,12 +872,48 @@ export class Repository {
     }
     const canonicalUrl = canonicalizeUrl(item.url);
     const urlHash = sha256(canonicalUrl);
-    const existing = await this.db
+    let existing = await this.db
       .selectFrom("signals")
       .selectAll()
       .where("url_hash", "=", urlHash)
       .executeTakeFirst();
     if (existing) {
+      if (existing.content_scope !== source.content_scope) {
+        if (existing.content_scope === "embodied-data") return undefined;
+        const timestamp = now();
+        const existingId = existing.id;
+        const promoted = await this.db.transaction().execute(async (transaction) => {
+          const relations = await transaction
+            .selectFrom("signals")
+            .leftJoin("event_signals", "event_signals.signal_id", "signals.id")
+            .leftJoin("signal_triage", "signal_triage.signal_id", "signals.id")
+            .select([
+              "event_signals.signal_id as attached_signal_id",
+              "signal_triage.signal_id as triaged_signal_id",
+            ])
+            .where("signals.id", "=", existingId)
+            .executeTakeFirst();
+          if (!relations || relations.attached_signal_id || relations.triaged_signal_id)
+            return false;
+          await transaction
+            .updateTable("signals")
+            .set({
+              source_id: sourceId,
+              content_scope: "embodied-data",
+              updated_at: timestamp,
+            })
+            .where("id", "=", existingId)
+            .execute();
+          return true;
+        });
+        if (!promoted) return undefined;
+        existing = {
+          ...existing,
+          source_id: sourceId,
+          content_scope: "embodied-data",
+          updated_at: timestamp,
+        };
+      }
       const timestamp = now();
       await this.upsertSignalObservation(existing.id, sourceId, item, canonicalUrl, timestamp);
       const existingTags = parseJson<string[]>(existing.tags_json, []);
@@ -904,6 +963,7 @@ export class Repository {
         metrics_json: json(item.metrics),
         raw_meta_json: json(item.rawMeta),
         content_hash: sha256(`${item.title}\n${item.summary}`),
+        content_scope: source.content_scope,
         created_at: timestamp,
         updated_at: timestamp,
       })
@@ -1382,7 +1442,7 @@ export class Repository {
   }
 
   async publicEvents(): Promise<PublicEvent[]> {
-    const events = await this.listEvents("published");
+    const events = await this.listEventsByContentScope("embodied-data", "published");
     if (!events.length) return [];
     const evidenceRows = await this.db
       .selectFrom("event_signals")
@@ -1401,6 +1461,8 @@ export class Repository {
         "in",
         events.map((event) => event.id),
       )
+      .where("signals.content_scope", "=", "embodied-data")
+      .where("sources.content_scope", "=", "embodied-data")
       .orderBy("event_signals.event_id")
       .orderBy("event_signals.relevance_score", "desc")
       .execute();
@@ -1574,6 +1636,7 @@ export class Repository {
       .selectFrom("actors")
       .selectAll()
       .where("enabled", "=", 1)
+      .where("content_scope", "=", "embodied-data")
       .orderBy("table_score", "desc")
       .orderBy("name")
       .execute();
@@ -1596,6 +1659,43 @@ export class Repository {
       .where("is_default", "=", 1)
       .where("status", "=", "published")
       .executeTakeFirst();
+  }
+
+  async auditEvents(input: { scope: "all" | ContentScope; status?: string }) {
+    if (input.scope === "all") return this.listEvents(input.status);
+    return this.listEventsByContentScope(input.scope, input.status);
+  }
+
+  async auditSignals(input: { scope: "all" | ContentScope }) {
+    let query = this.db.selectFrom("signals").selectAll();
+    if (input.scope !== "all") {
+      query = query.where("content_scope", "=", ContentScopeSchema.parse(input.scope));
+    }
+    return query.orderBy("published_at", "desc").execute();
+  }
+
+  async auditActors(input: { scope: "all" | ContentScope }) {
+    let query = this.db.selectFrom("actors").selectAll();
+    if (input.scope !== "all") {
+      query = query.where("content_scope", "=", ContentScopeSchema.parse(input.scope));
+    }
+    return query.orderBy("name").execute();
+  }
+
+  async auditTracks() {
+    return this.db.selectFrom("tracks").selectAll().orderBy("order_index").execute();
+  }
+
+  async auditResources() {
+    return this.db.selectFrom("model_resources").selectAll().orderBy("provider").execute();
+  }
+
+  async auditViews() {
+    return this.db.selectFrom("views").selectAll().orderBy("slug").execute();
+  }
+
+  async auditScoutInsights() {
+    return this.listScoutInsights();
   }
 
   async eventTracks(eventId: string) {

@@ -11,6 +11,7 @@ export interface SourceTable {
   id: string;
   slug: string;
   name: string;
+  owner: Generated<string>;
   homepage_url: string;
   adapter: string;
   tier: number;
@@ -45,6 +46,9 @@ export interface SourceTable {
   license_note: Generated<string>;
   quality_score: Generated<number>;
   last_verified_at: Generated<string | null>;
+  robots_policy: Generated<string>;
+  freshness_slo_hours: Generated<number>;
+  adapter_version: Generated<string>;
   content_scope: Generated<ContentScope>;
   created_at: string;
   updated_at: string;
@@ -257,6 +261,7 @@ export interface EventTable {
   manual_override: number;
   happened_at: string;
   published_at: string | null;
+  readiness_blockers_json: Generated<string>;
   content_scope: Generated<ContentScope>;
   created_at: string;
   updated_at: string;

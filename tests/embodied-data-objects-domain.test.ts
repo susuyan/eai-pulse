@@ -1,6 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { embodiedCollectionMethods } from "../src/catalog/embodied-data/collection-methods.js";
+import { embodiedDatasets } from "../src/catalog/embodied-data/datasets.js";
+import { embodiedPeers } from "../src/catalog/embodied-data/peers.js";
+import { embodiedStandards } from "../src/catalog/embodied-data/standards.js";
 import {
   ActorDataCapabilitySchema,
   CollectionMethodProfileSchema,
@@ -119,7 +123,7 @@ describe("embodied data domain objects", () => {
     }
   });
 
-  it("keeps private object fixtures out of seed and the current repository snapshot", async () => {
+  it("keeps private fixtures out of seed and separate from production catalogs", async () => {
     const seedSource = await readFile(
       fileURLToPath(new URL("../src/db/seed.ts", import.meta.url)),
       "utf8",
@@ -132,21 +136,50 @@ describe("embodied data domain objects", () => {
       ...standards.map((item) => item.slug),
       ...collectionMethods.map((item) => item.slug),
     ];
+    const productionProfiles = new Map<string, unknown>();
+    for (const item of embodiedDatasets) {
+      productionProfiles.set(`dataset:${item.slug}`, item.profile);
+    }
+    for (const item of embodiedStandards) {
+      productionProfiles.set(`standard:${item.slug}`, item.profile);
+    }
+    for (const item of embodiedCollectionMethods) {
+      productionProfiles.set(`collection-method:${item.slug}`, item.profile);
+    }
+
+    for (const item of datasets) {
+      expect(productionProfiles.get(`dataset:${item.slug}`)).not.toEqual(item.profile);
+    }
+    for (const item of standards) {
+      expect(productionProfiles.get(`standard:${item.slug}`)).not.toEqual(item.profile);
+    }
+    for (const item of collectionMethods) {
+      expect(productionProfiles.get(`collection-method:${item.slug}`)).not.toEqual(item.profile);
+    }
 
     for (const slug of fixtureSlugs) {
       expect(seedSource).not.toContain(`"${slug}"`);
     }
-    for (const key of [
-      "datasets",
-      "datasetEvents",
-      "standards",
-      "standardEvents",
-      "collectionMethods",
-      "collectionMethodEvents",
-      "actorDataCapabilities",
-      "actorCapabilityEvidence",
-    ]) {
-      expect(snapshot[key] ?? []).toEqual([]);
-    }
+    expect((snapshot.datasets as Array<{ slug: string }>).map((item) => item.slug).sort()).toEqual(
+      embodiedDatasets.map((item) => item.slug).sort(),
+    );
+    expect(snapshot.datasetEvents).toHaveLength(
+      embodiedDatasets.reduce((sum, item) => sum + item.events.length, 0),
+    );
+    expect((snapshot.standards as Array<{ slug: string }>).map((item) => item.slug).sort()).toEqual(
+      embodiedStandards.map((item) => item.slug).sort(),
+    );
+    expect(snapshot.standardEvents).toHaveLength(
+      embodiedStandards.reduce((sum, item) => sum + item.events.length, 0),
+    );
+    expect(
+      (snapshot.collectionMethods as Array<{ slug: string }>).map((item) => item.slug).sort(),
+    ).toEqual(embodiedCollectionMethods.map((item) => item.slug).sort());
+    expect(snapshot.collectionMethodEvents).toHaveLength(
+      embodiedCollectionMethods.reduce((sum, item) => sum + item.events.length, 0),
+    );
+    const capabilityCount = embodiedPeers.reduce((sum, peer) => sum + peer.capabilities.length, 0);
+    expect(snapshot.actorDataCapabilities).toHaveLength(capabilityCount);
+    expect(snapshot.actorCapabilityEvidence).toHaveLength(capabilityCount);
   });
 });

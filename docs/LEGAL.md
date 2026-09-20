@@ -43,7 +43,7 @@ Event analysis should be original synthesis. It must link back to canonical evid
 
 ## 5. Corrections, attribution, and removal requests
 
-If you are a source owner, author, subject, or reader and identify an error, attribution problem, broken source link, privacy concern, or copyright issue, use the [Content correction or removal form](https://github.com/barretlee/agent-pulse/issues/new?template=content-correction.yml).
+If you are a source owner, author, subject, or reader and identify an error, attribution problem, broken source link, privacy concern, or copyright issue, use the [Content correction or removal form](https://github.com/susuyan/eai-pulse/issues/new?template=content-correction.yml).
 
 Please include:
 

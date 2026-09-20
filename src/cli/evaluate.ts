@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { appendFile, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,6 +16,7 @@ import { decideOperationalEvaluation } from "../pipeline/evaluation-policy.js";
 import {
   buildSystemEvaluationReport,
   compareSystemEvaluations,
+  type EvaluationScopeTransitionEvidence,
   normalizeOperationalEvaluationReport,
   renderEvaluationSummary,
   type SystemEvaluationReportV2,
@@ -40,6 +42,7 @@ export async function runEvaluateCli(): Promise<void> {
   const baselineResult = baselinePath
     ? await readReport(baselinePath)
     : { report: null, error: null };
+  const scopeTransitionEvidence = await readScopeTransitionEvidence(args);
   if (baselineResult.error && changeGateRequested(args, baselinePath)) {
     throw new Error(`Cannot read evaluation baseline: ${baselineResult.error}`);
   }
@@ -61,7 +64,7 @@ export async function runEvaluateCli(): Promise<void> {
     const report = buildSystemEvaluationReport(evaluation, invocation);
     const comparison =
       invocation.gateMode === "change" && baselineResult.report
-        ? compareSystemEvaluations(report, baselineResult.report)
+        ? compareSystemEvaluations(report, baselineResult.report, scopeTransitionEvidence)
         : null;
     const operationalDecision =
       invocation.gateMode === "operational"
@@ -88,6 +91,9 @@ export async function runEvaluateCli(): Promise<void> {
       );
     }
     console.log(JSON.stringify(payload, null, 2));
+    if ((report.embodiedQuality?.genericAILeak.numerator ?? 0) > 0) {
+      throw new Error("Embodied data quality gate failed: generic_ai_leak");
+    }
     if (invocation.failOnRegression && comparison && !comparison.passed) {
       throw new Error(`System evaluation regression: ${comparison.regressions.join("; ")}`);
     }
@@ -212,6 +218,65 @@ async function readReport(path: string): Promise<ReadReportResult> {
       error: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+export async function readScopeTransitionEvidence(
+  args: string[],
+): Promise<EvaluationScopeTransitionEvidence | undefined> {
+  const flags = [
+    "--scope-transition-manifest",
+    "--scope-transition-report",
+    "--scope-transition-evaluation",
+    "--scope-transition-base-sha",
+    "--scope-transition-base-snapshot",
+    "--scope-transition-current-snapshot",
+  ] as const;
+  const values = Object.fromEntries(flags.map((flag) => [flag, argumentValue(args, flag)]));
+  const present = flags.filter((flag) => values[flag] !== undefined);
+  if (present.length === 0) return undefined;
+  if (present.length !== flags.length) {
+    throw new Error(
+      `Incomplete scope transition evidence: ${flags.filter((flag) => !values[flag]).join(", ")}`,
+    );
+  }
+
+  const manifest = JSON.parse(
+    await readFile(values["--scope-transition-manifest"] as string, "utf8"),
+  ) as Record<string, unknown>;
+  const switchReport = JSON.parse(
+    await readFile(values["--scope-transition-report"] as string, "utf8"),
+  ) as { snapshot?: { sha256?: unknown } };
+  const transitionEvaluation = normalizeOperationalEvaluationReport(
+    JSON.parse(await readFile(values["--scope-transition-evaluation"] as string, "utf8")),
+  );
+
+  return {
+    candidateBaseGitSha: values["--scope-transition-base-sha"] as string,
+    manifestBaseGitSha: requiredString(manifest.baseGitSha, "manifest baseGitSha"),
+    candidateBaseSnapshotSha256: await sha256File(
+      values["--scope-transition-base-snapshot"] as string,
+    ),
+    manifestBaseSnapshotSha256: requiredString(manifest.snapshotSha256, "manifest snapshotSha256"),
+    currentSnapshotSha256: await sha256File(
+      values["--scope-transition-current-snapshot"] as string,
+    ),
+    switchSnapshotSha256: requiredString(
+      switchReport.snapshot?.sha256,
+      "switch report snapshot.sha256",
+    ),
+    transitionEvaluation,
+  };
+}
+
+async function sha256File(path: string): Promise<string> {
+  return createHash("sha256")
+    .update(await readFile(path))
+    .digest("hex");
+}
+
+function requiredString(value: unknown, field: string): string {
+  if (typeof value !== "string" || value.length === 0) throw new Error(`Missing ${field}`);
+  return value;
 }
 
 async function atomicWriteJson(path: string, value: unknown): Promise<void> {

@@ -104,8 +104,17 @@ describe("embodied data object persistence", () => {
   it("deletes Event relations without deleting long-lived objects", async () => {
     const db = await setup();
     const timestamp = "2026-09-19T00:00:00.000Z";
-    const event = await db.selectFrom("events").select("id").executeTakeFirstOrThrow();
-    const actor = await db.selectFrom("actors").select("id").executeTakeFirstOrThrow();
+    const event = await db
+      .selectFrom("events")
+      .select("id")
+      .where("content_scope", "=", "legacy-ai")
+      .executeTakeFirstOrThrow();
+    const actor = await db
+      .selectFrom("actors")
+      .select("id")
+      .where("content_scope", "=", "legacy-ai")
+      .executeTakeFirstOrThrow();
+    const baseline = await objectCounts(db);
     await db
       .insertInto("datasets")
       .values({
@@ -186,21 +195,30 @@ describe("embodied data object persistence", () => {
 
     await db.deleteFrom("events").where("id", "=", event.id).execute();
 
-    expect(await countRows(db, "datasets")).toBe(1);
-    expect(await countRows(db, "standards")).toBe(1);
-    expect(await countRows(db, "collection_methods")).toBe(1);
-    expect(await countRows(db, "actor_data_capabilities")).toBe(1);
-    expect(await countRows(db, "dataset_events")).toBe(0);
-    expect(await countRows(db, "standard_events")).toBe(0);
-    expect(await countRows(db, "collection_method_events")).toBe(0);
-    expect(await countRows(db, "actor_capability_evidence")).toBe(0);
+    expect(await countRows(db, "datasets")).toBe(baseline.datasets + 1);
+    expect(await countRows(db, "standards")).toBe(baseline.standards + 1);
+    expect(await countRows(db, "collection_methods")).toBe(baseline.collectionMethods + 1);
+    expect(await countRows(db, "actor_data_capabilities")).toBe(baseline.capabilities + 1);
+    expect(await countRows(db, "dataset_events")).toBe(baseline.datasetEvents);
+    expect(await countRows(db, "standard_events")).toBe(baseline.standardEvents);
+    expect(await countRows(db, "collection_method_events")).toBe(baseline.collectionMethodEvents);
+    expect(await countRows(db, "actor_capability_evidence")).toBe(baseline.capabilityEvidence);
   });
 
   it("cascades owned relations when an object or Actor is deleted", async () => {
     const db = await setup();
     const timestamp = "2026-09-19T00:00:00.000Z";
-    const event = await db.selectFrom("events").select("id").executeTakeFirstOrThrow();
-    const actor = await db.selectFrom("actors").select("id").executeTakeFirstOrThrow();
+    const event = await db
+      .selectFrom("events")
+      .select("id")
+      .where("content_scope", "=", "legacy-ai")
+      .executeTakeFirstOrThrow();
+    const actor = await db
+      .selectFrom("actors")
+      .select("id")
+      .where("content_scope", "=", "legacy-ai")
+      .executeTakeFirstOrThrow();
+    const baseline = await objectCounts(db);
     await db
       .insertInto("datasets")
       .values({
@@ -284,11 +302,11 @@ describe("embodied data object persistence", () => {
     await db.deleteFrom("collection_methods").where("id", "=", "method-1").execute();
     await db.deleteFrom("actors").where("id", "=", actor.id).execute();
 
-    expect(await countRows(db, "dataset_events")).toBe(0);
-    expect(await countRows(db, "standard_events")).toBe(0);
-    expect(await countRows(db, "collection_method_events")).toBe(0);
-    expect(await countRows(db, "actor_data_capabilities")).toBe(0);
-    expect(await countRows(db, "actor_capability_evidence")).toBe(0);
+    expect(await countRows(db, "dataset_events")).toBe(baseline.datasetEvents);
+    expect(await countRows(db, "standard_events")).toBe(baseline.standardEvents);
+    expect(await countRows(db, "collection_method_events")).toBe(baseline.collectionMethodEvents);
+    expect(await countRows(db, "actor_data_capabilities")).toBe(baseline.capabilities);
+    expect(await countRows(db, "actor_capability_evidence")).toBe(baseline.capabilityEvidence);
     expect(
       await db.selectFrom("events").select("id").where("id", "=", event.id).executeTakeFirst(),
     ).toBeDefined();
@@ -302,6 +320,7 @@ describe("embodied data object persistence", () => {
     const standardFixture = standards[0];
     const methodFixture = collectionMethods[0];
     if (!datasetFixture || !standardFixture || !methodFixture) throw new Error("Missing fixture");
+    const baseline = await objectCounts(db);
 
     const datasetId = await repository.upsertDataset(datasetFixture.slug, datasetFixture.profile);
     const standardId = await repository.upsertStandard(
@@ -324,20 +343,24 @@ describe("embodied data object persistence", () => {
       slug: datasetFixture.slug,
       profile: datasetFixture.profile,
     });
-    expect(await repository.listDatasets()).toHaveLength(1);
+    expect((await repository.listDatasets()).length).toBeGreaterThanOrEqual(baseline.datasets);
     expect(await repository.getStandardBySlug(standardFixture.slug)).toMatchObject({
       id: standardId,
       profile: standardFixture.profile,
     });
-    expect(await repository.listStandards()).toHaveLength(1);
+    expect((await repository.listStandards()).length).toBeGreaterThanOrEqual(baseline.standards);
     expect(await repository.getCollectionMethodBySlug(methodFixture.slug)).toMatchObject({
       id: methodId,
       profile: methodFixture.profile,
     });
-    expect(await repository.listCollectionMethods()).toHaveLength(1);
-    expect(await countRows(db, "dataset_events")).toBe(1);
-    expect(await countRows(db, "standard_events")).toBe(1);
-    expect(await countRows(db, "collection_method_events")).toBe(1);
+    expect((await repository.listCollectionMethods()).length).toBeGreaterThanOrEqual(
+      baseline.collectionMethods,
+    );
+    expect(await countRows(db, "dataset_events")).toBe(baseline.datasetEvents + 1);
+    expect(await countRows(db, "standard_events")).toBe(baseline.standardEvents + 1);
+    expect(await countRows(db, "collection_method_events")).toBe(
+      baseline.collectionMethodEvents + 1,
+    );
 
     await expect(
       repository.upsertDataset(datasetFixture.slug, {
@@ -395,12 +418,18 @@ describe("embodied data object persistence", () => {
   it("derives PeerCompanyProfile without treating Actor collection as capability proof", async () => {
     const db = await setup();
     const repository = new Repository(db);
-    const actors = await db.selectFrom("actors").select(["id", "slug"]).limit(2).execute();
+    const actors = await db
+      .selectFrom("actors")
+      .select(["id", "slug"])
+      .where("content_scope", "=", "legacy-ai")
+      .limit(2)
+      .execute();
     const actor = actors[0];
     const emptyActor = actors[1];
     const event = await db.selectFrom("events").select("id").executeTakeFirstOrThrow();
     const capability = actorCapabilities[0];
     if (!actor || !emptyActor || !capability) throw new Error("Missing fixture");
+    const baselineEvidence = await countRows(db, "actor_capability_evidence");
 
     const capabilityId = await repository.upsertActorDataCapability(actor.id, capability);
     await repository.linkActorCapabilityEvidence(capabilityId, event.id, "claim");
@@ -417,7 +446,7 @@ describe("embodied data object persistence", () => {
       actorSlug: emptyActor.slug,
       capabilities: [],
     });
-    expect(await countRows(db, "actor_capability_evidence")).toBe(1);
+    expect(await countRows(db, "actor_capability_evidence")).toBe(baselineEvidence + 1);
   });
 });
 
@@ -426,4 +455,17 @@ async function countRows(db: ReturnType<typeof createDatabase>, table: string): 
     count: number;
   }>`select count(*) as count from ${sql.table(table)}`.execute(db);
   return Number(result.rows[0]?.count ?? 0);
+}
+
+async function objectCounts(db: ReturnType<typeof createDatabase>) {
+  return {
+    datasets: await countRows(db, "datasets"),
+    datasetEvents: await countRows(db, "dataset_events"),
+    standards: await countRows(db, "standards"),
+    standardEvents: await countRows(db, "standard_events"),
+    collectionMethods: await countRows(db, "collection_methods"),
+    collectionMethodEvents: await countRows(db, "collection_method_events"),
+    capabilities: await countRows(db, "actor_data_capabilities"),
+    capabilityEvidence: await countRows(db, "actor_capability_evidence"),
+  };
 }

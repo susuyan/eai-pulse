@@ -4,6 +4,7 @@ import {
 } from "../domain/source-proposal.js";
 import { capitalEvidenceSources20260714 } from "./capital-evidence-sources-2026-07.js";
 import { ecosystemEvidenceSources20260714 } from "./ecosystem-evidence-sources-2026-07.js";
+import { type EmbodiedCatalogSource, embodiedSourceCatalog } from "./embodied-data/sources.js";
 import { sourceExpansionWave20260713 } from "./source-expansion-2026-07.js";
 import sourceProposalRows from "./source-proposals.json" with { type: "json" };
 import { vendorEvidenceSources20260714 } from "./vendor-evidence-sources-2026-07.js";
@@ -22,13 +23,20 @@ export type SourceCategory =
   | "expert"
   | "media"
   | "community-heat"
-  | "aggregator";
+  | "aggregator"
+  | "robot-team"
+  | "data-service"
+  | "capture-tool"
+  | "dataset-benchmark"
+  | "standard-policy"
+  | "peer-evidence";
 
 export type Acquisition = "rss" | "api" | "github" | "arxiv" | "html" | "social" | "manual";
 
 export interface CatalogSource {
   slug: string;
   name: string;
+  owner?: string;
   homepageUrl: string;
   endpoint: string;
   adapter: string;
@@ -46,6 +54,9 @@ export interface CatalogSource {
   maintenanceStatus: "ready" | "candidate" | "restricted" | "manual" | "proposal";
   cadence: string;
   licenseNote: string;
+  robotsPolicy?: string;
+  freshnessSloHours?: number;
+  adapterVersion?: string;
   identityHosts?: string[];
   socialHandles?: string[];
   proposalIssueNumber?: number;
@@ -3665,7 +3676,7 @@ export function proposalToCatalogSource(proposal: SourceProposalCatalogEntry): C
 const proposalSources: CatalogSource[] =
   SourceProposalCatalogSchema.parse(sourceProposalRows).map(proposalToCatalogSource);
 
-export const sourceCatalog: CatalogSource[] = [
+export const legacySourceCatalog: CatalogSource[] = [
   ...builtInSources,
   ...supplementalOfficialSources,
   ...sourceExpansionWave20260713,
@@ -3674,3 +3685,5 @@ export const sourceCatalog: CatalogSource[] = [
   ...ecosystemEvidenceSources20260714,
   ...proposalSources,
 ];
+
+export const sourceCatalog: EmbodiedCatalogSource[] = embodiedSourceCatalog;

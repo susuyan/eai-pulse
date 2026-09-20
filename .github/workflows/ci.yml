@@ -34,9 +34,13 @@ jobs:
       - name: Restore complete repository data
         run: npm run db:seed
       - name: Prepare previous evaluation baseline
+        id: evaluation-baseline
         shell: bash
         run: |
           set -euo pipefail
+          base_sha="$(git rev-parse HEAD^)"
+          echo "base_sha=$base_sha" >> "$GITHUB_OUTPUT"
+          git show HEAD^:data/snapshot/v1.json > "$RUNNER_TEMP/evaluation-base-snapshot.json"
           if git show HEAD^:data/reports/system-evaluation.json > "$RUNNER_TEMP/evaluation-baseline.json" 2>/dev/null; then
             echo "Using the previous commit evaluation as the CI baseline."
           elif [[ -s data/reports/system-evaluation.json ]]; then
@@ -46,19 +50,38 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          scope_transition_args=()
+          manifest_base_sha="$(jq -r '.baseGitSha' data/migrations/embodied-data-public-switch-baseline.json)"
+          if [[ "${{ steps.evaluation-baseline.outputs.base_sha }}" == "$manifest_base_sha" ]]; then
+            npm run --silent evaluate:system -- \
+              --skip-bootstrap \
+              --gate=operational \
+              --output="$RUNNER_TEMP/evaluation-scope-transition.json" > /dev/null
+            scope_transition_args=(
+              --scope-transition-manifest=data/migrations/embodied-data-public-switch-baseline.json
+              --scope-transition-report=data/reports/embodied-data-public-switch.json
+              --scope-transition-evaluation="$RUNNER_TEMP/evaluation-scope-transition.json"
+              --scope-transition-base-sha="${{ steps.evaluation-baseline.outputs.base_sha }}"
+              --scope-transition-base-snapshot="$RUNNER_TEMP/evaluation-base-snapshot.json"
+              --scope-transition-current-snapshot=data/snapshot/v1.json
+            )
+          fi
           npm run --silent evaluate:system -- \
             --skip-bootstrap \
             --gate=change \
             --baseline="$RUNNER_TEMP/evaluation-baseline.json" \
             --output="$RUNNER_TEMP/evaluation-current.json" \
             --summary="$GITHUB_STEP_SUMMARY" \
-            --fail-on-regression
+            --fail-on-regression \
+            "${scope_transition_args[@]}"
       - name: Upload system evaluation evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: system-evaluation-${{ github.run_id }}
-          path: ${{ runner.temp }}/evaluation-current.json
+          path: |
+            ${{ runner.temp }}/evaluation-current.json
+            ${{ runner.temp }}/evaluation-scope-transition.json
           if-no-files-found: error
           retention-days: 30
       - name: Export static site

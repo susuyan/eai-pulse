@@ -2,15 +2,15 @@
   "name": "agent-pulse",
   "version": "0.11.1",
   "private": false,
-  "description": "A curated AI industry intelligence timeline — signal, not noise.",
-  "author": "Barret Lee <barret.china@gmail.com>",
-  "homepage": "https://barretlee.github.io/agent-pulse/",
+  "description": "Evidence-backed embodied-data production intelligence and decision system.",
+  "author": "susuyan",
+  "homepage": "https://susuyan.github.io/eai-pulse/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/barretlee/agent-pulse.git"
+    "url": "git+https://github.com/susuyan/eai-pulse.git"
   },
   "bugs": {
-    "url": "https://github.com/barretlee/agent-pulse/issues"
+    "url": "https://github.com/susuyan/eai-pulse/issues"
   },
   "type": "module",
   "engines": {
@@ -28,6 +28,7 @@
     "db:migrate": "tsx src/cli/migrate.ts",
     "db:seed": "tsx src/cli/seed.ts",
     "db:snapshot": "tsx src/cli/snapshot.ts",
+    "migrate:embodied": "tsx src/cli/migrate-embodied-data.ts",
     "preview:embodied": "tsx src/cli/preview-embodied-data.ts",
     "collect": "tsx src/cli/collect.ts",
     "sources:audit": "tsx src/cli/audit-sources.ts",
@@ -61,11 +62,11 @@
     "check": "npm run lint && npm run typecheck && npm test && npm run export && npm run public:validate"
   },
   "keywords": [
-    "ai-news",
-    "ai-intelligence",
-    "timeline",
-    "llm",
-    "industry-analysis"
+    "embodied-ai",
+    "embodied-data",
+    "robot-data",
+    "data-pipeline",
+    "industry-intelligence"
   ],
   "license": "MIT",
   "dependencies": {

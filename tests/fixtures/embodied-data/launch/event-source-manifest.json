@@ -1,0 +1,236 @@
+[
+  {
+    "evidenceSlug": "behavior-1k-project",
+    "eventSlug": "behavior-1k-task-definition",
+    "url": "https://github.com/StanfordVL/BEHAVIOR-1K",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "libero-project",
+    "eventSlug": "libero-lifelong-task-suites",
+    "url": "https://github.com/Lifelong-Robot-Learning/LIBERO",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "calvin-project",
+    "eventSlug": "calvin-long-horizon-language-benchmark",
+    "url": "https://github.com/mees/calvin",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "rt1-paper",
+    "eventSlug": "rt1-data-driven-robotics",
+    "url": "https://arxiv.org/abs/2212.06817",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "ubtech-industrial-source",
+    "eventSlug": "ubtech-industrial-task-program",
+    "url": "https://www.ubtrobot.com/",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "nexdata-service-page",
+    "eventSlug": "nexdata-embodied-delivery-scope",
+    "url": "https://www.nexdata.ai/industries/embodied-ai",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "discover-service-corroboration",
+    "eventSlug": "nexdata-embodied-delivery-scope",
+    "url": "https://www.discover-robotics.com/en/data-collection",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "droid-paper",
+    "eventSlug": "droid-distributed-collection",
+    "url": "https://arxiv.org/abs/2403.12945",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "bridgedata-v2-paper",
+    "eventSlug": "bridgedata-v2-reusable-demonstrations",
+    "url": "https://arxiv.org/abs/2308.12952",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "robomind-paper",
+    "eventSlug": "robomind-unified-teleoperation",
+    "url": "https://arxiv.org/abs/2412.13877",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "agibot-world-repository",
+    "eventSlug": "agibot-world-bimanual-corpus",
+    "url": "https://github.com/OpenDriveLab/AgiBot-World",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "pi0-blog",
+    "eventSlug": "pi0-data-mixture-policy",
+    "url": "https://www.physicalintelligence.company/blog/pi0",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "discover-service-page",
+    "eventSlug": "discover-managed-collection-route",
+    "url": "https://www.discover-robotics.com/en/data-collection",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "gesen-service-corroboration",
+    "eventSlug": "discover-managed-collection-route",
+    "url": "https://www.gesenai.cn/",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "rh20t-project",
+    "eventSlug": "rh20t-force-aware-capture",
+    "url": "https://rh20t.github.io/",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "holoassist-repository",
+    "eventSlug": "holoassist-multimodal-human-demonstration",
+    "url": "https://holoassist.github.io/",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "ego-exo4d-project",
+    "eventSlug": "ego-exo4d-synchronized-demonstrations",
+    "url": "https://ego-exo4d-data.org/",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "aloha-act-repository",
+    "eventSlug": "aloha-bimanual-teleoperation",
+    "url": "https://github.com/tonyzhaozh/act",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "umi-repository",
+    "eventSlug": "umi-portable-demonstration-capture",
+    "url": "https://github.com/real-stanford/universal_manipulation_interface",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "astribot-official",
+    "eventSlug": "astribot-manipulation-capture-stack",
+    "url": "https://www.astribot.com/",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "roboset-project",
+    "eventSlug": "roboset-reproducible-production-baseline",
+    "url": "https://robopen.github.io/roboset/",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "droid-consortium-project",
+    "eventSlug": "droid-consortium-site-operations",
+    "url": "https://droid-dataset.github.io/",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "unitree-rl-gym-repository",
+    "eventSlug": "unitree-simulation-training-loop",
+    "url": "https://github.com/unitreerobotics/unitree_rl_gym",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "fourier-official",
+    "eventSlug": "fourier-humanoid-training-platform",
+    "url": "https://fourierintelligence.com/",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "robotera-official",
+    "eventSlug": "robotera-teleoperation-operations",
+    "url": "https://www.robotera.com/",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "gesen-service-page",
+    "eventSlug": "gesen-data-cleaning-operations",
+    "url": "https://www.gesenai.cn/",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "nexdata-service-corroboration",
+    "eventSlug": "gesen-data-cleaning-operations",
+    "url": "https://www.nexdata.ai/industries/embodied-ai",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "open-x-paper",
+    "eventSlug": "open-x-standardized-datasets",
+    "url": "https://arxiv.org/abs/2310.08864",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "ario-project",
+    "eventSlug": "ario-unified-robot-data-representation",
+    "url": "https://imaei.github.io/project_pages/ario/",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "lerobot-repository",
+    "eventSlug": "lerobot-open-dataset-toolchain",
+    "url": "https://github.com/huggingface/lerobot",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "rlds-repository",
+    "eventSlug": "rlds-episodic-data-contract",
+    "url": "https://github.com/google-research/rlds",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "rosbag2-repository",
+    "eventSlug": "rosbag2-recording-storage-plugins",
+    "url": "https://github.com/ros2/rosbag2",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "mcap-repository",
+    "eventSlug": "mcap-interoperable-sensor-container",
+    "url": "https://github.com/foxglove/mcap",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "robocasa-repository",
+    "eventSlug": "robocasa-synthetic-household-data",
+    "url": "https://github.com/robocasa/robocasa",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "isaac-sim-repository",
+    "eventSlug": "isaac-sim-synthetic-sensor-data",
+    "url": "https://github.com/isaac-sim/IsaacSim",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "isaac-lab-repository",
+    "eventSlug": "isaac-lab-training-evaluation-loop",
+    "url": "https://github.com/isaac-sim/IsaacLab",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "isaac-teleop-official",
+    "eventSlug": "isaac-teleop-simulation-capture",
+    "url": "https://developer.nvidia.com/isaac/sim",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "gello-repository",
+    "eventSlug": "gello-policy-feedback-capture",
+    "url": "https://github.com/wuphilipp/gello_software",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  },
+  {
+    "evidenceSlug": "galaxea-official",
+    "eventSlug": "galaxea-open-data-feedback-loop",
+    "url": "https://www.galaxea-ai.com/",
+    "verifiedAt": "2026-09-20T00:00:00.000Z"
+  }
+]

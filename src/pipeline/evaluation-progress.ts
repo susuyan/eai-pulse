@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { EmbodiedDataQuality, EmbodiedQualityReasonCode } from "./embodied-data-quality.js";
 import type { EvaluationDimension } from "./evaluate.js";
 import {
   type EvaluationContext,
@@ -25,6 +26,7 @@ export interface EvaluationResult {
   notes: string;
   startedAt: string;
   finishedAt: string;
+  embodiedQuality?: EmbodiedDataQuality | undefined;
 }
 
 export interface EvaluationImprovement {
@@ -56,6 +58,8 @@ export interface SystemEvaluationReportV2 extends EvaluationResult {
   improvementPlan: EvaluationImprovement[];
   comparison?: EvaluationComparison | undefined;
   operationalDecision?: OperationalEvaluationDecision | undefined;
+  qualityGatePassed?: boolean | undefined;
+  qualityReasonCodes?: EmbodiedQualityReasonCode[] | undefined;
 }
 
 export type SystemEvaluationReport = SystemEvaluationReportV2;
@@ -70,7 +74,32 @@ export interface EvaluationComparison {
   currentEvidenceCoverage: number;
   evidenceCoverageDelta: number;
   regressions: string[];
+  scopeTransition: EvaluationScopeTransitionDecision | null;
 }
+
+export interface EvaluationScopeTransitionEvidence {
+  candidateBaseGitSha: string;
+  manifestBaseGitSha: string;
+  candidateBaseSnapshotSha256: string;
+  manifestBaseSnapshotSha256: string;
+  currentSnapshotSha256: string;
+  switchSnapshotSha256: string;
+  transitionEvaluation: SystemEvaluationReport;
+}
+
+export interface EvaluationScopeTransitionDecision {
+  authorized: boolean;
+  baseGitSha: string;
+  reasonCodes: EvaluationScopeTransitionReasonCode[];
+}
+
+export type EvaluationScopeTransitionReasonCode =
+  | "base_git_sha_mismatch"
+  | "base_snapshot_sha_mismatch"
+  | "current_snapshot_sha_mismatch"
+  | "transition_gate_mode_invalid"
+  | "embodied_quality_gate_failed"
+  | "generic_ai_leak";
 
 export function buildSystemEvaluationReport(
   evaluation: EvaluationResult,
@@ -106,12 +135,15 @@ export function buildSystemEvaluationReport(
     targetReached: evaluation.overallScore >= SYSTEM_EVALUATION_TARGET,
     policy: "measured-evidence-only",
     improvementPlan,
+    qualityGatePassed: evaluation.embodiedQuality?.passed ?? true,
+    qualityReasonCodes: evaluation.embodiedQuality?.reasonCodes ?? [],
   };
 }
 
 export function compareSystemEvaluations(
   current: SystemEvaluationReport,
   baseline: SystemEvaluationReport,
+  scopeTransitionEvidence?: EvaluationScopeTransitionEvidence,
 ): EvaluationComparison {
   if (current.evaluationAsOf !== baseline.evaluationAsOf) {
     return {
@@ -126,9 +158,13 @@ export function compareSystemEvaluations(
       regressions: [
         `evaluation context mismatch: baseline ${baseline.evaluationAsOf}, current ${current.evaluationAsOf}`,
       ],
+      scopeTransition: null,
     };
   }
   const regressions: string[] = [];
+  if ((current.embodiedQuality?.genericAILeak.numerator ?? 0) > 0) {
+    regressions.push("generic_ai_leak");
+  }
   if (current.overallScore < baseline.overallScore) {
     regressions.push(
       `overall score regressed from ${baseline.overallScore} to ${current.overallScore}`,
@@ -157,8 +193,11 @@ export function compareSystemEvaluations(
       );
     }
   }
+  const scopeTransition = scopeTransitionEvidence
+    ? evaluateScopeTransition(current, scopeTransitionEvidence)
+    : null;
   return {
-    passed: regressions.length === 0,
+    passed: regressions.length === 0 || scopeTransition?.authorized === true,
     contextError: null,
     baselineScore: baseline.overallScore,
     currentScore: current.overallScore,
@@ -167,6 +206,40 @@ export function compareSystemEvaluations(
     currentEvidenceCoverage: current.evidenceCoverage,
     evidenceCoverageDelta: current.evidenceCoverage - baseline.evidenceCoverage,
     regressions,
+    scopeTransition,
+  };
+}
+
+function evaluateScopeTransition(
+  current: SystemEvaluationReport,
+  evidence: EvaluationScopeTransitionEvidence,
+): EvaluationScopeTransitionDecision {
+  const reasonCodes: EvaluationScopeTransitionReasonCode[] = [];
+  if (evidence.candidateBaseGitSha !== evidence.manifestBaseGitSha) {
+    reasonCodes.push("base_git_sha_mismatch");
+  }
+  if (evidence.candidateBaseSnapshotSha256 !== evidence.manifestBaseSnapshotSha256) {
+    reasonCodes.push("base_snapshot_sha_mismatch");
+  }
+  if (evidence.currentSnapshotSha256 !== evidence.switchSnapshotSha256) {
+    reasonCodes.push("current_snapshot_sha_mismatch");
+  }
+  if (evidence.transitionEvaluation.gateMode !== "operational") {
+    reasonCodes.push("transition_gate_mode_invalid");
+  }
+  if (evidence.transitionEvaluation.embodiedQuality?.passed !== true) {
+    reasonCodes.push("embodied_quality_gate_failed");
+  }
+  if (
+    (current.embodiedQuality?.genericAILeak.numerator ?? 0) > 0 ||
+    (evidence.transitionEvaluation.embodiedQuality?.genericAILeak.numerator ?? 0) > 0
+  ) {
+    reasonCodes.push("generic_ai_leak");
+  }
+  return {
+    authorized: reasonCodes.length === 0,
+    baseGitSha: evidence.candidateBaseGitSha,
+    reasonCodes,
   };
 }
 
@@ -225,6 +298,24 @@ const evaluationComparisonSchema = z
     currentEvidenceCoverage: z.number(),
     evidenceCoverageDelta: z.number(),
     regressions: z.array(z.string()),
+    scopeTransition: z
+      .object({
+        authorized: z.boolean(),
+        baseGitSha: z.string(),
+        reasonCodes: z.array(
+          z.enum([
+            "base_git_sha_mismatch",
+            "base_snapshot_sha_mismatch",
+            "current_snapshot_sha_mismatch",
+            "transition_gate_mode_invalid",
+            "embodied_quality_gate_failed",
+            "generic_ai_leak",
+          ]),
+        ),
+      })
+      .strict()
+      .nullable()
+      .optional(),
   })
   .strict();
 
@@ -257,7 +348,50 @@ const evaluationReportFields = {
   policy: z.literal("measured-evidence-only"),
   improvementPlan: z.array(evaluationImprovementSchema),
   comparison: evaluationComparisonSchema.optional(),
+  qualityGatePassed: z.boolean().optional(),
+  qualityReasonCodes: z
+    .array(
+      z.enum([
+        "missing_stage_coverage",
+        "insufficient_tier1_evidence",
+        "incomplete_data_profile",
+        "unsupported_peer_claim",
+        "generic_ai_leak",
+      ]),
+    )
+    .optional(),
 };
+
+const embodiedQualityReasonSchema = z.enum([
+  "missing_stage_coverage",
+  "insufficient_tier1_evidence",
+  "incomplete_data_profile",
+  "unsupported_peer_claim",
+  "generic_ai_leak",
+]);
+
+const embodiedQualityMetricSchema = z
+  .object({
+    numerator: z.number(),
+    denominator: z.number(),
+    score: z.number(),
+    status: z.enum(["pass", "fail"]),
+    evidenceAgeHours: z.number().nullable(),
+    reasonCodes: z.array(embodiedQualityReasonSchema),
+  })
+  .strict();
+
+const embodiedDataQualitySchema = z
+  .object({
+    stageCoverage: embodiedQualityMetricSchema,
+    tier1EvidenceRatio: embodiedQualityMetricSchema,
+    dataProfileCompleteness: embodiedQualityMetricSchema,
+    peerClaimEvidenceRatio: embodiedQualityMetricSchema,
+    genericAILeak: embodiedQualityMetricSchema,
+    passed: z.boolean(),
+    reasonCodes: z.array(embodiedQualityReasonSchema),
+  })
+  .strict();
 
 const systemEvaluationReportV1Schema = z
   .object({ schemaVersion: z.literal(1), ...evaluationReportFields })
@@ -270,6 +404,7 @@ export const systemEvaluationReportV2Schema = z
     evaluationAsOf: timestampSchema,
     gateMode: z.enum(["change", "operational"]),
     operationalDecision: operationalEvaluationDecisionSchema.optional(),
+    embodiedQuality: embodiedDataQualitySchema.optional(),
   })
   .strict();
 
@@ -281,7 +416,11 @@ export function normalizeSystemEvaluationReport(value: unknown): SystemEvaluatio
       ...report,
       evaluationAsOf: parseEvaluationInstant(report.evaluationAsOf, "evaluationAsOf").toISOString(),
       comparison: report.comparison
-        ? { ...report.comparison, contextError: report.comparison.contextError ?? null }
+        ? {
+            ...report.comparison,
+            contextError: report.comparison.contextError ?? null,
+            scopeTransition: report.comparison.scopeTransition ?? null,
+          }
         : undefined,
     };
   }
@@ -300,7 +439,11 @@ export function normalizeSystemEvaluationReport(value: unknown): SystemEvaluatio
   return {
     ...normalized,
     comparison: normalized.comparison
-      ? { ...normalized.comparison, contextError: normalized.comparison.contextError ?? null }
+      ? {
+          ...normalized.comparison,
+          contextError: normalized.comparison.contextError ?? null,
+          scopeTransition: normalized.comparison.scopeTransition ?? null,
+        }
       : undefined,
   };
 }
@@ -326,7 +469,11 @@ export function renderEvaluationSummary(
     `- Score: ${report.overallScore} / 100 (target ${report.target}, delta ${delta})`,
     `- Raw weighted score: ${report.rawWeightedScore} / 100`,
     `- Evidence coverage: ${report.evidenceCoverage}%`,
+    `- Embodied quality gate: ${report.qualityGatePassed ? "passed" : "failed"} (${(report.qualityReasonCodes ?? []).join(", ") || "none"})`,
     `- Regression gate: ${comparison ? (comparison.passed ? "passed" : "failed") : "baseline unavailable"}`,
+    ...(comparison?.scopeTransition?.authorized
+      ? [`- Scope transition: authorized once at ${comparison.scopeTransition.baseGitSha}`]
+      : []),
     "",
     "### Highest-priority evidence gaps",
     "",
@@ -339,7 +486,14 @@ export function renderEvaluationSummary(
           `| ${summaryCell(item.name)} | ${item.score} | ${item.weightedGap} | ${summaryCell(item.nextAction)} |`,
       ),
   ];
-  if (comparison && !comparison.passed) {
+  if (comparison?.scopeTransition?.authorized) {
+    lines.push(
+      "",
+      "### Acknowledged scope transition",
+      "",
+      ...comparison.regressions.map((item) => `- ${item}`),
+    );
+  } else if (comparison && !comparison.passed) {
     lines.push("", "### Regressions", "", ...comparison.regressions.map((item) => `- ${item}`));
   }
   return `${lines.join("\n")}\n`;

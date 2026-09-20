@@ -1,9 +1,16 @@
 import { createHash } from "node:crypto";
 import type { Kysely } from "kysely";
 import { earlyHistoryEvents } from "../catalog/early-history.js";
+import { embodiedCollectionMethods } from "../catalog/embodied-data/collection-methods.js";
+import { embodiedDatasets } from "../catalog/embodied-data/datasets.js";
+import { embodiedEventEvidence } from "../catalog/embodied-data/event-evidence.js";
+import { embodiedLaunchEvents } from "../catalog/embodied-data/events.js";
+import { embodiedPeers } from "../catalog/embodied-data/peers.js";
+import { embodiedStandards } from "../catalog/embodied-data/standards.js";
+import { embodiedTracks } from "../catalog/embodied-data/tracks.js";
 import { type CuratedEventSeed, historicalEvents } from "../catalog/history.js";
 import { recentDensityEvents } from "../catalog/recent-density.js";
-import { sourceCatalog } from "../catalog/sources.js";
+import { type CatalogSource, legacySourceCatalog, sourceCatalog } from "../catalog/sources.js";
 import { canonicalizeUrl, sha256 } from "../domain/url.js";
 import { Repository } from "./repository.js";
 import type { DatabaseSchema } from "./types.js";
@@ -14,7 +21,7 @@ const stableId = (namespace: string, slug: string) => {
   return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-4${hash.slice(13, 16)}-a${hash.slice(17, 20)}-${hash.slice(20, 32)}`;
 };
 
-const tracks = [
+const legacyTracks = [
   [
     "tech-evolution",
     "模型能力与研究",
@@ -681,11 +688,16 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
   const repository = new Repository(db);
   const timestamp = isoNow();
 
-  for (const source of sourceCatalog) {
+  const saveCatalogEntry = async (
+    source: CatalogSource,
+    contentScope: "legacy-ai" | "embodied-data",
+  ) => {
+    const previous = await repository.getSourceByIdOrSlug(source.slug);
     await repository.saveCatalogSource({
       id: stableId("source", source.slug),
       slug: source.slug,
       name: source.name,
+      owner: source.owner ?? source.name,
       homepage_url: source.homepageUrl,
       adapter: source.adapter,
       tier: source.tier,
@@ -694,6 +706,7 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
       language: source.language,
       authority_score: source.authorityScore,
       enabled: source.enabled ? 1 : 0,
+      observation_enabled: 0,
       config_json: JSON.stringify({
         url: source.endpoint,
         take: source.tier === 1 ? 50 : 30,
@@ -717,18 +730,59 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
       license_note: source.licenseNote,
       quality_score: source.qualityScore,
       last_verified_at: null,
+      robots_policy: source.robotsPolicy ?? "Review required before automated collection.",
+      freshness_slo_hours: source.freshnessSloHours ?? 168,
+      adapter_version: source.adapterVersion ?? "1",
+      content_scope: contentScope,
+    });
+    if (
+      contentScope === "embodied-data" &&
+      previous &&
+      previous.content_scope !== "embodied-data"
+    ) {
+      await repository.updateSource(previous.id, {
+        enabled: source.enabled ? 1 : 0,
+        observation_enabled: 0,
+        lifecycle_status: source.lifecycleStatus,
+        maintenance_status: source.maintenanceStatus,
+        content_scope: "embodied-data",
+        retired_at: null,
+      });
+    }
+  };
+
+  const embodiedSlugs = new Set(sourceCatalog.map((source) => source.slug));
+  for (const source of legacySourceCatalog) {
+    if (embodiedSlugs.has(source.slug)) continue;
+    await saveCatalogEntry(source, "legacy-ai");
+    const stored = await repository.getSource(stableId("source", source.slug));
+    await repository.updateSource(stored?.id ?? stableId("source", source.slug), {
+      enabled: 0,
+      observation_enabled: 0,
+      lifecycle_status: "retired",
+      maintenance_status: "retired",
+      content_scope: "legacy-ai",
+      retired_at: stored?.retired_at ?? timestamp,
     });
   }
-  const catalogSlugs = new Set(sourceCatalog.map((source) => source.slug));
+
+  for (const source of sourceCatalog) {
+    await saveCatalogEntry(source, "embodied-data");
+  }
+  const catalogSlugs = new Set(
+    [...legacySourceCatalog, ...sourceCatalog].map((source) => source.slug),
+  );
   const staleSources = (await repository.listSources()).filter(
     (source) => !catalogSlugs.has(source.slug),
   );
   for (const source of staleSources) {
     await repository.updateSource(source.id, {
       enabled: 0,
+      observation_enabled: 0,
       lifecycle_status: "retired",
       maintenance_status: "retired",
-      retired_at: timestamp,
+      content_scope: "legacy-ai",
+      retired_at: source.retired_at ?? timestamp,
     });
   }
 
@@ -750,7 +804,7 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
       .execute();
   }
 
-  for (const [slug, name, description, kind, perspective, color, icon, order] of tracks) {
+  for (const [slug, name, description, kind, perspective, color, icon, order] of legacyTracks) {
     const existing = await db
       .selectFrom("tracks")
       .select("id")
@@ -777,6 +831,45 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
         .where("id", "=", existing.id)
         .execute();
     else await db.insertInto("tracks").values(value).execute();
+  }
+  await db
+    .updateTable("tracks")
+    .set({ enabled: 0, updated_at: timestamp })
+    .where(
+      "slug",
+      "not in",
+      embodiedTracks.map((track) => track.slug),
+    )
+    .execute();
+  for (const track of embodiedTracks) {
+    const existing = await db
+      .selectFrom("tracks")
+      .select("id")
+      .where("slug", "=", track.slug)
+      .executeTakeFirst();
+    const value = {
+      id: stableId("track", track.slug),
+      slug: track.slug,
+      name: track.name,
+      description: track.description,
+      kind: "main",
+      perspective: "pipeline",
+      color: track.color,
+      icon: track.icon,
+      order_index: track.order,
+      enabled: 1,
+      created_at: timestamp,
+      updated_at: timestamp,
+    };
+    if (existing) {
+      await db
+        .updateTable("tracks")
+        .set({ ...value, id: existing.id })
+        .where("id", "=", existing.id)
+        .execute();
+    } else {
+      await db.insertInto("tracks").values(value).execute();
+    }
   }
 
   for (const [slug, name, actorType, region, scale, domains, tableScore, website] of actors) {
@@ -807,6 +900,11 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
         .execute();
     else await db.insertInto("actors").values(value).execute();
   }
+  await db
+    .updateTable("actors")
+    .set({ enabled: 0, content_scope: "legacy-ai", updated_at: timestamp })
+    .where("content_scope", "=", "legacy-ai")
+    .execute();
 
   for (const [
     slug,
@@ -854,6 +952,7 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
         .execute();
     else await db.insertInto("model_resources").values(value).execute();
   }
+  await db.updateTable("model_resources").set({ enabled: 0, updated_at: timestamp }).execute();
 
   const viewId = stableId("view", "executive-briefing");
   const viewValue = {
@@ -868,8 +967,8 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
       defaultTrack: "tech-evolution",
     }),
     theme_json: JSON.stringify({ theme: "midnight", accent: "#8b5cf6", radius: 20 }),
-    is_default: 1,
-    status: "published",
+    is_default: 0,
+    status: "archived",
     created_at: timestamp,
     updated_at: timestamp,
   };
@@ -886,61 +985,324 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
       .execute();
   else await db.insertInto("views").values(viewValue).execute();
 
-  for (const event of allEvents) await seedEvent(db, repository, event, timestamp);
-  await seedScout(db, timestamp);
-}
-
-async function seedScout(db: Kysely<DatabaseSchema>, timestamp: string) {
-  const slug = "scout-lingbot-cross-embodiment-opportunity";
-  const existing = await db
-    .selectFrom("scout_insights")
-    .select("id")
-    .where("slug", "=", slug)
-    .executeTakeFirst();
-  const id = existing?.id ?? stableId("scout", slug);
-  const value = {
-    id,
-    slug,
-    kind: "venture",
+  const embodiedViewValue = {
+    id: stableId("view", "embodied-data-operations"),
+    slug: "embodied-data-operations",
+    name: "具身数据情报与生产洞察",
+    description: "从关键变化进入六段数据管线，并下钻证据、数据资产、同行、来源与行动。",
+    filters_json: JSON.stringify({ statuses: ["published"], contentScope: "embodied-data" }),
+    layout_json: JSON.stringify({
+      blocks: ["pipeline", "key-changes", "evidence", "assets", "peers", "sources", "actions"],
+      density: "comfortable",
+      defaultTrack: "demand-definition",
+    }),
+    theme_json: JSON.stringify({ theme: "field-notes", accent: "#d95d39", radius: 16 }),
+    is_default: 1,
     status: "published",
-    title: "精灵发现：跨本体 VLA 正在打开一批“机器人能力迁移”工具机会",
-    observation:
-      "LingBot-VLA 2.0 把跨本体与多视角执行作为核心能力，说明行业开始从单机型 demo 转向可迁移能力。",
-    hypothesis:
-      "模型本身之外，数据适配、能力评测、部署诊断和任务迁移会成为机器人团队的高摩擦环节，适合从窄工具切入。",
-    why_now: "模型和开源实现刚进入开发者验证期，团队尚未形成稳定工具链，窗口早于大规模商业采购。",
-    target_audience: "具身智能创业团队、机器人算法与平台工程师",
-    suggested_action:
-      "用 48 小时访谈 5 个不同本体团队，验证迁移中最耗时的步骤；选一个问题做只读诊断 demo。",
-    artifact_idea: "跨本体迁移检查清单、公开 benchmark 和一个诊断 CLI 原型",
-    counter_signals:
-      "如果实际迁移仍高度依赖专有硬件数据、开源模型复现率低或团队更愿意内部建设，工具机会将明显收窄。",
-    horizon: "30-90d",
-    confidence_score: 74,
-    evidence_score: 78,
-    novelty_score: 86,
-    leverage_score: 88,
-    total_score: 82,
-    cooldown_key: "venture:lingbot-vla-2-cross-embodiment",
-    generated_at: timestamp,
-    expires_at: null,
-    published_at: timestamp,
     created_at: timestamp,
     updated_at: timestamp,
   };
-  if (existing) {
-    await db.updateTable("scout_insights").set(value).where("id", "=", id).execute();
-  } else {
-    await db.insertInto("scout_insights").values(value).execute();
-  }
-  const eventId = stableId("event", "lingbot-vla-2-cross-embodiment");
-  const evidence = await db
-    .selectFrom("scout_evidence")
-    .select("insight_id")
-    .where("insight_id", "=", id)
-    .where("event_id", "=", eventId)
+  const existingEmbodiedView = await db
+    .selectFrom("views")
+    .select("id")
+    .where("slug", "=", embodiedViewValue.slug)
     .executeTakeFirst();
-  if (!evidence) {
+  if (existingEmbodiedView) {
+    await db
+      .updateTable("views")
+      .set({ ...embodiedViewValue, id: existingEmbodiedView.id })
+      .where("id", "=", existingEmbodiedView.id)
+      .execute();
+  } else {
+    await db.insertInto("views").values(embodiedViewValue).execute();
+  }
+
+  for (const event of allEvents) await seedEvent(db, repository, event, timestamp);
+  await seedEmbodiedLaunchCatalog(db, repository, timestamp);
+  await seedEmbodiedObjects(db, repository, timestamp);
+  await seedScout(db, timestamp);
+}
+
+async function seedEmbodiedLaunchCatalog(
+  db: Kysely<DatabaseSchema>,
+  repository: Repository,
+  timestamp: string,
+) {
+  const evidenceBySlug = new Map(
+    embodiedEventEvidence.map((evidence) => [evidence.slug, evidence]),
+  );
+  for (const event of embodiedLaunchEvents) {
+    const existing = await db
+      .selectFrom("events")
+      .select("id")
+      .where("slug", "=", event.slug)
+      .executeTakeFirst();
+    const id = existing?.id ?? stableId("event", event.slug);
+    const value = {
+      id,
+      slug: event.slug,
+      title: event.title,
+      fact_summary: event.fact,
+      summary: event.interpretation,
+      technical_insight: event.dataProfile.deliveryImpact,
+      industry_insight: event.interpretation,
+      future_outlook: event.futureWatch,
+      business_value: event.recommendedAction,
+      category: event.category,
+      company: event.company,
+      keywords_json: JSON.stringify(event.keywords),
+      confidence_score: 92,
+      heat_score: 0,
+      impact_score: 88,
+      value_score: 90,
+      score_factors_json: JSON.stringify({
+        authority: 90,
+        corroboration: event.evidenceSlugs.length > 1 ? 90 : 75,
+        primaryEvidence: 100,
+        uniqueAuthors: event.evidenceSlugs.length,
+        independentSources: event.evidenceSlugs.length,
+        platformBreadth: 1,
+        regionBreadth: 1,
+        velocity: 0,
+        freshness: 70,
+        crossRegion: false,
+      }),
+      status: "published",
+      featured: 0,
+      manual_override: 1,
+      happened_at: event.date,
+      published_at: event.date,
+      content_scope: "embodied-data" as const,
+      created_at: timestamp,
+      updated_at: timestamp,
+    };
+    if (existing) {
+      await db.updateTable("events").set(value).where("id", "=", id).execute();
+    } else {
+      await db.insertInto("events").values(value).execute();
+    }
+    await repository.upsertEventDataProfile(id, event.dataProfile);
+    await db.deleteFrom("event_tracks").where("event_id", "=", id).execute();
+    for (const [index, stage] of event.dataProfile.pipelineStages.entries()) {
+      const track = await db
+        .selectFrom("tracks")
+        .select("id")
+        .where("slug", "=", stage)
+        .executeTakeFirstOrThrow();
+      await db
+        .insertInto("event_tracks")
+        .values({
+          event_id: id,
+          track_id: track.id,
+          node_role: index === 0 ? "milestone" : "supporting",
+          narrative: event.interpretation,
+          stage: "evidence-baseline",
+          order_index: index * 10,
+          created_at: timestamp,
+        })
+        .execute();
+    }
+
+    for (const evidenceSlug of event.evidenceSlugs) {
+      const evidence = evidenceBySlug.get(evidenceSlug);
+      if (!evidence) throw new Error(`Missing embodied event evidence: ${evidenceSlug}`);
+      const source = await repository.getSourceByIdOrSlug(evidence.sourceSlug);
+      if (!source) throw new Error(`Missing embodied evidence source: ${evidence.sourceSlug}`);
+      const inserted = await repository.insertSignal(source.id, {
+        externalId: evidence.slug,
+        url: evidence.url,
+        title: evidence.title,
+        summary: event.fact,
+        language: "zh-CN",
+        publishedAt: evidence.publishedAt,
+        category: event.category,
+        tags: [...event.keywords],
+        metrics: { independentSources: event.evidenceSlugs.length, platforms: ["official"] },
+        rawMeta: { seeded: true, evidenceRole: evidence.role },
+      });
+      const signalId =
+        inserted?.id ??
+        (
+          await db
+            .selectFrom("signals")
+            .select("id")
+            .where("canonical_url", "=", canonicalizeUrl(evidence.url))
+            .executeTakeFirstOrThrow()
+        ).id;
+      await db
+        .updateTable("signals")
+        .set({ source_id: source.id, content_scope: "embodied-data", updated_at: timestamp })
+        .where("id", "=", signalId)
+        .execute();
+      await repository.attachSignal(
+        id,
+        signalId,
+        evidence.role,
+        evidence.role === "primary" ? 100 : 80,
+      );
+    }
+  }
+}
+
+async function seedEmbodiedObjects(
+  db: Kysely<DatabaseSchema>,
+  repository: Repository,
+  timestamp: string,
+) {
+  const eventId = async (slug: string) =>
+    (await db.selectFrom("events").select("id").where("slug", "=", slug).executeTakeFirstOrThrow())
+      .id;
+
+  await db
+    .deleteFrom("event_actors")
+    .where(
+      "event_id",
+      "in",
+      embodiedLaunchEvents.map((event) => stableId("event", event.slug)),
+    )
+    .execute();
+
+  for (const item of embodiedDatasets) {
+    const id = await repository.upsertDataset(item.slug, item.profile);
+    for (const relation of item.events) {
+      await repository.linkDatasetEvent(id, await eventId(relation.eventSlug), relation.role);
+    }
+  }
+  for (const item of embodiedStandards) {
+    const id = await repository.upsertStandard(item.slug, item.profile);
+    for (const relation of item.events) {
+      await repository.linkStandardEvent(id, await eventId(relation.eventSlug), relation.role);
+    }
+  }
+  for (const item of embodiedCollectionMethods) {
+    const id = await repository.upsertCollectionMethod(item.slug, item.profile);
+    for (const relation of item.events) {
+      await repository.linkCollectionMethodEvent(
+        id,
+        await eventId(relation.eventSlug),
+        relation.role,
+      );
+    }
+  }
+  for (const peer of embodiedPeers) {
+    const existing = await db
+      .selectFrom("actors")
+      .select("id")
+      .where("slug", "=", peer.actorSlug)
+      .executeTakeFirst();
+    const id = existing?.id ?? stableId("actor", peer.actorSlug);
+    const value = {
+      id,
+      slug: peer.actorSlug,
+      name: peer.actorName,
+      actor_type: peer.actorType,
+      region: peer.region,
+      scale: "peer",
+      domains_json: JSON.stringify(["embodied-data"]),
+      table_score: 0,
+      website_url: peer.websiteUrl,
+      enabled: 1,
+      content_scope: "embodied-data" as const,
+      created_at: timestamp,
+      updated_at: timestamp,
+    };
+    if (existing) {
+      await db.updateTable("actors").set(value).where("id", "=", id).execute();
+    } else {
+      await db.insertInto("actors").values(value).execute();
+    }
+    for (const capability of peer.capabilities) {
+      const capabilityId = await repository.upsertActorDataCapability(id, capability.profile);
+      const capabilityEventId = await eventId(capability.eventSlug);
+      await repository.linkActorCapabilityEvidence(
+        capabilityId,
+        capabilityEventId,
+        capability.evidenceRole,
+      );
+      const existingRelation = await db
+        .selectFrom("event_actors")
+        .select("event_id")
+        .where("event_id", "=", capabilityEventId)
+        .where("actor_id", "=", id)
+        .executeTakeFirst();
+      if (!existingRelation) {
+        await db
+          .insertInto("event_actors")
+          .values({
+            event_id: capabilityEventId,
+            actor_id: id,
+            actor_role: "peer",
+            progress_stage: capability.profile.verificationStatus,
+            relevance_score: capability.profile.confidence,
+            created_at: timestamp,
+          })
+          .execute();
+      }
+    }
+  }
+}
+
+async function seedScout(db: Kysely<DatabaseSchema>, timestamp: string) {
+  await db
+    .updateTable("scout_insights")
+    .set({ status: "archived", published_at: null, updated_at: timestamp })
+    .where("kind", "not in", [
+      "collection-route",
+      "capture-system",
+      "production-operations",
+      "data-standard",
+      "quality-feedback",
+      "peer-opportunity",
+    ])
+    .execute();
+  const opportunities = [
+    ["collection-route", "droid-distributed-collection", "验证分布式采集路线的可复制边界"],
+    ["capture-system", "rh20t-force-aware-capture", "验证力觉与多视角采集系统"],
+    ["production-operations", "droid-consortium-site-operations", "建立跨站点数据生产审计包"],
+    ["data-standard", "open-x-standardized-datasets", "建立跨本体数据转换契约"],
+    ["quality-feedback", "gello-policy-feedback-capture", "把训练失败转成返采闭环"],
+    ["peer-opportunity", "nexdata-embodied-delivery-scope", "核验同行交付能力与采购缺口"],
+  ] as const;
+  for (const [kind, eventSlug, title] of opportunities) {
+    const slug = `scout-${kind}`;
+    const existing = await db
+      .selectFrom("scout_insights")
+      .select("id")
+      .where("slug", "=", slug)
+      .executeTakeFirst();
+    const id = existing?.id ?? stableId("scout", slug);
+    const value = {
+      id,
+      slug,
+      kind,
+      status: "published",
+      title: `星探建议：${title}`,
+      observation: `触发事件「${eventSlug}」提供了可回链的具身数据生产证据。`,
+      hypothesis:
+        "非共识点：客户更可能为可验证的生产结果和风险边界付费，而不是为泛化能力叙事付费。",
+      why_now: "公开项目已经给出可复现入口，适合在 7 天内用真实项目验证需求、成本和交付边界。",
+      target_audience: "具身数据负责人、采集运营负责人、机器人研发负责人和采购验收负责人",
+      suggested_action:
+        "选择一个真实项目，定义成功指标与停止条件，完成首个小实验并记录可复核结果。",
+      artifact_idea: "一页机会 brief、证据清单、实验记录、风险清单和继续或停止决策",
+      counter_signals:
+        "风险：证据可能仅代表发布方。失效条件：独立复现失败、客户无预算或实验结果不能改善质量、成本或交付周期。",
+      horizon: "7-30d",
+      confidence_score: 80,
+      evidence_score: 82,
+      novelty_score: 78,
+      leverage_score: 86,
+      total_score: 82,
+      cooldown_key: `${kind}:${eventSlug}`,
+      generated_at: timestamp,
+      expires_at: null,
+      published_at: timestamp,
+      created_at: timestamp,
+      updated_at: timestamp,
+    };
+    if (existing) await db.updateTable("scout_insights").set(value).where("id", "=", id).execute();
+    else await db.insertInto("scout_insights").values(value).execute();
+    const eventId = stableId("event", eventSlug);
     await db
       .insertInto("scout_evidence")
       .values({
@@ -950,6 +1312,7 @@ async function seedScout(db: Kysely<DatabaseSchema>, timestamp: string) {
         weight: 100,
         created_at: timestamp,
       })
+      .onConflict((conflict) => conflict.columns(["insight_id", "event_id"]).doNothing())
       .execute();
   }
 }

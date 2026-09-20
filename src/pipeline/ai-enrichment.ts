@@ -9,8 +9,13 @@ import { evaluateEventReadiness, type ReadinessBlocker } from "./readiness.js";
 const PLACEHOLDER = /待编辑|待补充|\bTBD\b|\bTODO\b|placeholder/i;
 const HARD_BLOCKERS = new Set<ReadinessBlocker>([
   "event_not_found",
+  "legacy_scope",
+  "missing_data_profile",
+  "invalid_data_profile",
+  "missing_pipeline_stage",
   "missing_evidence",
   "missing_primary_evidence",
+  "unsafe_evidence_url",
   "low_confidence",
   "unsupported_heat",
 ]);

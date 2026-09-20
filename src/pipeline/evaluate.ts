@@ -2,6 +2,9 @@ import { randomUUID } from "node:crypto";
 import type { Kysely } from "kysely";
 import { capabilities, productVersion } from "../catalog/product.js";
 import type { DatabaseSchema } from "../db/types.js";
+import { EventDataProfileSchema } from "../domain/embodied-data.js";
+import { ActorDataCapabilitySchema } from "../domain/embodied-data-objects.js";
+import { calculateEmbodiedDataQuality } from "./embodied-data-quality.js";
 import {
   type EvaluationContext,
   type EvaluationGateMode,
@@ -148,6 +151,28 @@ export async function evaluateSystem(db: Kysely<DatabaseSchema>, context: Evalua
         .execute(),
       eventReadinessSummary(db, context.asOf),
     ]);
+  const [eventProfiles, eventTracks, capabilityRows, capabilityEvidence] = await Promise.all([
+    db.selectFrom("event_data_profiles").selectAll().execute(),
+    db
+      .selectFrom("event_tracks")
+      .innerJoin("tracks", "tracks.id", "event_tracks.track_id")
+      .select(["event_tracks.event_id as eventId", "tracks.slug as trackSlug"])
+      .execute(),
+    db
+      .selectFrom("actor_data_capabilities")
+      .innerJoin("actors", "actors.id", "actor_data_capabilities.actor_id")
+      .select(["actor_data_capabilities.id", "actor_data_capabilities.profile_json"])
+      .where("actors.content_scope", "=", "embodied-data")
+      .execute(),
+    db
+      .selectFrom("actor_capability_evidence")
+      .select([
+        "capability_id as capabilityId",
+        "evidence_role as evidenceRole",
+        "created_at as createdAt",
+      ])
+      .execute(),
+  ]);
 
   const sources = allSources.filter((source) => source.lifecycle_status !== "retired");
   const sourcesById = new Map(sources.map((source) => [source.id, source]));
@@ -220,6 +245,59 @@ export async function evaluateSystem(db: Kysely<DatabaseSchema>, context: Evalua
   const readyIds = new Set(
     readiness.items.filter((item) => item.status === "ready").map((item) => item.eventId),
   );
+  const profileByEvent = new Map(eventProfiles.map((profile) => [profile.event_id, profile]));
+  const stagesByEvent = new Map<string, string[]>();
+  for (const link of eventTracks) {
+    const values = stagesByEvent.get(link.eventId) ?? [];
+    values.push(link.trackSlug);
+    stagesByEvent.set(link.eventId, values);
+  }
+  const capabilityEvidenceById = new Map<string, typeof capabilityEvidence>();
+  for (const link of capabilityEvidence) {
+    const values = capabilityEvidenceById.get(link.capabilityId) ?? [];
+    values.push(link);
+    capabilityEvidenceById.set(link.capabilityId, values);
+  }
+  const readyPublicEventRows = published
+    .filter((event) => readyIds.has(event.id))
+    .map((event) => {
+      const evidence = evidenceByEvent.get(event.id) ?? [];
+      const profile = profileByEvent.get(event.id);
+      return {
+        contentScope: event.content_scope,
+        stages: stagesByEvent.get(event.id) ?? [],
+        tier1Evidence: evidence.some(
+          (row) =>
+            row.tier === 1 && row.role !== "aggregator" && row.sourceCategory !== "aggregator",
+        ),
+        completeProfile: Boolean(
+          profile && EventDataProfileSchema.safeParse(JSON.parse(profile.profile_json)).success,
+        ),
+        evidenceAt:
+          evidence
+            .map((row) => row.signalCreatedAt)
+            .sort()
+            .at(-1) ?? null,
+      };
+    });
+  const embodiedQuality = calculateEmbodiedDataQuality({
+    readyPublicEvents: readyPublicEventRows,
+    peerClaims: capabilityRows.map((row) => {
+      const profile = ActorDataCapabilitySchema.parse(JSON.parse(row.profile_json));
+      const evidence = capabilityEvidenceById.get(row.id) ?? [];
+      return {
+        verificationStatus: profile.verificationStatus,
+        claimant: profile.claimant,
+        evidenceRoles: evidence.map((item) => item.evidenceRole),
+        evidenceAt:
+          evidence
+            .map((item) => item.createdAt)
+            .sort()
+            .at(-1) ?? null,
+      };
+    }),
+    asOf: context.asOf,
+  });
   const readyPublished = published.filter((event) => readyIds.has(event.id)).length;
   const linkedSignals = new Set(pointInTimeEvidence.flatMap((row) => row.sourceId)).size;
   const directSignals = pointInTimeSignalProvenance.filter(
@@ -557,6 +635,7 @@ export async function evaluateSystem(db: Kysely<DatabaseSchema>, context: Evalua
     evidenceCoverage,
     dimensions,
     capabilities,
+    embodiedQuality,
     notes,
     startedAt,
     finishedAt,

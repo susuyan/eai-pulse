@@ -53,6 +53,7 @@ jobs:
             --output="$RUNNER_TEMP/evaluation.json" \
             --summary="$GITHUB_STEP_SUMMARY" > "$RUNNER_TEMP/evaluation-output.json"
           jq -e '.operationalDecision.status and .operationalDecision.fingerprint' "$RUNNER_TEMP/evaluation.json" >/dev/null
+          jq -e '.embodiedQuality.genericAILeak.numerator == 0' "$RUNNER_TEMP/evaluation.json" >/dev/null
           score="$(jq -r '.overallScore' "$RUNNER_TEMP/evaluation.json")"
           test "$score" -ge 0
           echo "score=$score" >> "$GITHUB_OUTPUT"

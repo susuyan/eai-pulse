@@ -2,6 +2,9 @@ import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { embodiedCollectionMethods } from "../src/catalog/embodied-data/collection-methods.js";
+import { embodiedDatasets } from "../src/catalog/embodied-data/datasets.js";
+import { embodiedStandards } from "../src/catalog/embodied-data/standards.js";
 import { loadConfig } from "../src/config/env.js";
 import { createDatabase } from "../src/db/database.js";
 import { migrateToLatest } from "../src/db/migrate.js";
@@ -57,6 +60,11 @@ describe("repository data snapshot", () => {
       .where("slug", "=", "lingbot-vla-2-cross-embodiment")
       .executeTakeFirstOrThrow();
     await repository.updateEvent(profiledEvent.id, { content_scope: "embodied-data" });
+    await sourceDb
+      .updateTable("events")
+      .set({ readiness_blockers_json: JSON.stringify(["missing_track"]) })
+      .where("id", "=", profiledEvent.id)
+      .execute();
     await repository.upsertEventDataProfile(profiledEvent.id, profiles.valid[0]);
     const datasetFixture = datasets[0];
     const standardFixture = standards[0];
@@ -171,6 +179,8 @@ describe("repository data snapshot", () => {
       rawMeta: {},
     });
     const deepmind = (await repository.listSources()).find((source) => source.slug === "deepmind");
+    expect(deepmind).toBeDefined();
+    await repository.updateSource(deepmind?.id ?? "", { content_scope: "embodied-data" });
     await repository.insertSignal(deepmind?.id ?? "", {
       externalId: "snapshot-second-observation",
       url: "https://openai.com/index/snapshot-test?utm_medium=syndication",
@@ -218,45 +228,63 @@ describe("repository data snapshot", () => {
       snapshot.events.find((event: { slug: string }) => event.slug === profiledEvent.slug)
         ?.contentScope,
     ).toBe("embodied-data");
-    expect(snapshot.eventDataProfiles).toEqual([
-      expect.objectContaining({ eventSlug: profiledEvent.slug, profile: profiles.valid[0] }),
-    ]);
-    expect(snapshot.datasets).toEqual([
-      expect.objectContaining({ slug: datasetFixture.slug, profile: datasetFixture.profile }),
-    ]);
-    expect(snapshot.datasetEvents).toEqual([
-      expect.objectContaining({
-        datasetSlug: datasetFixture.slug,
-        eventSlug: profiledEvent.slug,
-        relationRole: "release",
-      }),
-    ]);
-    expect(snapshot.standards).toEqual([
-      expect.objectContaining({ slug: standardFixture.slug, profile: standardFixture.profile }),
-    ]);
-    expect(snapshot.collectionMethods).toEqual([
-      expect.objectContaining({ slug: methodFixture.slug, profile: methodFixture.profile }),
-    ]);
-    expect(snapshot.actorDataCapabilities).toEqual([
-      expect.objectContaining({
-        actorSlug: capabilityActor.slug,
-        capabilityKey: capabilityFixture.capabilityKey,
-        profile: capabilityFixture,
-      }),
-    ]);
-    expect(snapshot.actorCapabilityEvidence).toEqual([
-      expect.objectContaining({
-        actorSlug: capabilityActor.slug,
-        capabilityKey: capabilityFixture.capabilityKey,
-        eventSlug: profiledEvent.slug,
-        evidenceRole: "claim",
-      }),
-    ]);
+    expect(
+      snapshot.events.find((event: { slug: string }) => event.slug === profiledEvent.slug)
+        ?.readinessBlockers,
+    ).toEqual(["missing_track"]);
+    expect(snapshot.eventDataProfiles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ eventSlug: profiledEvent.slug, profile: profiles.valid[0] }),
+      ]),
+    );
+    expect(snapshot.datasets).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ slug: datasetFixture.slug, profile: datasetFixture.profile }),
+      ]),
+    );
+    expect(snapshot.datasetEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          datasetSlug: datasetFixture.slug,
+          eventSlug: profiledEvent.slug,
+          relationRole: "release",
+        }),
+      ]),
+    );
+    expect(snapshot.standards).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ slug: standardFixture.slug, profile: standardFixture.profile }),
+      ]),
+    );
+    expect(snapshot.collectionMethods).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ slug: methodFixture.slug, profile: methodFixture.profile }),
+      ]),
+    );
+    expect(snapshot.actorDataCapabilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          actorSlug: capabilityActor.slug,
+          capabilityKey: capabilityFixture.capabilityKey,
+          profile: capabilityFixture,
+        }),
+      ]),
+    );
+    expect(snapshot.actorCapabilityEvidence).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          actorSlug: capabilityActor.slug,
+          capabilityKey: capabilityFixture.capabilityKey,
+          eventSlug: profiledEvent.slug,
+          evidenceRole: "claim",
+        }),
+      ]),
+    );
     expect(first.counts.signalTriage).toBe(1);
     expect(first.counts.sourceChecks).toBe(1);
     expect(first.counts.sourceRuns).toBe(2);
     expect(first.counts.signalObservations).toBeGreaterThanOrEqual(2);
-    expect(first.counts.scoutInsights).toBe(1);
+    expect(first.counts.scoutInsights).toBe(6);
     expect(first.counts.evaluationRuns).toBe(1);
 
     type ObjectSnapshotFixture = {
@@ -366,6 +394,14 @@ describe("repository data snapshot", () => {
     databases.push(invalidDb);
     await migrateToLatest(invalidDb, config);
     await seedDatabase(invalidDb);
+    const seededDatasetCount = Number(
+      (
+        await invalidDb
+          .selectFrom("datasets")
+          .select(({ fn }) => fn.countAll<number>().as("count"))
+          .executeTakeFirstOrThrow()
+      ).count,
+    );
     for (const corruption of corruptionCases) {
       const invalidSnapshot = structuredClone(snapshot) as ObjectSnapshotFixture;
       corruption.mutate(invalidSnapshot);
@@ -383,7 +419,7 @@ describe("repository data snapshot", () => {
               .executeTakeFirstOrThrow()
           ).count,
         ),
-      ).toBe(0);
+      ).toBe(seededDatasetCount);
     }
 
     const targetDb = createDatabase(config);
@@ -392,8 +428,20 @@ describe("repository data snapshot", () => {
     await seedDatabase(targetDb);
     const targetRepository = new Repository(targetDb);
     const targetObjectIds = {
-      dataset: "00000000-0000-4000-8000-000000000101",
-      standard: "00000000-0000-4000-8000-000000000102",
+      dataset: (
+        await targetDb
+          .selectFrom("datasets")
+          .select("id")
+          .where("slug", "=", datasetFixture.slug)
+          .executeTakeFirstOrThrow()
+      ).id,
+      standard: (
+        await targetDb
+          .selectFrom("standards")
+          .select("id")
+          .where("slug", "=", standardFixture.slug)
+          .executeTakeFirstOrThrow()
+      ).id,
       method: "00000000-0000-4000-8000-000000000103",
       capability: "00000000-0000-4000-8000-000000000104",
     };
@@ -404,26 +452,24 @@ describe("repository data snapshot", () => {
       .where("slug", "=", capabilityActor.slug)
       .executeTakeFirstOrThrow();
     await targetDb
-      .insertInto("datasets")
-      .values({
-        id: targetObjectIds.dataset,
-        slug: datasetFixture.slug,
+      .updateTable("datasets")
+      .set({
         profile_json: JSON.stringify(datasetFixture.profile),
         schema_version: 1,
         created_at: preexistingCreatedAt,
         updated_at: preexistingCreatedAt,
       })
+      .where("id", "=", targetObjectIds.dataset)
       .execute();
     await targetDb
-      .insertInto("standards")
-      .values({
-        id: targetObjectIds.standard,
-        slug: standardFixture.slug,
+      .updateTable("standards")
+      .set({
         profile_json: JSON.stringify(standardFixture.profile),
         schema_version: 1,
         created_at: preexistingCreatedAt,
         updated_at: preexistingCreatedAt,
       })
+      .where("id", "=", targetObjectIds.standard)
       .execute();
     await targetDb
       .insertInto("collection_methods")
@@ -613,14 +659,15 @@ describe("repository data snapshot", () => {
         .where("id", "=", secondRunId)
         .executeTakeFirst(),
     ).toEqual({ status: "not_modified" });
-    expect(await targetRepository.publicScoutInsights()).toHaveLength(1);
+    expect(await targetRepository.publicScoutInsights()).toHaveLength(6);
 
     const restoredProfileEvent = await targetDb
       .selectFrom("events")
-      .select(["id", "content_scope"])
+      .select(["id", "content_scope", "readiness_blockers_json"])
       .where("slug", "=", profiledEvent.slug)
       .executeTakeFirstOrThrow();
     expect(restoredProfileEvent.content_scope).toBe("embodied-data");
+    expect(JSON.parse(restoredProfileEvent.readiness_blockers_json)).toEqual(["missing_track"]);
     expect(await targetRepository.getEventDataProfile(restoredProfileEvent.id)).toEqual(
       profiles.valid[0],
     );
@@ -648,34 +695,42 @@ describe("repository data snapshot", () => {
     expect(await targetRepository.listActorDataCapabilities(restoredCapabilityActor.id)).toEqual([
       capabilityFixture,
     ]);
-    expect(await targetDb.selectFrom("dataset_events").selectAll().execute()).toEqual([
-      expect.objectContaining({
-        dataset_id: targetObjectIds.dataset,
-        event_id: restoredProfileEvent.id,
-        relation_role: "release",
-      }),
-    ]);
-    expect(await targetDb.selectFrom("standard_events").selectAll().execute()).toEqual([
-      expect.objectContaining({
-        standard_id: targetObjectIds.standard,
-        event_id: restoredProfileEvent.id,
-        relation_role: "publication",
-      }),
-    ]);
-    expect(await targetDb.selectFrom("collection_method_events").selectAll().execute()).toEqual([
-      expect.objectContaining({
-        collection_method_id: targetObjectIds.method,
-        event_id: restoredProfileEvent.id,
-        relation_role: "demonstration",
-      }),
-    ]);
-    expect(await targetDb.selectFrom("actor_capability_evidence").selectAll().execute()).toEqual([
-      expect.objectContaining({
-        capability_id: targetObjectIds.capability,
-        event_id: restoredProfileEvent.id,
-        evidence_role: "claim",
-      }),
-    ]);
+    expect(await targetDb.selectFrom("dataset_events").selectAll().execute()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          dataset_id: targetObjectIds.dataset,
+          event_id: restoredProfileEvent.id,
+          relation_role: "release",
+        }),
+      ]),
+    );
+    expect(await targetDb.selectFrom("standard_events").selectAll().execute()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          standard_id: targetObjectIds.standard,
+          event_id: restoredProfileEvent.id,
+          relation_role: "publication",
+        }),
+      ]),
+    );
+    expect(await targetDb.selectFrom("collection_method_events").selectAll().execute()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          collection_method_id: targetObjectIds.method,
+          event_id: restoredProfileEvent.id,
+          relation_role: "demonstration",
+        }),
+      ]),
+    );
+    expect(await targetDb.selectFrom("actor_capability_evidence").selectAll().execute()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          capability_id: targetObjectIds.capability,
+          event_id: restoredProfileEvent.id,
+          evidence_role: "claim",
+        }),
+      ]),
+    );
 
     const legacyRoot = await mkdtemp(join(tmpdir(), "agent-pulse-legacy-snapshot-"));
     const legacySnapshot = structuredClone(snapshot);
@@ -717,9 +772,11 @@ describe("repository data snapshot", () => {
       .executeTakeFirstOrThrow();
     expect(legacyProfileEvent.content_scope).toBe("legacy-ai");
     expect(await legacyRepository.getEventDataProfile(legacyProfileEvent.id)).toBeUndefined();
-    expect(await legacyRepository.listDatasets()).toEqual([]);
-    expect(await legacyRepository.listStandards()).toEqual([]);
-    expect(await legacyRepository.listCollectionMethods()).toEqual([]);
+    expect(await legacyRepository.listDatasets()).toHaveLength(embodiedDatasets.length);
+    expect(await legacyRepository.listStandards()).toHaveLength(embodiedStandards.length);
+    expect(await legacyRepository.listCollectionMethods()).toHaveLength(
+      embodiedCollectionMethods.length,
+    );
     const legacyCapabilityActor = await legacyDb
       .selectFrom("actors")
       .select("id")

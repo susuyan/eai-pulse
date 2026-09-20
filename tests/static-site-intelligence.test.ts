@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { sourceCatalog } from "../src/catalog/sources.js";
+import { legacySourceCatalog as sourceCatalog } from "../src/catalog/sources.js";
 import { githubReleasesAdapter } from "../src/collectors/github-releases.js";
 import { rssAdapter } from "../src/collectors/rss.js";
 import type { CollectContext } from "../src/collectors/types.js";
@@ -29,9 +29,148 @@ import {
   summarizeSourcePortfolio,
   timelineEventsForPresentation,
 } from "../src/pipeline/static-site/intelligence.js";
-import { renderTimeline } from "../src/pipeline/static-site/pages.js";
+import { renderStaticPages, renderTimeline } from "../src/pipeline/static-site/pages.js";
 
 describe("static-site intelligence consumption model", () => {
+  it("renders the exact embodied-data route and navigation contract", () => {
+    const model = embodiedSiteModel();
+    const pages = renderStaticPages(model);
+    const paths = pages.map((page) => page.path).sort();
+    const expectedLocalePaths = [
+      "index.html",
+      "pipeline/index.html",
+      "assets/index.html",
+      "peers/index.html",
+      "sources/index.html",
+      "scout/index.html",
+      "timeline/index.html",
+      "changelog/index.html",
+      "legal/index.html",
+      "events/embodied-event/index.html",
+      "404.html",
+    ];
+    expect(paths).toEqual(
+      [...expectedLocalePaths, ...expectedLocalePaths.map((path) => `en/${path}`)].sort(),
+    );
+
+    const home = pages.find((page) => page.path === "index.html")?.content ?? "";
+    for (const [label, href] of [
+      ["关键变化", "./"],
+      ["数据管线", "./pipeline/"],
+      ["数据资产", "./assets/"],
+      ["行业同行", "./peers/"],
+      ["来源地图", "./sources/"],
+      ["行动建议", "./scout/"],
+    ]) {
+      expect(home).toContain(`href="${href}"`);
+      expect(home).toContain(label);
+    }
+    expect(
+      model.pipelineStages.map((stage) => home.indexOf(`data-pipeline-stage="${stage.slug}"`)),
+    ).toEqual(
+      [
+        ...model.pipelineStages.map((stage) => home.indexOf(`data-pipeline-stage="${stage.slug}"`)),
+      ].sort((a, b) => a - b),
+    );
+    expect(home).toContain("具身数据情报与生产洞察");
+    expect(home).toContain("数据资产");
+    expect(home).toContain("行业同行");
+    expect(home).toContain("来源地图");
+    expect(home).toContain("行动建议");
+    expect(home).toContain("https://example.com/evidence");
+    expect(home).not.toContain("模型价格");
+    expect(home).not.toContain("六个领域趋势");
+  });
+
+  it("renders complete English stage labels and English event metadata fallbacks", () => {
+    const model = embodiedSiteModel();
+    const event = model.embodiedEvents[0];
+    if (!event) throw new Error("Missing event fixture");
+    event.title = "具身数据事件";
+    event.factSummary = "中文事实摘要";
+    const pages = renderStaticPages(model);
+    const pipeline = pages.find((page) => page.path === "en/pipeline/index.html")?.content ?? "";
+    const eventPage =
+      pages.find((page) => page.path === "en/events/embodied-event/index.html")?.content ?? "";
+    const head = eventPage.match(/<head>[\s\S]*?<\/head>/)?.[0] ?? "";
+
+    expect(pipeline).toContain("Demand and task definition");
+    expect(pipeline).toContain("Decide what data to collect");
+    expect(pipeline).not.toContain("需求与任务定义");
+    expect(head).toContain("Embodied Event · Agent Pulse");
+    expect(head).toContain("Evidence and production impact for the embodied-data event");
+    expect(head).not.toContain("具身数据事件");
+    expect(head).not.toContain("中文事实摘要");
+    expect(eventPage).toContain("Original-language record");
+  });
+
+  it("renders milestones, peer comparisons, counter-evidence, and next signals per stage", () => {
+    const pages = renderStaticPages(embodiedSiteModel());
+    const pipeline = pages.find((page) => page.path === "pipeline/index.html")?.content ?? "";
+
+    expect(pipeline).toContain("阶段里程碑");
+    expect(pipeline).toContain("同行对比");
+    expect(pipeline).toContain("反证与未知");
+    expect(pipeline).toContain("下一信号");
+    expect(pipeline).toContain("embodied-event");
+    expect(pipeline).toContain("Next signal");
+    expect(pipeline).toContain("Example Lab");
+  });
+
+  it("rejects unsafe source and peer links and keeps object relations navigable", () => {
+    const model = embodiedSiteModel();
+    const source = model.sources[0];
+    const peer = model.peers[0];
+    const event = model.embodiedEvents[0];
+    if (!source || !peer || !event) throw new Error("Missing public-site fixtures");
+    source.homepageUrl = "javascript:alert('source')";
+    peer.websiteUrl = "javascript:alert('peer')";
+    const capability = peer.capabilities[0];
+    if (!capability) throw new Error("Missing capability fixture");
+    capability.sourceUrl = "javascript:alert('evidence')";
+    model.datasets = [
+      {
+        slug: "droid",
+        name: "DROID",
+        publisher: "Example Lab",
+        canonicalUrl: "https://example.com/droid",
+        version: "1",
+        releaseDate: "2026-09-20",
+        pipelineStages: ["acquisition-route"],
+        modalities: ["rgb"],
+        embodiments: ["single-arm"],
+        scenarios: ["tabletop"],
+        tasks: ["manipulation"],
+        acquisitionMethods: ["teleoperation"],
+        dataFormats: ["RLDS"],
+        scaleClaims: [],
+        sensorConfiguration: [],
+        synchronization: [],
+        calibration: [],
+        annotations: [],
+        qualityMethods: ["task completion"],
+        license: null,
+        access: { mode: "open", url: "https://example.com/droid" },
+        useCases: ["robot policy training"],
+        knownResults: [],
+        limitations: [],
+        evidenceStatus: "verified",
+        relatedEvents: [{ slug: event.slug, title: "Embodied event", role: "release" }],
+      },
+    ];
+
+    const pages = renderStaticPages(model);
+    const sources = pages.find((page) => page.path === "sources/index.html")?.content ?? "";
+    const peers = pages.find((page) => page.path === "peers/index.html")?.content ?? "";
+    const assets = pages.find((page) => page.path === "assets/index.html")?.content ?? "";
+
+    expect(sources).not.toContain("javascript:");
+    expect(peers).not.toContain("javascript:");
+    expect(sources).toContain("Example Source");
+    expect(peers).toContain('id="example-lab"');
+    expect(assets).toContain('href="../events/embodied-event/"');
+  });
+
   it("sorts one event per card by its latest evidence update", () => {
     const olderEventWithNewUpdate = event("older", "2026-01-01T00:00:00Z", [
       evidence("Official update", "primary", "2026-07-10T00:00:00Z"),
@@ -180,22 +319,22 @@ describe("static-site intelligence consumption model", () => {
     ]);
   });
 
-  it("does not count the monthly research group against six visible regular events", () => {
+  it("keeps research and regular embodied events in the public timeline", () => {
     const regular = Array.from({ length: 7 }, (_, index) =>
       event(`regular-${index}`, `2026-07-${String(index + 1).padStart(2, "0")}T08:00:00Z`, []),
     );
     const model = {
-      events: [...regular, researchEvent("paper", "2026-07-15T08:00:00Z")],
+      embodiedEvents: [...regular, researchEvent("paper", "2026-07-15T08:00:00Z")],
       tracks: [],
     } as unknown as StaticSiteModel;
     const page = renderTimeline(model, "zh-CN");
 
-    expect(page).toContain('data-research-month="2026-07"');
-    expect(page.match(/data-month-extra="true"/g)).toHaveLength(1);
-    expect(page).toContain('data-timeline-item-count="7"');
+    expect(page).toContain("paper");
+    for (const item of regular) expect(page).toContain(item.slug);
+    expect(page.match(/<li>/g)).toHaveLength(8);
   });
 
-  it("lazy-mounts month groups only after the public Event total exceeds 500", () => {
+  it("keeps the embodied timeline complete without client-side mounting", () => {
     const manyEvents = Array.from({ length: 501 }, (_, index) => {
       const month = 11 - (index % 12);
       return event(
@@ -204,16 +343,19 @@ describe("static-site intelligence consumption model", () => {
         [],
       );
     });
-    const model = { events: manyEvents, tracks: [] } as unknown as StaticSiteModel;
+    const model = { embodiedEvents: manyEvents, tracks: [] } as unknown as StaticSiteModel;
     const lazyPage = renderTimeline(model, "zh-CN");
-    const regularPage = renderTimeline({ ...model, events: manyEvents.slice(0, 500) }, "zh-CN");
+    const regularPage = renderTimeline(
+      {
+        ...model,
+        embodiedEvents: manyEvents.slice(0, 500) as unknown as StaticSiteModel["embodiedEvents"],
+      },
+      "zh-CN",
+    );
 
-    expect(lazyPage).toContain('data-timeline-lazy="true"');
-    expect(lazyPage.match(/data-timeline-month-template/g)).toHaveLength(6);
-    expect(lazyPage).toContain("data-timeline-month-toggle");
-    expect(lazyPage).toContain('data-month-extra="true"');
-    expect(regularPage).toContain('data-timeline-lazy="false"');
-    expect(regularPage).not.toContain("data-timeline-month-template");
+    expect(lazyPage.match(/<li>/g)).toHaveLength(501);
+    expect(regularPage.match(/<li>/g)).toHaveLength(500);
+    expect(lazyPage).not.toContain("data-timeline-month-template");
   });
 
   it("highlights only events from the previous seven days", () => {
@@ -419,6 +561,218 @@ function event(
     tracks: [],
     actors: [],
   };
+}
+
+function embodiedSiteModel(): StaticSiteModel {
+  const legacyEvent = event("embodied-event", "2026-09-20T00:00:00.000Z", [
+    evidence("Primary evidence", "primary", "2026-09-20T00:00:00.000Z"),
+  ]);
+  const primaryEvidence = legacyEvent.evidence[0];
+  if (!primaryEvidence) throw new Error("Primary evidence fixture is missing");
+  primaryEvidence.url = "https://example.com/evidence";
+  primaryEvidence.source = "Example Lab";
+  const { id: _id, actors: _actors, ...publicEvent } = legacyEvent;
+  const pipelineStages = [
+    [
+      "demand-definition",
+      "需求与任务定义",
+      "Demand and task definition",
+      "Decide what data to collect and why.",
+      "01",
+    ],
+    [
+      "acquisition-route",
+      "采集技术路线",
+      "Acquisition route",
+      "Compare collection and production routes.",
+      "02",
+    ],
+    [
+      "multimodal-capture",
+      "多模态采集设备",
+      "Multimodal capture",
+      "Track synchronized multimodal capture.",
+      "03",
+    ],
+    [
+      "production-operations",
+      "生产运营与成本",
+      "Production operations and cost",
+      "Track throughput, cost, and delivery.",
+      "04",
+    ],
+    [
+      "data-engineering-standards",
+      "数据工程与标准",
+      "Data engineering and standards",
+      "Track formats and governance standards.",
+      "05",
+    ],
+    [
+      "quality-training-feedback",
+      "质量验收与训练反馈",
+      "Quality acceptance and training feedback",
+      "Feed evaluation results into collection.",
+      "06",
+    ],
+  ].map(([slug, name, nameEn, descriptionEn, icon], order) => ({
+    slug,
+    name,
+    description: `${name}说明`,
+    nameEn,
+    descriptionEn,
+    color: "#345",
+    icon,
+    order,
+    milestones:
+      slug === "acquisition-route"
+        ? [
+            {
+              eventSlug: "embodied-event",
+              title: "embodied-event",
+              happenedAt: "2026-09-20T00:00:00.000Z",
+              deliveryImpact:
+                "Defines the production and acceptance boundary for a robot data run.",
+              evidenceStatus: "verified",
+              evidence: legacyEvent.evidence,
+            },
+          ]
+        : [],
+    peerComparisons:
+      slug === "acquisition-route"
+        ? [
+            {
+              peerSlug: "example-lab",
+              peerName: "Example Lab",
+              claimText: "Publishes a sourced teleoperation collection method.",
+              verificationStatus: "independently-verified",
+              sourceUrl: "https://example.com/lab/evidence",
+            },
+          ]
+        : [],
+    counterEvidence: [],
+    nextSignals:
+      slug === "acquisition-route"
+        ? [{ eventSlug: "embodied-event", eventTitle: "embodied-event", signal: "Next signal" }]
+        : [],
+  }));
+  return {
+    siteUrl: "https://example.com/",
+    generatedAt: "2026-09-20T00:00:00.000Z",
+    events: [legacyEvent],
+    tracks: pipelineStages.map((stage) => ({
+      ...stage,
+      kind: "pipeline",
+      perspective: "production",
+    })),
+    actors: [],
+    resources: [],
+    sources: [
+      {
+        slug: "example-source",
+        name: "Example Source",
+        homepageUrl: "https://example.com/source",
+        category: "official",
+        region: "CN",
+        tier: 1,
+        role: "official",
+        acquisition: "rss",
+        topics: ["embodied-data"],
+        maintenanceStatus: "maintained",
+        lifecycle: "shadow",
+        observationEnabled: false,
+        qualityScore: 90,
+        cadence: "weekly",
+        healthStatus: "healthy",
+        lastCheckedAt: null,
+        latestItemAt: null,
+        healthErrorCode: null,
+      },
+    ],
+    signals: [],
+    influencers: [],
+    scout: [],
+    narratives: { horizon: { start: "2026", end: "2026", label: "2026" }, eras: [], tracks: [] },
+    product: {
+      version: "0.12.0",
+      generatedAt: "2026-09-20T00:00:00.000Z",
+      capabilities: [],
+      roadmap: [],
+      releases: [],
+      evaluation: null,
+      sourceCoverage: {
+        total: 1,
+        active: 0,
+        observing: 0,
+        candidate: 1,
+        regions: ["CN"],
+        categories: ["official"],
+      },
+    },
+    github: {
+      repositoryUrl: "https://github.com/example/agent-pulse",
+      stars: 1,
+      forks: 0,
+      openIssues: 0,
+      latestRelease: "v0.12.0",
+      fetchedAt: null,
+    },
+    embodiedEvents: [
+      {
+        ...publicEvent,
+        pipelineStages: ["acquisition-route"],
+        dataProfile: {
+          pipelineStages: ["acquisition-route"],
+          scenarios: ["tabletop manipulation"],
+          embodiments: ["single-arm"],
+          tasks: ["manipulation"],
+          modalities: ["rgb", "action"],
+          acquisitionMethods: ["teleoperation"],
+          dataFormats: ["RLDS"],
+          standards: ["RLDS"],
+          scaleClaims: [],
+          qualityMetrics: ["task completion"],
+          costSignals: [],
+          deliveryImpact: "Defines the production and acceptance boundary for a robot data run.",
+          evidenceStatus: "verified",
+        },
+        datasets: [{ slug: "droid", title: "DROID", role: "release" }],
+        standards: [],
+        collectionMethods: [
+          { slug: "teleoperation", title: "Robot teleoperation", role: "demonstration" },
+        ],
+        peers: [{ slug: "example-lab", title: "Example Lab", role: "claim" }],
+      },
+    ],
+    pipelineStages,
+    datasets: [],
+    standards: [],
+    collectionMethods: [],
+    peers: [
+      {
+        slug: "example-lab",
+        name: "Example Lab",
+        actorType: "lab",
+        region: "CN",
+        websiteUrl: "https://example.com/lab",
+        capabilities: [
+          {
+            capabilityKey: "teleoperation-collection",
+            pipelineStages: ["acquisition-route"],
+            claimText: "Publishes a sourced teleoperation collection method.",
+            claimant: "independent",
+            sourceUrl: "https://example.com/lab/evidence",
+            claimedAt: "2026-09-20T00:00:00.000Z",
+            verificationStatus: "independently-verified",
+            verifiedAt: "2026-09-20T00:00:00.000Z",
+            confidence: 90,
+            limitations: [],
+            evidence: [{ slug: "embodied-event", title: "Embodied event", role: "verification" }],
+          },
+        ],
+      },
+    ],
+  } as StaticSiteModel;
 }
 
 function researchEvent(slug: string, happenedAt: string): EnrichedEvent {

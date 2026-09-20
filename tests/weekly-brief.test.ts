@@ -226,7 +226,7 @@ describe("weekly GitHub Issue brief", () => {
     expect(result.body).toContain(
       "如果 7 天内无法观察到可量化改善，或风险与人工接管未下降，则停止扩面。",
     );
-    expect(result.body).toContain("https://barretlee.github.io/agent-pulse/events/weekly-event/");
+    expect(result.body).toContain("https://susuyan.github.io/eai-pulse/events/weekly-event/");
     expect(result.body).not.toContain("```json");
     expect(completionCalls).toBe(2);
     expect(result.repairAttempts).toBe(1);

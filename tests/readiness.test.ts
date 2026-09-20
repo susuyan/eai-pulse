@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { earlyHistoryEvents } from "../src/catalog/early-history.js";
+import { embodiedLaunchEvents } from "../src/catalog/embodied-data/events.js";
 import { historicalEvents } from "../src/catalog/history.js";
 import { recentDensityEvents } from "../src/catalog/recent-density.js";
 import { loadConfig } from "../src/config/env.js";
@@ -28,7 +29,7 @@ describe("event publication readiness", () => {
   it("accepts a curated first-party milestone and labels its evidence level", async () => {
     const { db, repository } = await setup();
     const event = (await repository.listEvents("published")).find(
-      (item) => item.slug === "openai-o1-test-time-reasoning",
+      (item) => item.slug === "droid-distributed-collection",
     );
     expect(event).toBeTruthy();
 
@@ -81,7 +82,7 @@ describe("event publication readiness", () => {
   it("does not allow a high heat label without cross-source and cross-platform factors", async () => {
     const { db, repository } = await setup();
     const event = (await repository.listEvents("published")).find(
-      (item) => item.slug === "openai-o1-test-time-reasoning",
+      (item) => item.slug === "droid-distributed-collection",
     );
 
     const readiness = await evaluateEventReadiness(db, event?.id ?? "missing", {
@@ -96,7 +97,7 @@ describe("event publication readiness", () => {
   it("blocks research events that do not explain method, impact, and what to verify next", async () => {
     const { db, repository } = await setup();
     const event = (await repository.listEvents("published")).find(
-      (item) => item.slug === "openai-o1-test-time-reasoning",
+      (item) => item.slug === "droid-distributed-collection",
     );
 
     const readiness = await evaluateEventReadiness(db, event?.id ?? "missing", {
@@ -113,7 +114,7 @@ describe("event publication readiness", () => {
   it("accepts concise research analysis above the reduced depth floor", async () => {
     const { db, repository } = await setup();
     const event = (await repository.listEvents("published")).find(
-      (item) => item.slug === "openai-o1-test-time-reasoning",
+      (item) => item.slug === "droid-distributed-collection",
     );
     const technical =
       "The method compares controlled reasoning budgets across reproducible task variants.";
@@ -134,11 +135,62 @@ describe("event publication readiness", () => {
     expect(readiness.blockers).not.toContain("thin_research_analysis");
   });
 
+  it("blocks legacy scope, missing profiles, invalid stages, and unsafe evidence URLs", async () => {
+    const { db, repository } = await setup();
+    const legacy = (await repository.listEvents("published")).find(
+      (item) => item.slug === "openai-o1-test-time-reasoning",
+    );
+    const embodied = (await repository.listEvents("published")).find(
+      (item) => item.slug === "droid-distributed-collection",
+    );
+    if (!legacy || !embodied) throw new Error("Missing readiness fixtures");
+
+    expect((await evaluateEventReadiness(db, legacy.id)).blockers).toContain("legacy_scope");
+
+    await db.deleteFrom("event_data_profiles").where("event_id", "=", embodied.id).execute();
+    expect((await evaluateEventReadiness(db, embodied.id)).blockers).toContain(
+      "missing_data_profile",
+    );
+
+    await db
+      .insertInto("event_data_profiles")
+      .values({
+        event_id: embodied.id,
+        profile_json: JSON.stringify({ pipelineStages: [] }),
+        schema_version: 1,
+        created_at: embodied.created_at,
+        updated_at: embodied.updated_at,
+      })
+      .execute();
+    const invalid = await evaluateEventReadiness(db, embodied.id);
+    expect(invalid.blockers).toEqual(
+      expect.arrayContaining(["invalid_data_profile", "missing_pipeline_stage"]),
+    );
+
+    const signal = await db
+      .selectFrom("event_signals")
+      .select("signal_id")
+      .where("event_id", "=", embodied.id)
+      .executeTakeFirstOrThrow();
+    await db
+      .updateTable("signals")
+      .set({ canonical_url: "http://example.com/unsafe" })
+      .where("id", "=", signal.signal_id)
+      .execute();
+    expect((await evaluateEventReadiness(db, embodied.id)).blockers).toContain(
+      "unsafe_evidence_url",
+    );
+  });
+
   it("summarizes blockers across the editorial backlog", async () => {
     const { db } = await setup();
     const summary = await eventReadinessSummary(db);
     expect(summary.total).toBe(
-      earlyHistoryEvents.length + historicalEvents.length + recentDensityEvents.length + 6,
+      earlyHistoryEvents.length +
+        historicalEvents.length +
+        recentDensityEvents.length +
+        embodiedLaunchEvents.length +
+        6,
     );
     expect(summary.ready).toBeGreaterThan(0);
     expect(summary.ready + summary.blocked).toBe(summary.total);

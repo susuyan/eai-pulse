@@ -123,7 +123,7 @@ describe("point-in-time system evaluation", () => {
     const source = await db
       .selectFrom("sources")
       .select("id")
-      .where("lifecycle_status", "=", "active")
+      .where("content_scope", "=", "embodied-data")
       .executeTakeFirstOrThrow();
     const run = await db
       .selectFrom("source_runs")

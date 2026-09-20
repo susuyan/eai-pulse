@@ -8,12 +8,20 @@ export interface EmbodiedDataRelevanceInput {
   businessValue: string;
   category: string;
   keywords: string[];
+  originalSourceAvailable?: boolean;
+}
+
+export interface EmbodiedDataRelevanceEvidence {
+  matched: boolean;
+  matchedTerms: string[];
 }
 
 export interface EmbodiedDataRelevanceAssessment {
   decision: "include" | "review" | "reject";
   matchedStages: EmbodiedPipelineStage[];
   reasons: string[];
+  embodimentAnchor: EmbodiedDataRelevanceEvidence;
+  productionImpact: EmbodiedDataRelevanceEvidence;
 }
 
 const EMBODIED_ANCHORS = [
@@ -128,78 +136,166 @@ const STAGE_TERMS: ReadonlyArray<{
   },
 ];
 
-const NEGATIVE_CUES = [
-  " no ",
-  " not ",
-  " without ",
-  " unclear ",
-  " unverified ",
-  " unknown ",
-  " doesn't ",
-  " does not ",
-  " do not ",
-  " is not ",
-  " are not ",
+const EXCLUSION_RULES: ReadonlyArray<{ reason: string; terms: readonly string[] }> = [
+  { reason: "excluded_turing_test", terms: ["turing test", "图灵测试"] },
+  {
+    reason: "excluded_generic_agent",
+    terms: ["generic multimodal agent", "multimodal agent", "通用多模态 agent"],
+  },
+  {
+    reason: "excluded_architecture_only",
+    terms: ["architecture scaling", "architecture-only", "model architecture result", "架构改进"],
+  },
+  { reason: "excluded_control_only", terms: ["control-only", "control law", "仅控制"] },
+  {
+    reason: "excluded_perception_only",
+    terms: ["perception-only", "inference accuracy", "仅感知"],
+  },
+];
+
+const NEGATION_PREFIXES = [
+  "no ",
+  "not ",
+  "without ",
+  "does not ",
+  "do not ",
+  "same ",
+  "没有",
+  "无",
+  "不涉及",
+  "未改变",
+];
+
+const UNCERTAINTY_CUES = [
+  "not disclosed",
+  "does not disclose",
+  "no verified",
+  "not measurable",
+  "not yet measurable",
+  "incomplete",
+  "unknown",
+  "unclear",
+  "unverified",
   "未披露",
   "不明确",
-  "不清楚",
-  "未经证实",
-  "没有",
-  "无直接",
+  "待验证",
+];
+
+const NO_PRODUCTION_IMPACT_CUES = [
+  "without any collection or dataset change",
+  "no data-production problem changes",
+  "no collection, standard, or quality artifact",
+  "changes no pipeline decision",
+  "does not change a production decision",
+  "does not change embodied data production",
+  "不改变数据生产",
 ];
 
 export function assessEmbodiedDataRelevance(
   input: EmbodiedDataRelevanceInput,
 ): EmbodiedDataRelevanceAssessment {
-  const corpus = positiveCorpus(input);
-  const evidenceCorpus = positiveCorpus({ ...input, businessValue: "" });
-  const hasEmbodiedAnchor = matchesAny(corpus, EMBODIED_ANCHORS);
-  const matchedSignalCount = DATA_SIGNAL_GROUPS.filter((terms) =>
-    matchesAny(evidenceCorpus, terms),
+  const corpus = evidenceCorpus(input);
+  const embodimentTerms = findMatchedTerms(corpus, EMBODIED_ANCHORS);
+  const productionTerms = DATA_SIGNAL_GROUPS.flatMap((terms) => findMatchedTerms(corpus, terms));
+  const matchedSignalCount = DATA_SIGNAL_GROUPS.filter(
+    (terms) => findMatchedTerms(corpus, terms).length > 0,
   ).length;
-  const hasDataPipelineAnchor = matchedSignalCount > 0;
-  const matchedStages = STAGE_TERMS.filter(({ terms }) => matchesAny(evidenceCorpus, terms)).map(
-    ({ stage }) => stage,
-  );
+  const embodimentAnchor = evidence(embodimentTerms);
+  const productionImpact = evidence(productionTerms);
+  const matchedStages = STAGE_TERMS.filter(
+    ({ terms }) => findMatchedTerms(corpus, terms).length > 0,
+  ).map(({ stage }) => stage);
 
-  if (!hasEmbodiedAnchor || !hasDataPipelineAnchor) {
-    const reasons: string[] = [];
-    if (!hasEmbodiedAnchor) reasons.push("embodied_anchor_missing");
-    if (!hasDataPipelineAnchor) reasons.push("data_pipeline_anchor_missing");
-    return { decision: "reject", matchedStages, reasons };
+  const excluded = EXCLUSION_RULES.find(({ terms }) => matchesAny(corpus, terms));
+  if (input.originalSourceAvailable === false) {
+    return assessment(
+      "reject",
+      [],
+      ["original_source_missing"],
+      embodimentAnchor,
+      productionImpact,
+    );
+  }
+  if (excluded) {
+    return assessment("reject", [], [excluded.reason], embodimentAnchor, productionImpact);
+  }
+  if (NO_PRODUCTION_IMPACT_CUES.some((cue) => corpus.includes(normalize(cue)))) {
+    return assessment(
+      "reject",
+      [],
+      ["data_pipeline_anchor_missing"],
+      embodimentAnchor,
+      productionImpact,
+    );
+  }
+  if (
+    normalize(input.category) === "financing" &&
+    !matchesAny(corpus, ["data provider", "data service", "数据服务商"])
+  ) {
+    return assessment(
+      "reject",
+      [],
+      ["excluded_financing_only"],
+      embodimentAnchor,
+      productionImpact,
+    );
   }
 
-  if (matchedSignalCount < 2) {
-    return {
-      decision: "review",
+  if (!embodimentAnchor.matched || !productionImpact.matched) {
+    const reasons: string[] = [];
+    if (!embodimentAnchor.matched) reasons.push("embodied_anchor_missing");
+    if (!productionImpact.matched) reasons.push("data_pipeline_anchor_missing");
+    return assessment("reject", matchedStages, reasons, embodimentAnchor, productionImpact);
+  }
+
+  if (matchedSignalCount < 2 || UNCERTAINTY_CUES.some((cue) => corpus.includes(normalize(cue)))) {
+    return assessment(
+      "review",
       matchedStages,
-      reasons: [
+      [
         "data_impact_too_thin",
+        "production_impact_ambiguous",
+        "embodied_anchor_matched",
         ...(matchedStages.length > 0 ? ["pipeline_stage_matched"] : []),
       ],
-    };
+      embodimentAnchor,
+      productionImpact,
+    );
   }
 
-  return {
-    decision: "include",
+  return assessment(
+    "include",
     matchedStages,
-    reasons: ["embodied_data_scope_matched", "pipeline_stage_matched"],
-  };
+    [
+      "embodied_data_scope_matched",
+      "embodied_anchor_matched",
+      "production_impact_matched",
+      "pipeline_stage_matched",
+    ],
+    embodimentAnchor,
+    productionImpact,
+  );
 }
 
-function positiveCorpus(input: EmbodiedDataRelevanceInput): string {
-  return [
-    input.title,
-    input.summary,
-    input.technicalInsight,
-    input.industryInsight,
-    input.businessValue,
-    input.category,
-    ...input.keywords,
-  ]
+function evidenceCorpus(input: EmbodiedDataRelevanceInput): string {
+  return [input.title, input.summary, input.technicalInsight, input.industryInsight]
     .map(normalize)
-    .filter((value) => !NEGATIVE_CUES.some((cue) => ` ${value} `.includes(cue)))
     .join("\n");
+}
+
+function assessment(
+  decision: EmbodiedDataRelevanceAssessment["decision"],
+  matchedStages: EmbodiedPipelineStage[],
+  reasons: string[],
+  embodimentAnchor: EmbodiedDataRelevanceEvidence,
+  productionImpact: EmbodiedDataRelevanceEvidence,
+): EmbodiedDataRelevanceAssessment {
+  return { decision, matchedStages, reasons, embodimentAnchor, productionImpact };
+}
+
+function evidence(matchedTerms: string[]): EmbodiedDataRelevanceEvidence {
+  const uniqueTerms = [...new Set(matchedTerms)].sort();
+  return { matched: uniqueTerms.length > 0, matchedTerms: uniqueTerms };
 }
 
 function normalize(value: string): string {
@@ -207,5 +303,19 @@ function normalize(value: string): string {
 }
 
 function matchesAny(corpus: string, terms: readonly string[]): boolean {
-  return terms.some((term) => corpus.includes(normalize(term)));
+  return findMatchedTerms(corpus, terms).length > 0;
+}
+
+function findMatchedTerms(corpus: string, terms: readonly string[]): string[] {
+  return terms.filter((term) => hasPositiveOccurrence(corpus, normalize(term)));
+}
+
+function hasPositiveOccurrence(corpus: string, term: string): boolean {
+  let offset = corpus.indexOf(term);
+  while (offset >= 0) {
+    const prefix = corpus.slice(Math.max(0, offset - 24), offset);
+    if (!NEGATION_PREFIXES.some((cue) => prefix.endsWith(cue))) return true;
+    offset = corpus.indexOf(term, offset + term.length);
+  }
+  return false;
 }

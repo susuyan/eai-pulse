@@ -31,21 +31,18 @@ describe("GitHub source governance workflows", () => {
     expect(audit.lastIndexOf("npm run ops:reconcile")).toBeLessThan(
       audit.lastIndexOf("npm run export"),
     );
-    expect(audit.indexOf("git show origin/main:data/reports/system-evaluation.json")).toBeLessThan(
-      audit.indexOf("--output=data/reports/system-evaluation.json"),
-    );
     expect(audit.indexOf("npm run db:snapshot -- merge")).toBeLessThan(
-      audit.indexOf("--output=data/reports/system-evaluation.json"),
+      audit.indexOf('--output="$RUNNER_TEMP/source-audit-evaluation.json"'),
     );
     expect(audit.lastIndexOf("npm run ops:reconcile")).toBeLessThan(
-      audit.indexOf("--output=data/reports/system-evaluation.json"),
+      audit.indexOf('--output="$RUNNER_TEMP/source-audit-evaluation.json"'),
     );
-    expect(audit.indexOf("--output=data/reports/system-evaluation.json")).toBeLessThan(
+    expect(audit.indexOf('--output="$RUNNER_TEMP/source-audit-evaluation.json"')).toBeLessThan(
       audit.indexOf("npm run db:snapshot -- write"),
     );
-    expect(audit).toContain(
-      "git add -- data/reports/source-health.json data/reports/system-evaluation.json data/snapshot/v1.json",
-    );
+    expect(audit).toContain("git add -- data/reports/source-health.json data/snapshot/v1.json");
+    expect(audit).not.toContain("npm run activate:auto");
+    expect(audit).not.toContain("--persist");
     expect(refresh.indexOf("git fetch origin main")).toBeLessThan(
       refresh.indexOf("npm run db:snapshot -- merge"),
     );
@@ -149,7 +146,8 @@ describe("GitHub source governance workflows", () => {
       refresh.indexOf("npm run --silent research:impact -- --skip-seed"),
     );
     expect(refresh).toContain("Observe direct research feeds in shadow");
-    expect(refresh).toContain('npm run collect -- --source="$source"');
+    expect(refresh).toContain('npm run collect -- --scope=embodied-data --source="$source"');
+    expect(refresh).toContain("npm run collect -- --scope=embodied-data");
     expect(refresh).toContain("microsoft-research google-research");
     expect(refresh).toContain(
       "was not collected; its lifecycle state is unchanged and the batch will continue",
@@ -279,6 +277,8 @@ describe("GitHub source governance workflows", () => {
     expect(guard).toContain("gh workflow run data-refresh.yml --ref main --field mode=incremental");
     expect(guard).not.toContain("publish_weekly=true");
     expect(guard).toContain("--baseline=data/reports/system-evaluation.json");
+    expect(guard).toContain(".embodiedQuality.genericAILeak.numerator == 0");
+    expect(monitor).toContain(".evaluationAsOf and .gateMode and .embodiedQuality");
     expect(guard).toContain('--summary="$GITHUB_STEP_SUMMARY"');
     expect(guard.indexOf("Upload evaluation evidence")).toBeLessThan(
       guard.indexOf("Update the single monitor incident"),

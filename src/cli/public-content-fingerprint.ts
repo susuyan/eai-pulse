@@ -5,10 +5,12 @@ import { fileURLToPath } from "node:url";
 
 const volatileKeys = new Set(["generatedAt", "finishedAt", "lastCheckedAt", "latestItemAt"]);
 export const PUBLIC_CONTENT_FILES = [
-  "timeline.json",
-  "signals.json",
+  "events.json",
+  "pipeline.json",
+  "assets.json",
+  "peers.json",
+  "sources.json",
   "scout.json",
-  "narratives.json",
   "product.json",
 ] as const;
 
@@ -20,7 +22,6 @@ export function fingerprintPublicContent(payloads: unknown[]): string {
 export async function runPublicContentFingerprintCli(args = process.argv.slice(2)): Promise<void> {
   const dataDir = resolve(valueFor(args, "--dir") ?? "dist/data");
   const files: string[] = [...PUBLIC_CONTENT_FILES];
-  if (args.includes("--include-sources")) files.push("sources.json");
   const payloads = await Promise.all(
     files.map(async (file) => JSON.parse(await readFile(resolve(dataDir, file), "utf8"))),
   );

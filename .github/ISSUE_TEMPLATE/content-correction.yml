@@ -29,7 +29,7 @@ body:
     attributes:
       label: Agent Pulse URL or record identifier
       description: Link to the affected page, event, source, or record.
-      placeholder: https://barretlee.github.io/agent-pulse/...
+      placeholder: https://susuyan.github.io/eai-pulse/...
     validations:
       required: true
 

@@ -51,11 +51,13 @@ export async function clusterSignals(
       continue;
     }
     let eventCreated = false;
-    let event = events.find((candidate) =>
-      belongsToEvent(
-        { title: signal.title, publishedAt: signal.published_at },
-        { title: candidate.title, happenedAt: candidate.happened_at },
-      ),
+    let event = events.find(
+      (candidate) =>
+        candidate.content_scope === signal.content_scope &&
+        belongsToEvent(
+          { title: signal.title, publishedAt: signal.published_at },
+          { title: candidate.title, happenedAt: candidate.happened_at },
+        ),
     );
     if (!event) {
       const score = eventabilityScore(signal, source);
@@ -97,7 +99,8 @@ export async function clusterSignals(
         manual_override: 0,
         happened_at: signal.published_at,
         published_at: null,
-        content_scope: "legacy-ai",
+        readiness_blockers_json: "[]",
+        content_scope: signal.content_scope,
         created_at: timestamp,
         updated_at: timestamp,
       } satisfies EventRow;
@@ -117,6 +120,7 @@ export async function clusterSignals(
     if (eventCreated) {
       const candidates = await repository.listDeferredSignalsNear(event.happened_at);
       for (const candidate of candidates) {
+        if (candidate.content_scope !== event.content_scope) continue;
         if (
           !belongsToEvent(
             { title: candidate.title, publishedAt: candidate.published_at },

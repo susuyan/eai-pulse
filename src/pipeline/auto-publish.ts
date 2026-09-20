@@ -1,8 +1,9 @@
 /** Autonomous publication behind deterministic evidence and readiness gates. */
 
 import type { Kysely } from "kysely";
-import { now } from "../db/repository.js";
+import { now, parseJson } from "../db/repository.js";
 import type { DatabaseSchema } from "../db/types.js";
+import { assessEmbodiedDataRelevance } from "../domain/embodied-data-relevance.js";
 import { findEventMergeCandidates } from "./event-merge.js";
 import { evaluateEventReadiness } from "./readiness.js";
 import { scoutPublicationDecision } from "./scout.js";
@@ -12,6 +13,7 @@ export interface PublicationPreparationResult {
   published: number;
   blocked: number;
   eventIds: string[];
+  blockersByEvent: Record<string, string[]>;
   errors: string[];
 }
 
@@ -43,24 +45,55 @@ export async function autoPublishReadyEvents(
     published: 0,
     blocked: 0,
     eventIds: [],
+    blockersByEvent: {},
     errors: [],
   };
   const events = await db.selectFrom("events").selectAll().where("status", "=", "review").execute();
   for (const event of events) {
     try {
       const readiness = await evaluateEventReadiness(db, event.id);
-      if (readiness.status === "ready") {
+      const relevance = assessEmbodiedDataRelevance({
+        title: event.title,
+        summary: event.summary,
+        technicalInsight: event.technical_insight,
+        industryInsight: event.industry_insight,
+        businessValue: event.business_value,
+        category: event.category,
+        keywords: parseJson<string[]>(event.keywords_json, []),
+      });
+      const blockers = [
+        ...readiness.blockers,
+        ...(relevance.decision === "include"
+          ? []
+          : [
+              "relevance_not_included",
+              ...relevance.reasons.map((reason) => `relevance:${reason}`),
+            ]),
+      ];
+      if (readiness.status === "ready" && relevance.decision === "include") {
         result.ready += 1;
         result.eventIds.push(event.id);
         await db
           .updateTable("events")
-          .set({ status: "published", published_at: now(), updated_at: now() })
+          .set({
+            status: "published",
+            published_at: now(),
+            readiness_blockers_json: "[]",
+            updated_at: now(),
+          })
           .where("id", "=", event.id)
           .where("status", "=", "review")
           .execute();
         result.published += 1;
       } else {
         result.blocked += 1;
+        result.blockersByEvent[event.id] = blockers;
+        await db
+          .updateTable("events")
+          .set({ readiness_blockers_json: JSON.stringify(blockers), updated_at: now() })
+          .where("id", "=", event.id)
+          .where("status", "=", "review")
+          .execute();
       }
     } catch (error) {
       result.errors.push(`Event ${event.id}: ${message(error)}`);

@@ -16,12 +16,64 @@ setupSignalBrowser();
 setupTrendModules();
 setupGithubStarCount();
 setupBackToTop();
+setupPipelineFocus();
 const timeline = document.querySelector("[data-timeline]");
 if (timeline) import("./timeline.js").then(({ setupTimeline }) => setupTimeline(timeline));
+const embodiedTimeline = document.querySelector("[data-embodied-timeline]");
+if (embodiedTimeline) {
+  import("./timeline.js").then(({ setupEmbodiedTimeline }) =>
+    setupEmbodiedTimeline(embodiedTimeline),
+  );
+}
 setupCardFilters();
 setupSourceFilters();
 setupMobileListPagination();
 setupStockWidgets();
+
+function setupPipelineFocus() {
+  const root = document.querySelector("[data-embodied-pipeline]");
+  if (!root) return;
+
+  const buttons = [...root.querySelectorAll("[data-pipeline-filter]")];
+  const stages = [...root.querySelectorAll("[data-pipeline-stage]")];
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const selectStage = (requestedSlug, updateUrl = true) => {
+    const slug =
+      requestedSlug === "all" ||
+      stages.some((stage) => stage.dataset.pipelineStage === requestedSlug)
+        ? requestedSlug
+        : "all";
+    buttons.forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.pipelineFilter === slug));
+      if (button.dataset.pipelineFilter === slug) button.setAttribute("aria-current", "true");
+      else button.removeAttribute("aria-current");
+    });
+    stages.forEach((stage) => {
+      stage.hidden = slug !== "all" && stage.dataset.pipelineStage !== slug;
+    });
+    const selected = stages.find((stage) => stage.dataset.pipelineStage === slug);
+    if (updateUrl) {
+      history.replaceState(null, "", selected ? `#${encodeURIComponent(slug)}` : location.pathname);
+    }
+    selected?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+  };
+
+  buttons.forEach((button, index) => {
+    button.addEventListener("click", () => selectStage(button.dataset.pipelineFilter || "all"));
+    button.addEventListener("keydown", (event) => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      const offset = event.key === "ArrowRight" ? 1 : -1;
+      buttons[(index + offset + buttons.length) % buttons.length]?.focus();
+    });
+  });
+  root.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    selectStage("all");
+    buttons[0]?.focus();
+  });
+  selectStage(decodeURIComponent(location.hash.slice(1)) || "all", false);
+}
 
 function runWhenIdle(callback, timeout = 2400) {
   if ("requestIdleCallback" in window) {

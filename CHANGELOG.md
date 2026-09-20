@@ -12,6 +12,14 @@
 
 ## [Unreleased]
 
+### 具身数据生产公开站
+
+- 公开产品已从通用 AI 行业信息流切换为具身数据生产全链路认知系统，围绕关键变化、六阶段管线、数据资产、同行能力、来源覆盖与行动建议六个视图组织 36 个可回链 Event。
+- 当前公开数据包含 12 个 Dataset、4 个 Standard、6 个 CollectionMethod 和 15 个同行能力档案；事实、推断、能力声明与待验证机会继续分层表达。
+- 36 个具身数据来源保持 `shadow`，作为发现与观察目录；没有来源被描述为 `active` 生产采集器。SQLite 仍是零配置默认数据库，尚未通过真实 MySQL 集成验证，因此不宣称 MySQL 兼容。
+- 公开导出只包含 allowlist DTO。历史通用 AI 数据、原始 payload、数据库字段、管理备注和保留的 provenance 不进入 Pages；旧通用路由返回新的查找说明，不映射到无关内容。
+- 中英文页面、事件详情、JSON DTO、Sitemap、RSS、`llms.txt` 与公开内容指纹统一使用具身数据领域契约；完整性门禁阻止旧六主线、模型价格与旧路由泄漏。
+
 ### 开发中
 
 - 补齐 Monitor 告警恢复闭环：健康检查恢复为 `ok` 时，非 dry-run 会向既有 critical Issue 追加评测水位与来源健康证据并自动关闭；默认手动 dry-run 仍保持只读。
@@ -19,8 +27,8 @@
 - 升级静态服务、XML 解析、HTTP、MySQL 与测试工具链依赖，清零当前 npm 安全告警；CI 新增生产依赖审计门禁，锁文件出现已知漏洞时立即失败。
 - 修复运营评测的非单调来源覆盖：健康来源从 observation 晋级 active 时不再因观察数下降而扣分；Quality Guard 同时兼容新版 GitHub CLI 的分页输出约束，刷新冷却检查不再因互斥参数失败。
 - 修复通用网页来源对链接属性顺序、英文月份缩写和无日期卡片的识别：adapter 只输出具备标题、同站公开 URL 与可信发布日期的对象，并将 Databricks 切换到可用的一方 Feed；来源恢复仍需经过连续健康检查与既有生命周期门禁。
-- 新增具身数据方向的实验性领域基础：受控词表、Event DataProfile、可审计 content scope 和只读迁移预览。公开站、现有数据和发布规则尚未切换。
-- 具身数据实验性领域基础新增 Dataset、Standard、CollectionMethod 与同行能力声明对象，支持严格校验、Event 证据关联和事务性快照恢复；危险证据 URL、缺失引用、未知 schema 版本与事件合并证据丢失会被阻断，对象 fixture 尚未进入当前数据或公开站。
+- 建立具身数据受控词表、Event DataProfile、可审计 content scope 和迁移预览，并在通过范围、证据与发布门禁后完成公开切换。
+- Dataset、Standard、CollectionMethod 与同行能力声明对象进入当前快照和公开 DTO；危险证据 URL、缺失引用、未知 schema 版本与事件合并证据丢失继续被阻断。
 - GitHub Pages、每日数据刷新与健康监控根据当前仓库动态生成公开站 URL，并支持通过 Actions Variable 覆盖；健康监控按来源健康标签与审计 marker 查找 Issue，不再依赖上游仓库固定编号，使 fork 可独立建立生产发布闭环。
 - 新增根路径 `llms.txt`，为 AI Agent 提供站点说明、事实边界、核心页面与公开 JSON DTO 索引；Footer 增加轻量高亮入口，并通过页面元数据提升机器发现能力。
 - 修复事件时间线筛选 tabs 在桌面端无法用鼠标拖拽、页面加载时又会自动滚动居中的问题；现在拖拽只滚动筛选条，且仅在用户点击筛选项后自动居中。

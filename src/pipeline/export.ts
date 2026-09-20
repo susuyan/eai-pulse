@@ -23,6 +23,7 @@ import type {
   PublicTrack,
   StaticSiteModel,
 } from "./static-site/dto.js";
+import { buildEmbodiedPublicData } from "./static-site/embodied-intelligence.js";
 import { githubDataAtBuildTime } from "./static-site/github.js";
 import { renderLlmsTxt } from "./static-site/llms.js";
 import type { StaticPage } from "./static-site/pages.js";
@@ -97,19 +98,19 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
       persist: true,
     }));
   const narratives = await loadMergedIndustryNarratives(config.rootDir);
-  const [events, tracks, actors, resources, view, scout, latestSourceChecks, signals] =
-    await Promise.all([
+  const [events, tracks, actors, resources, scout, latestSourceChecks, signals] = await Promise.all(
+    [
       repository.publicEvents(),
       repository.listTracks(),
       repository.listActors(),
       repository.listResources(),
-      repository.getDefaultView(),
       repository.publicScoutInsights(),
       repository.latestSourceChecks(),
       repository.publicSignals(),
-    ]);
+    ],
+  );
   const sources = (await repository.listSources()).filter(
-    (source) => source.lifecycle_status !== "retired",
+    (source) => source.content_scope === "embodied-data" && source.lifecycle_status !== "retired",
   );
 
   const generatedAt = new Date().toISOString();
@@ -117,6 +118,12 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
     join(config.rootDir, "data/reports/research-impact.json"),
   );
   const eventRelations = await repository.publicEventRelations(events.map((event) => event.id));
+  const embodiedData = await buildEmbodiedPublicData(db, repository, {
+    events,
+    tracks,
+    actors,
+    eventTracks: eventRelations.tracks,
+  });
   const enrichedEvents = events.map((event) => ({
     ...event,
     tracks: eventRelations.tracks.get(event.id) ?? [],
@@ -239,6 +246,7 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
       categories: [...new Set(sources.map((source) => source.source_category))],
     },
   };
+  const publicProductData = toEmbodiedPublicProduct(productData);
 
   await rm(config.distDir, { recursive: true, force: true });
   await mkdir(join(config.distDir, "data"), { recursive: true });
@@ -246,51 +254,39 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
   await optimizeStaticAssets(config.distDir);
 
   await Promise.all([
-    writeJson(join(config.distDir, "data/timeline.json"), {
+    writeJson(join(config.distDir, "data/events.json"), {
       schemaVersion: 1,
       generatedAt,
       siteUrl: config.PUBLIC_SITE_URL,
-      events: enrichedEvents,
+      events: embodiedData.events,
     }),
-    writeJson(join(config.distDir, "data/tracks.json"), publicTracks),
+    writeJson(join(config.distDir, "data/pipeline.json"), {
+      schemaVersion: 1,
+      generatedAt,
+      stages: embodiedData.pipelineStages,
+    }),
+    writeJson(join(config.distDir, "data/assets.json"), {
+      schemaVersion: 1,
+      generatedAt,
+      datasets: embodiedData.datasets,
+      standards: embodiedData.standards,
+      collectionMethods: embodiedData.collectionMethods,
+    }),
+    writeJson(join(config.distDir, "data/peers.json"), {
+      schemaVersion: 1,
+      generatedAt,
+      peers: embodiedData.peers,
+    }),
     writeJson(join(config.distDir, "data/scout.json"), {
       schemaVersion: 1,
       generatedAt,
       insights: publicScout,
     }),
-    writeJson(join(config.distDir, "data/narratives.json"), {
-      schemaVersion: 1,
-      generatedAt,
-      ...narratives,
-    }),
     writeJson(join(config.distDir, "data/product.json"), {
       schemaVersion: 1,
-      ...productData,
+      ...publicProductData,
     }),
     writeJson(join(config.distDir, "data/sources.json"), publicSources),
-    writeJson(join(config.distDir, "data/signals.json"), {
-      schemaVersion: 1,
-      generatedAt,
-      disclaimer:
-        "Source observations are not verified public facts. Follow the original URL and use published Events for evidence-backed judgments.",
-      signals: publicSignals,
-    }),
-    writeJson(join(config.distDir, "data/influencers.json"), publicInfluencers),
-    writeJson(join(config.distDir, "data/actors.json"), publicActors),
-    writeJson(
-      join(config.distDir, "data/view.json"),
-      view
-        ? {
-            slug: view.slug,
-            name: view.name,
-            description: view.description,
-            filters: parseJson(view.filters_json, {}),
-            layout: parseJson(view.layout_json, {}),
-            theme: parseJson(view.theme_json, {}),
-          }
-        : {},
-    ),
-    writeJson(join(config.distDir, "data/github.json"), github),
   ]);
 
   const model: StaticSiteModel = {
@@ -322,8 +318,14 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
         })),
       })),
     } satisfies IndustryNarratives,
-    product: productData,
+    product: publicProductData,
     github,
+    embodiedEvents: embodiedData.events,
+    pipelineStages: embodiedData.pipelineStages,
+    datasets: embodiedData.datasets,
+    standards: embodiedData.standards,
+    collectionMethods: embodiedData.collectionMethods,
+    peers: embodiedData.peers,
   };
 
   const allPages = renderStaticPages(model);
@@ -332,6 +334,7 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
   await Promise.all([
     writeSitemap(allPages, config.PUBLIC_SITE_URL, config.distDir),
     writeRobotsTxt(config.PUBLIC_SITE_URL, config.distDir),
+    writeRssFeed(embodiedData.events, config.PUBLIC_SITE_URL, generatedAt, config.distDir),
     writeFile(join(config.distDir, "llms.txt"), renderLlmsTxt(model), "utf8"),
   ]);
 
@@ -345,6 +348,52 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
     signals: publicSignals.length,
     version: productVersion,
     generatedAt,
+  };
+}
+
+function toEmbodiedPublicProduct(product: ProductData): ProductData {
+  const capabilitySlugs = new Set([
+    "continuous-data-refresh",
+    "embodied-data-foundation",
+    "primary-source-gate",
+    "source-lifecycle",
+    "resilient-fetch",
+    "source-observability",
+    "source-contract",
+    "incremental-sync",
+    "normalize",
+    "dedupe",
+    "event-clustering",
+    "event-convergence",
+    "claim-evidence",
+    "scout",
+    "publication-readiness",
+    "static-release",
+    "content-rights-boundary",
+    "repository-snapshot",
+    "security",
+  ]);
+  const relevantReleaseText =
+    /具身数据|数据管线|数据资产|同行能力|content scope|Dataset|Standard|CollectionMethod|public switch|readiness/i;
+  const legacyOrStaleText =
+    /模型价格|六个领域|尚未切换|尚未进入当前数据|model pricing|six strategic lines/i;
+
+  return {
+    ...product,
+    capabilities: product.capabilities.filter((item) => capabilitySlugs.has(item.slug)),
+    roadmap: [],
+    releases: product.releases
+      .filter((release) => release.status === "unreleased")
+      .map((release) => ({
+        ...release,
+        capabilities: release.capabilities.filter(
+          (item) => relevantReleaseText.test(item) && !legacyOrStaleText.test(item),
+        ),
+        changes: release.changes.filter(
+          (item) => relevantReleaseText.test(item) && !legacyOrStaleText.test(item),
+        ),
+      })),
+    evaluation: null,
   };
 }
 
@@ -381,7 +430,7 @@ async function writeSitemap(pages: StaticPage[], siteUrl: string, distDir: strin
   const routes = new Map<string, { zhPath: string; enPath: string | null }>();
 
   for (const page of pages) {
-    const path = page.path === "404.html" ? null : page.path;
+    const path = page.path.endsWith("404.html") ? null : page.path;
     if (!path) continue;
 
     if (path.startsWith("en/")) {
@@ -451,6 +500,40 @@ Disallow: /admin/
 Sitemap: ${baseUrl}sitemap.xml
 `;
   await writeFile(join(distDir, "robots.txt"), content, "utf8");
+}
+
+async function writeRssFeed(
+  events: StaticSiteModel["embodiedEvents"],
+  siteUrl: string,
+  generatedAt: string,
+  distDir: string,
+): Promise<void> {
+  const baseUrl = siteUrl.endsWith("/") ? siteUrl : `${siteUrl}/`;
+  const items = [...events]
+    .sort((left, right) => Date.parse(right.happenedAt) - Date.parse(left.happenedAt))
+    .map((event) => {
+      const url = new URL(`events/${event.slug}/`, baseUrl).toString();
+      return `    <item>
+      <title>${escapeXml(event.title)}</title>
+      <link>${escapeXml(url)}</link>
+      <guid isPermaLink="true">${escapeXml(url)}</guid>
+      <pubDate>${new Date(event.publishedAt ?? event.happenedAt).toUTCString()}</pubDate>
+      <description>${escapeXml(event.factSummary)}</description>
+    </item>`;
+    })
+    .join("\n");
+  const rss = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Agent Pulse · Embodied Data Intelligence</title>
+    <link>${escapeXml(baseUrl)}</link>
+    <description>Evidence-backed changes in embodied-data production.</description>
+    <lastBuildDate>${new Date(generatedAt).toUTCString()}</lastBuildDate>
+${items}
+  </channel>
+</rss>
+`;
+  await writeFile(join(distDir, "feed.xml"), rss, "utf8");
 }
 
 function escapeXml(value: string): string {

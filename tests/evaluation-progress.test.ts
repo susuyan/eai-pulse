@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { EmbodiedDataQuality } from "../src/pipeline/embodied-data-quality.js";
 import type { EvaluationDimension } from "../src/pipeline/evaluate.js";
 import { parseEvaluationInstant } from "../src/pipeline/evaluation-context.js";
 import {
@@ -69,6 +70,33 @@ function reportV2(evaluationAsOf: string, gateMode: "change" | "operational") {
     schemaVersion: 2 as const,
     evaluationAsOf,
     gateMode,
+  };
+}
+
+function embodiedQuality(leaks = 0): EmbodiedDataQuality {
+  const passing = {
+    numerator: 1,
+    denominator: 1,
+    score: 100,
+    status: "pass" as const,
+    evidenceAgeHours: 1,
+    reasonCodes: [],
+  };
+  return {
+    stageCoverage: passing,
+    tier1EvidenceRatio: passing,
+    dataProfileCompleteness: passing,
+    peerClaimEvidenceRatio: passing,
+    genericAILeak: {
+      numerator: leaks,
+      denominator: 1,
+      score: leaks === 0 ? 100 : 0,
+      status: leaks === 0 ? ("pass" as const) : ("fail" as const),
+      evidenceAgeHours: 1,
+      reasonCodes: leaks === 0 ? [] : ["generic_ai_leak"],
+    },
+    passed: leaks === 0,
+    reasonCodes: leaks === 0 ? [] : ["generic_ai_leak"],
   };
 }
 
@@ -174,6 +202,74 @@ describe("system evaluation progress", () => {
       passed: true,
       scoreDelta: 0,
       regressions: [],
+    });
+  });
+
+  it("authorizes one scoped baseline transition only with matching snapshots and passing embodied quality", () => {
+    const baseline = buildSystemEvaluationReport(
+      evaluation([dimension({ slug: "coverage", score: 80 })]),
+      { asOf: new Date("2026-07-14T00:00:01.000Z"), gateMode: "operational", persist: false },
+    );
+    const current = buildSystemEvaluationReport(
+      {
+        ...evaluation([dimension({ slug: "coverage", score: 30 })]),
+        overallScore: 30,
+        rawWeightedScore: 30,
+        evidenceCoverage: 20,
+      },
+      { asOf: new Date("2026-07-14T00:00:01.000Z"), gateMode: "change", persist: false },
+    );
+    const transitionEvaluation = buildSystemEvaluationReport(
+      { ...evaluation([dimension()]), embodiedQuality: embodiedQuality(0) },
+      { asOf: new Date("2026-09-20T12:00:00.000Z"), gateMode: "operational", persist: false },
+    );
+    const scopeTransition = {
+      candidateBaseGitSha: "8ce4b02",
+      manifestBaseGitSha: "8ce4b02",
+      candidateBaseSnapshotSha256: "old-snapshot",
+      manifestBaseSnapshotSha256: "old-snapshot",
+      currentSnapshotSha256: "new-snapshot",
+      switchSnapshotSha256: "new-snapshot",
+      transitionEvaluation,
+    };
+
+    expect(compareSystemEvaluations(current, baseline, scopeTransition)).toMatchObject({
+      passed: true,
+      scopeTransition: {
+        authorized: true,
+        baseGitSha: "8ce4b02",
+        reasonCodes: [],
+      },
+      regressions: expect.arrayContaining(["overall score regressed from 60 to 30"]),
+    });
+
+    expect(
+      compareSystemEvaluations(current, baseline, {
+        ...scopeTransition,
+        candidateBaseGitSha: "future-base",
+      }),
+    ).toMatchObject({
+      passed: false,
+      scopeTransition: {
+        authorized: false,
+        reasonCodes: expect.arrayContaining(["base_git_sha_mismatch"]),
+      },
+    });
+  });
+
+  it("fails the comparison absolutely when one generic AI item leaks", () => {
+    const baseline = buildSystemEvaluationReport(
+      { ...evaluation([dimension()]), embodiedQuality: embodiedQuality(0) },
+      { asOf: new Date("2026-07-14T00:00:01.000Z"), gateMode: "operational", persist: false },
+    );
+    const current = buildSystemEvaluationReport(
+      { ...evaluation([dimension({ score: 100 })]), embodiedQuality: embodiedQuality(1) },
+      { asOf: new Date("2026-07-14T00:00:01.000Z"), gateMode: "change", persist: false },
+    );
+
+    expect(compareSystemEvaluations(current, baseline)).toMatchObject({
+      passed: false,
+      regressions: expect.arrayContaining(["generic_ai_leak"]),
     });
   });
 

@@ -142,5 +142,342 @@
       "decision": "reject",
       "matchedStages": []
     }
+  },
+  {
+    "name": "include task taxonomy tied to collection requirements",
+    "input": {
+      "title": "Robot task taxonomy defines collection requirements",
+      "summary": "The task definition maps scenario taxonomy to data requirements and teleoperation routes.",
+      "technicalInsight": "Each task specifies observations, actions, and metadata.",
+      "industryInsight": "The taxonomy makes collection plans comparable.",
+      "businessValue": "Production owners can create auditable work orders.",
+      "category": "standard",
+      "keywords": ["robot", "task definition", "data requirement", "teleoperation"]
+    },
+    "expected": {
+      "decision": "include",
+      "matchedStages": ["demand-definition", "acquisition-route", "data-engineering-standards"]
+    }
+  },
+  {
+    "name": "include simulation dataset with training feedback",
+    "input": {
+      "title": "Humanoid simulation dataset reports training effect",
+      "summary": "The synthetic data release compares simulation data mixes and policy success rate.",
+      "technicalInsight": "Ablations connect demonstrations to model performance.",
+      "industryInsight": "Teams can choose a measured hybrid acquisition route.",
+      "businessValue": "The evidence reduces physical collection experiments.",
+      "category": "dataset",
+      "keywords": ["humanoid", "synthetic data", "dataset", "success rate"]
+    },
+    "expected": {
+      "decision": "include",
+      "matchedStages": ["acquisition-route", "quality-training-feedback"]
+    }
+  },
+  {
+    "name": "include wearable multimodal demonstration capture",
+    "input": {
+      "title": "Wearable robot system synchronizes multimodal capture",
+      "summary": "The data collection system records RGB-D, joint state, and actions from demonstrations.",
+      "technicalInsight": "Timestamp synchronization preserves observation-action alignment.",
+      "industryInsight": "The route expands manipulation data supply.",
+      "businessValue": "Teams can compare modality coverage and collection throughput.",
+      "category": "capture-system",
+      "keywords": ["robot", "data collection", "RGB-D", "joint state"]
+    },
+    "expected": {
+      "decision": "include",
+      "matchedStages": ["acquisition-route", "multimodal-capture"]
+    }
+  },
+  {
+    "name": "include data factory throughput and quality controls",
+    "input": {
+      "title": "Humanoid data factory publishes throughput and acceptance thresholds",
+      "summary": "The operation reports demonstration hours, annotation throughput, and trajectory validation.",
+      "technicalInsight": "Failed episodes are rejected before dataset delivery.",
+      "industryInsight": "The release exposes comparable production operations.",
+      "businessValue": "Buyers can audit capacity and data quality together.",
+      "category": "operations",
+      "keywords": ["humanoid", "data factory", "collection throughput", "data quality"]
+    },
+    "expected": {
+      "decision": "include",
+      "matchedStages": ["acquisition-route", "production-operations", "quality-training-feedback"]
+    }
+  },
+  {
+    "name": "include robot episode interchange format",
+    "input": {
+      "title": "Robot episode interchange format standardizes provenance",
+      "summary": "The standard defines schema, metadata, and data format for manipulation datasets.",
+      "technicalInsight": "The format preserves synchronized observations and actions.",
+      "industryInsight": "Shared contracts reduce conversion loss.",
+      "businessValue": "Suppliers can deliver against one acceptance standard.",
+      "category": "standard",
+      "keywords": ["robot", "interchange format", "metadata", "dataset"]
+    },
+    "expected": { "decision": "include", "matchedStages": ["data-engineering-standards"] }
+  },
+  {
+    "name": "include tactile dataset benchmark",
+    "input": {
+      "title": "Dexterous-hand tactile dataset links sensors to success rate",
+      "summary": "The release provides tactile, force-torque, and joint-state demonstrations.",
+      "technicalInsight": "Ablations measure each modality's training effect.",
+      "industryInsight": "The benchmark connects capture choices to outcomes.",
+      "businessValue": "Teams can prioritize modalities using measured effects.",
+      "category": "dataset",
+      "keywords": ["dexterous", "dataset", "tactile", "training effect"]
+    },
+    "expected": {
+      "decision": "include",
+      "matchedStages": ["acquisition-route", "multimodal-capture", "quality-training-feedback"]
+    }
+  },
+  {
+    "name": "include autonomous vehicle data operations",
+    "input": {
+      "title": "Autonomous vehicle fleet updates data operations",
+      "summary": "The robotic fleet publishes data collection, multimodal coverage, and annotation throughput.",
+      "technicalInsight": "The pipeline synchronizes RGB, point-cloud, and action traces.",
+      "industryInsight": "The update changes embodied training data supply.",
+      "businessValue": "Teams can benchmark production capacity.",
+      "category": "operations",
+      "keywords": ["robotic", "data collection", "multimodal", "annotation throughput"]
+    },
+    "expected": {
+      "decision": "include",
+      "matchedStages": ["acquisition-route", "multimodal-capture", "production-operations"]
+    }
+  },
+  {
+    "name": "include annotation quality feedback loop",
+    "input": {
+      "title": "Robot annotation pipeline closes the quality feedback loop",
+      "summary": "The system compares annotation throughput, acceptance thresholds, and model performance.",
+      "technicalInsight": "Error categories flow back into trajectory validation.",
+      "industryInsight": "Data engineering changes become measurable in training.",
+      "businessValue": "Quality owners can prioritize corrections.",
+      "category": "quality",
+      "keywords": ["robot", "annotation throughput", "data quality", "model performance"]
+    },
+    "expected": {
+      "decision": "include",
+      "matchedStages": ["production-operations", "quality-training-feedback"]
+    }
+  },
+  {
+    "name": "include dataset provenance delivery contract",
+    "input": {
+      "title": "Embodied dataset contract adds provenance and thresholds",
+      "summary": "The robot data standard requires metadata, provenance, and acceptance thresholds.",
+      "technicalInsight": "The schema binds collection route, sensors, and validation.",
+      "industryInsight": "The contract makes delivery auditable.",
+      "businessValue": "Procurement can reject nonconforming data.",
+      "category": "standard",
+      "keywords": ["embodied", "dataset", "schema", "data quality"]
+    },
+    "expected": {
+      "decision": "include",
+      "matchedStages": ["data-engineering-standards", "quality-training-feedback"]
+    }
+  },
+  {
+    "name": "review teleoperation pilot without production evidence",
+    "input": {
+      "title": "Robot team starts a teleoperation pilot",
+      "summary": "The pilot may collect demonstrations, but no scale or modality evidence is available.",
+      "technicalInsight": "The operator workflow remains undisclosed.",
+      "industryInsight": "The route could matter after a production run.",
+      "businessValue": "Watch for verified output.",
+      "category": "pilot",
+      "keywords": ["robot", "teleoperation"]
+    },
+    "expected": { "decision": "review", "matchedStages": ["acquisition-route"] }
+  },
+  {
+    "name": "review dataset teaser without modality details",
+    "input": {
+      "title": "Humanoid team previews a future dataset",
+      "summary": "The company names a training dataset but does not disclose collection details.",
+      "technicalInsight": "Only a release teaser is available.",
+      "industryInsight": "The asset may matter after publication.",
+      "businessValue": "Keep it under review.",
+      "category": "dataset",
+      "keywords": ["humanoid", "dataset"]
+    },
+    "expected": { "decision": "review", "matchedStages": [] }
+  },
+  {
+    "name": "review unmeasured quality claim",
+    "input": {
+      "title": "Robot provider claims better data quality",
+      "summary": "The provider gives no acceptance threshold or training effect.",
+      "technicalInsight": "The improvement is not measurable.",
+      "industryInsight": "The claim needs a quality contract.",
+      "businessValue": "Request evidence before comparison.",
+      "category": "quality",
+      "keywords": ["robot", "data quality"]
+    },
+    "expected": { "decision": "review", "matchedStages": ["quality-training-feedback"] }
+  },
+  {
+    "name": "review draft robot schema",
+    "input": {
+      "title": "Draft robot data schema opens for comment",
+      "summary": "The draft introduces a schema but does not define metadata or interchange behavior.",
+      "technicalInsight": "The proposal is incomplete.",
+      "industryInsight": "It may affect delivery contracts after revision.",
+      "businessValue": "Track the next version.",
+      "category": "standard",
+      "keywords": ["robot", "schema"]
+    },
+    "expected": { "decision": "review", "matchedStages": ["data-engineering-standards"] }
+  },
+  {
+    "name": "review capture sensor with uncertain data impact",
+    "input": {
+      "title": "Humanoid camera module adds RGB-D capture",
+      "summary": "The hardware could support collection, but no pipeline change is documented.",
+      "technicalInsight": "Synchronization and output format are unknown.",
+      "industryInsight": "Data impact remains plausible but unverified.",
+      "businessValue": "Wait for a collection-system integration.",
+      "category": "hardware",
+      "keywords": ["humanoid", "RGB-D"]
+    },
+    "expected": { "decision": "review", "matchedStages": ["multimodal-capture"] }
+  },
+  {
+    "name": "review synthetic route without delivered data",
+    "input": {
+      "title": "Robotics lab proposes a synthetic data route",
+      "summary": "The method may generate demonstrations, but no dataset or training result is released.",
+      "technicalInsight": "The production yield is unknown.",
+      "industryInsight": "The approach needs a delivery artifact.",
+      "businessValue": "Monitor validation.",
+      "category": "research",
+      "keywords": ["robotics", "synthetic data"]
+    },
+    "expected": { "decision": "review", "matchedStages": ["acquisition-route"] }
+  },
+  {
+    "name": "reject Turing test result",
+    "input": {
+      "title": "AI agent passes a Turing test with a robot avatar",
+      "summary": "The result measures conversation and does not change data production.",
+      "technicalInsight": "No collection or quality method is involved.",
+      "industryInsight": "The result concerns general intelligence evaluation.",
+      "businessValue": "It has no operational data impact.",
+      "category": "research",
+      "keywords": ["robot", "Turing test"]
+    },
+    "expected": { "decision": "reject", "matchedStages": [] }
+  },
+  {
+    "name": "reject generic multimodal agent",
+    "input": {
+      "title": "Multimodal Agent reasons about robot images",
+      "summary": "The generic Agent answers questions from images and text.",
+      "technicalInsight": "The release changes inference only.",
+      "industryInsight": "No embodied collection or delivery change exists.",
+      "businessValue": "It is outside the production pipeline.",
+      "category": "model",
+      "keywords": ["robot", "multimodal agent"]
+    },
+    "expected": { "decision": "reject", "matchedStages": [] }
+  },
+  {
+    "name": "reject generic VLA architecture",
+    "input": {
+      "title": "VLA architecture adds a larger transformer",
+      "summary": "The robot model improves accuracy through architecture scaling.",
+      "technicalInsight": "Training data and collection remain unchanged.",
+      "industryInsight": "This is a model architecture result.",
+      "businessValue": "No direct data-production decision changes.",
+      "category": "research",
+      "keywords": ["VLA", "robot", "architecture"]
+    },
+    "expected": { "decision": "reject", "matchedStages": [] }
+  },
+  {
+    "name": "reject robot fundraising without data impact",
+    "input": {
+      "title": "Humanoid robot company raises a funding round",
+      "summary": "The announcement describes expansion but no collection or dataset change.",
+      "technicalInsight": "No production method is disclosed.",
+      "industryInsight": "Capital alone is not data-production evidence.",
+      "businessValue": "The transaction changes no pipeline decision.",
+      "category": "financing",
+      "keywords": ["humanoid", "fundraising"]
+    },
+    "expected": { "decision": "reject", "matchedStages": [] }
+  },
+  {
+    "name": "reject control-only paper",
+    "input": {
+      "title": "Robot control paper improves torque tracking",
+      "summary": "The control-only method changes a controller with the same training data.",
+      "technicalInsight": "The contribution is a control law.",
+      "industryInsight": "No collection or delivery impact is shown.",
+      "businessValue": "It is outside the data pipeline.",
+      "category": "research",
+      "keywords": ["robot", "control"]
+    },
+    "expected": { "decision": "reject", "matchedStages": [] }
+  },
+  {
+    "name": "reject perception-only benchmark",
+    "input": {
+      "title": "Robot perception benchmark ranks detectors",
+      "summary": "The perception-only benchmark reuses a dataset and changes no production method.",
+      "technicalInsight": "The result compares inference accuracy.",
+      "industryInsight": "It does not affect collection operations.",
+      "businessValue": "It is not a production signal.",
+      "category": "benchmark",
+      "keywords": ["robot", "dataset", "perception"]
+    },
+    "expected": { "decision": "reject", "matchedStages": [] }
+  },
+  {
+    "name": "reject dataset claim with no original source",
+    "input": {
+      "title": "Aggregator claims a large humanoid dataset exists",
+      "summary": "The post repeats a dataset size with no original source.",
+      "technicalInsight": "No release artifact can be verified.",
+      "industryInsight": "The claim cannot enter the corpus.",
+      "businessValue": "Do not use it for planning.",
+      "category": "dataset",
+      "keywords": ["humanoid", "dataset", "training data"],
+      "originalSourceAvailable": false
+    },
+    "expected": { "decision": "reject", "matchedStages": [] }
+  },
+  {
+    "name": "reject humanoid battery update",
+    "input": {
+      "title": "Humanoid robot receives a larger battery",
+      "summary": "Runtime increases without any collection or dataset change.",
+      "technicalInsight": "The update is limited to power hardware.",
+      "industryInsight": "No data-production problem changes.",
+      "businessValue": "It is outside the intelligence boundary.",
+      "category": "product",
+      "keywords": ["humanoid", "battery"]
+    },
+    "expected": { "decision": "reject", "matchedStages": [] }
+  },
+  {
+    "name": "reject robot event marketing announcement",
+    "input": {
+      "title": "Robot brand announces a developer conference",
+      "summary": "The event agenda covers product marketing without data production changes.",
+      "technicalInsight": "No collection, standard, or quality artifact is released.",
+      "industryInsight": "The announcement is promotional.",
+      "businessValue": "It does not change a production decision.",
+      "category": "event",
+      "keywords": ["robot", "conference"]
+    },
+    "expected": { "decision": "reject", "matchedStages": [] }
   }
 ]

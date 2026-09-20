@@ -2,56 +2,50 @@ import type { StaticSiteModel } from "./dto.js";
 
 export function renderLlmsTxt(model: StaticSiteModel): string {
   const baseUrl = ensureSlash(model.siteUrl);
+  const assetCount =
+    model.datasets.length + model.standards.length + model.collectionMethods.length;
 
   return `# Agent Pulse
 
-> Agent Pulse is a China-first, globally scoped AI industry evidence and decision system. It connects verified events, original evidence, industry trends, source observations, and clearly labeled action hypotheses.
+> Agent Pulse is an evidence-backed intelligence system for embodied-data production. It follows the production chain from demand definition through acquisition, multimodal capture, operations, data engineering, quality acceptance, and training feedback.
 
-Snapshot generated at ${model.generatedAt}. The public corpus contains ${model.events.length} published events, ${model.tracks.length} industry trends, ${model.sources.length} catalogued sources, ${model.signals.length} source observations, and ${model.scout.length} action hypotheses.
+Snapshot generated at ${model.generatedAt}. The public corpus contains ${model.embodiedEvents.length} published Events, ${model.pipelineStages.length} pipeline stages, ${assetCount} data assets, ${model.peers.length} peers, ${model.sources.length} sources, and ${model.scout.length} Scout hypotheses.
 
 Consumption guidance:
-- Start with published Events in \`data/timeline.json\` when answering factual questions. Keep each Event's fact summary separate from its analysis, forecast, and impact fields.
-- Follow the original evidence URLs attached to an Event when a claim needs verification or citation.
-- Treat \`data/signals.json\` as an observation feed, not as verified facts. A Signal may be useful for discovery but has not necessarily passed publication gates.
-- Treat industry narratives and action ideas as analysis or hypotheses. Preserve their uncertainty, counter-signals, and evidence links.
-- Prefer the newest \`generatedAt\` value. The Chinese pages are canonical; English pages are available under \`/en/\`.
-- Public data is an allowlisted summary. Do not infer access to raw collector payloads, private notes, credentials, or paywalled content.
+- Use published Events in \`data/events.json\` for factual questions. Events are verified facts with explicit evidence status; analysis and forecasts remain separate fields.
+- Follow the original evidence URLs on each Event when a claim needs verification or citation.
+- Treat Scout outputs as hypotheses, not as verified facts, investment conclusions, or instructions for external action.
+- Source lifecycle and health describe observation readiness. A catalogued source is not necessarily active or independently verified.
+- Prefer the newest \`generatedAt\` value. Chinese pages are canonical; English pages are available under \`/en/\`.
+- Public data is an allowlisted summary. It does not expose raw collector payloads, private notes, credentials, or paywalled content.
 
 ## Start Here
 
-- [Latest material shifts](${baseUrl}): Current evidence-backed changes and the six industry areas Agent Pulse follows.
-- [Industry trends](${baseUrl}lines/): Stage-based analysis, key events, current assessment, and what to verify next.
-- [Event timeline](${baseUrl}timeline/): Published events in reverse chronological order with stable event pages and source links.
-- [Method and evidence boundary](${baseUrl}legal/): How facts, analysis, forecasts, and opportunity hypotheses are separated.
+- [Current material shifts](${baseUrl}): Evidence-backed changes that affect embodied-data production decisions.
+- [Six-stage production pipeline](${baseUrl}pipeline/): Milestones, evidence, and next signals in production order.
+- [Data assets](${baseUrl}assets/): Public datasets, standards, and collection methods with original sources.
+- [Industry peers](${baseUrl}peers/): Sourced capability claims and verification status without an unsupported overall ranking.
+- [Source map](${baseUrl}sources/): Region, role, acquisition method, lifecycle, and public health state.
+- [Action ideas](${baseUrl}scout/): Evidence-linked Scout hypotheses with experiments and invalidation conditions.
+- [Event timeline](${baseUrl}timeline/): Published Events in reverse chronological order.
+- [Evidence boundary](${baseUrl}legal/): Copyright, attribution, fact, and correction rules.
 
 ## Core Machine-Readable Data
 
-- [Published events and evidence](${baseUrl}data/timeline.json): The primary factual corpus. Includes stable slugs, dates, fact summaries, analysis fields, evidence records, tracks, actors, and research-impact assessments.
-- [Industry trend definitions](${baseUrl}data/tracks.json): The public trend taxonomy used to organize Events.
-- [Industry narratives](${baseUrl}data/narratives.json): Stage histories, current theses, decision lenses, and next signals. Treat these as analysis rather than raw facts.
-- [Product capabilities and evaluation](${baseUrl}data/product.json): Current version, capability maturity, release history, source coverage, and the evidence-backed system evaluation.
-
-## Research and Decision Views
-
-- [Industry evolution](${baseUrl}industry-evolution/): A longer historical view of AI technology, products, companies, and business-model changes.
-- [Action ideas](${baseUrl}scout/): Evidence-linked opportunity hypotheses with target audience, suggested experiment, risk, and invalidation signals.
-- [Companies and institutions](${baseUrl}actors/): Public actor coverage and related Events.
-- [Model pricing](${baseUrl}resources/): Public model-price comparisons with verification dates and original sources.
+- [Published Events](${baseUrl}data/events.json): The factual corpus, stable event slugs, public evidence, pipeline stages, and embodied-data profiles.
+- [Pipeline stages](${baseUrl}data/pipeline.json): The ordered six-stage production taxonomy.
+- [Data assets](${baseUrl}data/assets.json): Allowlisted datasets, standards, and collection methods.
+- [Peer capabilities](${baseUrl}data/peers.json): Sourced peer capability claims and evidence relations.
+- [Source metadata](${baseUrl}data/sources.json): Public source catalog and latest allowlisted health state.
+- [Scout hypotheses](${baseUrl}data/scout.json): Action ideas that remain hypotheses rather than facts.
+- [Product metadata](${baseUrl}data/product.json): Versioned public capabilities and release history.
 
 ## Provenance and Governance
 
-- [Source catalog](${baseUrl}sources/): Source ownership, tier, region, acquisition, lifecycle, observation state, and public health status.
 - [Product updates](${baseUrl}changelog/): User-visible changes and release history.
-- [Sitemap](${baseUrl}sitemap.xml): Complete index of Chinese and English public pages, including stable Event URLs.
+- [Sitemap](${baseUrl}sitemap.xml): Current Chinese and English pages, including stable Event URLs.
+- [RSS feed](${baseUrl}feed.xml): Published embodied-data Events only.
 - [GitHub repository](${model.github.repositoryUrl}): Source code, versioned public snapshot, workflows, and issue history.
-
-## Optional
-
-- [Source observations](${baseUrl}data/signals.json): Large discovery feed. These records are not verified public facts; use published Events for factual claims.
-- [Source metadata](${baseUrl}data/sources.json): Machine-readable public source catalog and latest allowlisted health state.
-- [Action hypotheses](${baseUrl}data/scout.json): Machine-readable Scout ideas; each remains a hypothesis rather than a fact or investment conclusion.
-- [Actor metadata](${baseUrl}data/actors.json): Machine-readable companies and institutions.
-- [Influencer metadata](${baseUrl}data/influencers.json): Public profiles, focus areas, and whether access is automatic or restricted.
 `;
 }
 

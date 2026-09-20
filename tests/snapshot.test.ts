@@ -282,7 +282,7 @@ describe("repository data snapshot", () => {
     expect(first.counts.sourceChecks).toBe(1);
     expect(first.counts.sourceRuns).toBe(2);
     expect(first.counts.signalObservations).toBeGreaterThanOrEqual(2);
-    expect(first.counts.scoutInsights).toBe(1);
+    expect(first.counts.scoutInsights).toBe(6);
     expect(first.counts.evaluationRuns).toBe(1);
 
     type ObjectSnapshotFixture = {
@@ -657,7 +657,7 @@ describe("repository data snapshot", () => {
         .where("id", "=", secondRunId)
         .executeTakeFirst(),
     ).toEqual({ status: "not_modified" });
-    expect(await targetRepository.publicScoutInsights()).toHaveLength(1);
+    expect(await targetRepository.publicScoutInsights()).toHaveLength(6);
 
     const restoredProfileEvent = await targetDb
       .selectFrom("events")

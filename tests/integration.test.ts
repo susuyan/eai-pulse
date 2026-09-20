@@ -127,10 +127,21 @@ describe("SQLite application", () => {
     expect(gzipSync(timeline).byteLength).toBeLessThan(300_000);
     expect(JSON.parse(timeline).events[0]).not.toHaveProperty("manual_override");
     const scout = JSON.parse(await readFile(join(config.distDir, "data/scout.json"), "utf8"));
-    expect(scout.insights).toHaveLength(1);
+    expect(scout.insights).toHaveLength(6);
     expect(scout.insights[0]).not.toHaveProperty("cooldown_key");
-    expect(scout.insights[0].slug).toBe("scout-embodied-data-production-audit");
-    expect(scout.insights[0].evidence[0].slug).toBe("droid-consortium-site-operations");
+    expect(new Set(scout.insights.map((item: { kind: string }) => item.kind))).toEqual(
+      new Set([
+        "collection-route",
+        "capture-system",
+        "production-operations",
+        "data-standard",
+        "quality-feedback",
+        "peer-opportunity",
+      ]),
+    );
+    expect(scout.insights.every((item: { evidence: unknown[] }) => item.evidence.length > 0)).toBe(
+      true,
+    );
     const product = JSON.parse(await readFile(join(config.distDir, "data/product.json"), "utf8"));
     expect(product.roadmap).toHaveLength(5);
     expect(product.releases[0]).toMatchObject({ version: "unreleased", status: "unreleased" });

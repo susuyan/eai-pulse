@@ -30,12 +30,12 @@ const event = {
 
 describe("Scout deterministic cards", () => {
   it.each([
-    "venture",
-    "media",
-    "work",
-    "learning",
-    "artifact",
-    "influence",
+    "collection-route",
+    "capture-system",
+    "production-operations",
+    "data-standard",
+    "quality-feedback",
+    "peer-opportunity",
   ] as const)("creates evidence-shaped %s opportunities", (kind) => {
     const card = buildScoutCard(event, kind);
     expect(card.hypothesis.length).toBeGreaterThan(30);
@@ -97,6 +97,12 @@ describe("Scout deterministic cards", () => {
         })),
       )
       .execute();
+    await db
+      .updateTable("events")
+      .set({ confidence_score: 100, heat_score: 60, impact_score: 100, value_score: 100 })
+      .where("content_scope", "=", "embodied-data")
+      .where("status", "=", "published")
+      .execute();
 
     const initiallyPublished = await db
       .selectFrom("scout_insights")
@@ -130,11 +136,20 @@ describe("Scout deterministic cards", () => {
             .execute()
         ).map((insight) => insight.kind),
       ),
-    ).toEqual(new Set(["venture", "media", "work", "learning", "artifact", "influence"]));
+    ).toEqual(
+      new Set([
+        "collection-route",
+        "capture-system",
+        "production-operations",
+        "data-standard",
+        "quality-feedback",
+        "peer-opportunity",
+      ]),
+    );
   });
 
   it("publishes only insights that clear every autonomous gate", () => {
-    expect(scoutPublicationDecision(buildScoutCard(event, "venture"))).toEqual({
+    expect(scoutPublicationDecision(buildScoutCard(event, "collection-route"))).toEqual({
       allowed: true,
       blockers: [],
     });
@@ -201,16 +216,31 @@ describe("Scout deterministic cards", () => {
       .selectAll()
       .where("status", "=", "published")
       .executeTakeFirstOrThrow();
-    const fixtures = Array.from({ length: PUBLIC_SCOUT_POOL_TARGET - 1 }, (_, index) => ({
-      ...original,
-      id: randomUUID(),
-      slug: `pool-fixture-${index}`,
-      kind:
-        ["venture", "media", "work", "learning", "artifact", "influence"][index % 6] ?? "venture",
-      title: `Pool fixture ${index}`,
-      cooldown_key: `pool:fixture-${index}`,
-      expires_at: "2099-12-31T00:00:00.000Z",
-    }));
+    const seededPublished = await db
+      .selectFrom("scout_insights")
+      .select(({ fn }) => fn.countAll<number>().as("count"))
+      .where("status", "=", "published")
+      .executeTakeFirstOrThrow();
+    const fixtures = Array.from(
+      { length: PUBLIC_SCOUT_POOL_TARGET - Number(seededPublished.count) },
+      (_, index) => ({
+        ...original,
+        id: randomUUID(),
+        slug: `pool-fixture-${index}`,
+        kind:
+          [
+            "collection-route",
+            "capture-system",
+            "production-operations",
+            "data-standard",
+            "quality-feedback",
+            "peer-opportunity",
+          ][index % 6] ?? "collection-route",
+        title: `Pool fixture ${index}`,
+        cooldown_key: `pool:fixture-${index}`,
+        expires_at: "2099-12-31T00:00:00.000Z",
+      }),
+    );
     await db.insertInto("scout_insights").values(fixtures).execute();
 
     expect(await runScout(db, 12)).toMatchObject({

@@ -90,9 +90,16 @@ describe("embodied data public boundary", () => {
       embodiedPeers.map((item) => item.actorSlug).sort(),
     );
     expect(await repository.listResources()).toEqual([]);
-    expect((await repository.publicScoutInsights()).map((item) => item.slug)).toEqual([
-      "scout-embodied-data-production-audit",
-    ]);
+    expect(new Set((await repository.publicScoutInsights()).map((item) => item.kind))).toEqual(
+      new Set([
+        "collection-route",
+        "capture-system",
+        "production-operations",
+        "data-standard",
+        "quality-feedback",
+        "peer-opportunity",
+      ]),
+    );
     expect(await repository.getDefaultView()).toMatchObject({
       slug: "embodied-data-operations",
       is_default: 1,

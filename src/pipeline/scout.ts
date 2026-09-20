@@ -2,10 +2,20 @@ import { createHash } from "node:crypto";
 import type { Kysely } from "kysely";
 import { Repository, scoutFingerprint } from "../db/repository.js";
 import type { DatabaseSchema, EventRow } from "../db/types.js";
+import type { EmbodiedPipelineStage } from "../domain/embodied-data.js";
+import { evaluateEventReadiness } from "./readiness.js";
 
 const SCOUT_LIFETIME_MS = 14 * 86_400_000;
 export const PUBLIC_SCOUT_POOL_TARGET = 18;
-const kinds = ["venture", "media", "work", "learning", "artifact", "influence"] as const;
+export const embodiedScoutKinds = [
+  "collection-route",
+  "capture-system",
+  "production-operations",
+  "data-standard",
+  "quality-feedback",
+  "peer-opportunity",
+] as const;
+const kinds = embodiedScoutKinds;
 
 export async function runScout(db: Kysely<DatabaseSchema>, limit = 3) {
   const repository = new Repository(db);
@@ -47,7 +57,12 @@ export async function runScout(db: Kysely<DatabaseSchema>, limit = 3) {
     requested,
     Math.max(PUBLIC_SCOUT_POOL_TARGET - publicFingerprints.size, missingKindCount, 0),
   );
-  const events = (await repository.listEvents("published")).sort(
+  const publishedEvents = await repository.listEventsByContentScope("embodied-data", "published");
+  const events: EventRow[] = [];
+  for (const event of publishedEvents) {
+    if ((await evaluateEventReadiness(db, event.id)).status === "ready") events.push(event);
+  }
+  events.sort(
     (a, b) =>
       scoutCandidateScore(b) - scoutCandidateScore(a) ||
       Date.parse(b.updated_at) - Date.parse(a.updated_at),
@@ -66,10 +81,13 @@ export async function runScout(db: Kysely<DatabaseSchema>, limit = 3) {
           (publishedKindCounts.get(left) ?? 0) - (publishedKindCounts.get(right) ?? 0) ||
           ((kinds.indexOf(left) + existingCount + index) % kinds.length) -
             ((kinds.indexOf(right) + existingCount + index) % kinds.length),
-      )[0] ?? "venture";
-    const cooldownKey = `${kind}:${event.slug}`;
-    const card = buildScoutCard(event, kind);
-    const fingerprint = scoutFingerprint(kind, card.title);
+      )[0] ?? "collection-route";
+    const profile = await repository.getEventDataProfile(event.id);
+    const profileKind = kindForStages(profile?.pipelineStages ?? [], kind);
+    const selectedKind = (publishedKindCounts.get(profileKind) ?? 0) === 0 ? profileKind : kind;
+    const cooldownKey = `${selectedKind}:${event.slug}`;
+    const card = buildScoutCard(event, selectedKind);
+    const fingerprint = scoutFingerprint(selectedKind, card.title);
     if (publicFingerprints.has(fingerprint)) {
       skipped += 1;
       continue;
@@ -79,12 +97,19 @@ export async function runScout(db: Kysely<DatabaseSchema>, limit = 3) {
       skipped += 1;
       continue;
     }
-    const publishable = scoutPublicationDecision(card);
+    const publishable = scoutPublicationDecision({
+      ...card,
+      eventStatus: event.status,
+      contentScope: event.content_scope,
+      readinessStatus: "ready",
+      genericOpportunity: false,
+      duplicateCooldown: false,
+    });
     const generatedAt = new Date().toISOString();
     await repository.insertScoutInsight(
       {
-        slug: `${kind}-${event.slug}-${shortHash(generatedAt)}`,
-        kind,
+        slug: `${selectedKind}-${event.slug}-${shortHash(generatedAt)}`,
+        kind: selectedKind,
         status: publishable.allowed ? "published" : "archived",
         ...card,
         cooldown_key: cooldownKey,
@@ -97,7 +122,7 @@ export async function runScout(db: Kysely<DatabaseSchema>, limit = 3) {
     if (publishable.allowed) {
       published += 1;
       publicFingerprints.add(fingerprint);
-      publishedKindCounts.set(kind, (publishedKindCounts.get(kind) ?? 0) + 1);
+      publishedKindCounts.set(selectedKind, (publishedKindCounts.get(selectedKind) ?? 0) + 1);
     } else archived += 1;
   }
   return {
@@ -122,6 +147,12 @@ export interface ScoutPublicationInput {
   evidence_score: number;
   confidence_score: number;
   novelty_score: number;
+  eventStatus?: string;
+  contentScope?: string;
+  readinessStatus?: string;
+  evidenceExpiresAt?: string | null;
+  genericOpportunity?: boolean;
+  duplicateCooldown?: boolean;
 }
 
 export function scoutPublicationDecision(input: ScoutPublicationInput): {
@@ -133,6 +164,20 @@ export function scoutPublicationDecision(input: ScoutPublicationInput): {
     ...(input.evidence_score < 70 ? ["evidence_score_below_70"] : []),
     ...(input.confidence_score < 70 ? ["confidence_score_below_70"] : []),
     ...(input.novelty_score < 55 ? ["novelty_score_below_55"] : []),
+    ...(input.eventStatus && input.eventStatus !== "published"
+      ? ["trigger_event_not_published"]
+      : []),
+    ...(input.contentScope && input.contentScope !== "embodied-data"
+      ? ["legacy_trigger_event"]
+      : []),
+    ...(input.readinessStatus && input.readinessStatus !== "ready"
+      ? ["trigger_event_not_ready"]
+      : []),
+    ...(input.evidenceExpiresAt && Date.parse(input.evidenceExpiresAt) <= Date.now()
+      ? ["evidence_expired"]
+      : []),
+    ...(input.genericOpportunity ? ["generic_opportunity"] : []),
+    ...(input.duplicateCooldown ? ["duplicate_cooldown"] : []),
   ];
   return { allowed: blockers.length === 0, blockers };
 }
@@ -157,7 +202,7 @@ export function buildScoutCard(event: EventRow, kind: (typeof kinds)[number]) {
       ),
     ),
   };
-  if (kind === "media") {
+  if (kind === "capture-system") {
     return {
       ...base,
       title: `围绕「${event.title}」整理一份可持续更新的分析`,
@@ -168,7 +213,7 @@ export function buildScoutCard(event: EventRow, kind: (typeof kinds)[number]) {
       artifact_idea: "一张证据地图 + 一篇 1500 字分析 + 后续可持续更新的观察清单",
     };
   }
-  if (kind === "work") {
+  if (kind === "production-operations") {
     return {
       ...base,
       title: `围绕「${event.title}」发起一个 7 天内部验证`,
@@ -179,7 +224,7 @@ export function buildScoutCard(event: EventRow, kind: (typeof kinds)[number]) {
       artifact_idea: "内部机会 brief、可运行 demo、决策记录和复盘模板",
     };
   }
-  if (kind === "learning") {
+  if (kind === "data-standard") {
     return {
       ...base,
       title: `围绕「${event.title}」核对一个关键未知项`,
@@ -190,7 +235,7 @@ export function buildScoutCard(event: EventRow, kind: (typeof kinds)[number]) {
       artifact_idea: "概念地图、原始资料索引、反例清单和一页学习复盘",
     };
   }
-  if (kind === "artifact") {
+  if (kind === "quality-feedback") {
     return {
       ...base,
       title: `围绕「${event.title}」制作一个可复用的数据集或工具`,
@@ -201,7 +246,7 @@ export function buildScoutCard(event: EventRow, kind: (typeof kinds)[number]) {
       artifact_idea: "公开数据表、评测脚本、检查清单或可复用 CLI",
     };
   }
-  if (kind === "influence") {
+  if (kind === "peer-opportunity") {
     return {
       ...base,
       title: `围绕「${event.title}」发布一条可持续核验的观点`,
@@ -221,6 +266,21 @@ export function buildScoutCard(event: EventRow, kind: (typeof kinds)[number]) {
       "48 小时内访谈 5 个潜在用户，确认现有替代方案、付费触发点和不可接受风险；只做一个能验证结果的原型。",
     artifact_idea: "机会假设画布、5 份访谈记录、一个结果型 demo 和继续/停止决策",
   };
+}
+
+function kindForStages(
+  stages: EmbodiedPipelineStage[],
+  fallback: (typeof kinds)[number],
+): (typeof kinds)[number] {
+  const stageKinds: Partial<Record<EmbodiedPipelineStage, (typeof kinds)[number]>> = {
+    "demand-definition": "peer-opportunity",
+    "acquisition-route": "collection-route",
+    "multimodal-capture": "capture-system",
+    "production-operations": "production-operations",
+    "data-engineering-standards": "data-standard",
+    "quality-training-feedback": "quality-feedback",
+  };
+  return stages.map((stage) => stageKinds[stage]).find(Boolean) ?? fallback;
 }
 
 function shortHash(value: string): string {

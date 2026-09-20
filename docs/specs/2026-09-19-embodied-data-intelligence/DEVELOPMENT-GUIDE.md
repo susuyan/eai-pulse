@@ -1,8 +1,24 @@
 # 具身数据认知系统开发指南
 
-状态：方向已确认，尚未开始业务实现  
+状态：方向已确认，领域基础包已完成，公开产品尚未切换
 日期：2026-09-19  
 适用对象：产品、数据、采集运营、研究与研发团队
+
+首个实施包：
+
+- [PRD](PRD.md)
+- [SYSTEM](SYSTEM.md)
+- [TEST](TEST.md)
+- [TASKS](TASKS.md)
+- [Implementation Plan](../../superpowers/plans/2026-09-19-embodied-data-foundation.md)
+
+第二个实施包：
+
+- [Domain Objects PRD](DOMAIN-OBJECTS-PRD.md)
+- [Domain Objects System](DOMAIN-OBJECTS-SYSTEM.md)
+- [Domain Objects Test](DOMAIN-OBJECTS-TEST.md)
+- [Domain Objects Tasks](DOMAIN-OBJECTS-TASKS.md)
+- [Domain Objects Implementation Plan](../../superpowers/plans/2026-09-19-embodied-data-domain-objects.md)
 
 ## 1. 直接结论
 

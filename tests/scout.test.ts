@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { loadConfig } from "../src/config/env.js";
 import { createDatabase } from "../src/db/database.js";
 import { migrateToLatest } from "../src/db/migrate.js";
@@ -16,6 +16,7 @@ import {
 const databases: ReturnType<typeof createDatabase>[] = [];
 
 afterEach(async () => {
+  vi.useRealTimers();
   while (databases.length) await databases.pop()?.destroy();
 });
 
@@ -53,6 +54,49 @@ describe("Scout deterministic cards", () => {
     databases.push(db);
     await migrateToLatest(db, config);
     await seedDatabase(db);
+    await db
+      .updateTable("scout_insights")
+      .set({ status: "archived", published_at: null })
+      .execute();
+
+    const fixtureNow = new Date("2026-09-19T00:00:00.000Z");
+    vi.useFakeTimers();
+    vi.setSystemTime(fixtureNow);
+    await db
+      .insertInto("events")
+      .values(
+        Array.from({ length: 6 }, (_, index) => ({
+          id: randomUUID(),
+          slug: `scout-diversity-${index}`,
+          title: `Scout diversity event ${index}`,
+          fact_summary:
+            "An official source published a bounded workflow update with measurable results.",
+          summary:
+            "The fixture provides a stable high-value event for deterministic Scout kind selection.",
+          technical_insight:
+            "The workflow has explicit inputs, outputs, controls, and failure boundaries.",
+          industry_insight:
+            "The change can affect a real operating workflow and merits a bounded validation.",
+          future_outlook: "Verify adoption, cost, completion rate, and human takeover frequency.",
+          business_value: "Run a reversible test with success, cost, and stop thresholds.",
+          category: "test-fixture",
+          company: `Fixture Company ${index}`,
+          keywords_json: JSON.stringify(["fixture", "workflow", "validation"]),
+          confidence_score: 100,
+          heat_score: 100,
+          impact_score: 100,
+          value_score: 100,
+          score_factors_json: JSON.stringify({ independentSources: 2, platformBreadth: 2 }),
+          status: "published",
+          featured: 0,
+          manual_override: 0,
+          happened_at: new Date(fixtureNow.getTime() - index * 60_000).toISOString(),
+          published_at: fixtureNow.toISOString(),
+          created_at: fixtureNow.toISOString(),
+          updated_at: fixtureNow.toISOString(),
+        })),
+      )
+      .execute();
 
     const initiallyPublished = await db
       .selectFrom("scout_insights")
@@ -85,8 +129,8 @@ describe("Scout deterministic cards", () => {
             .where("status", "=", "published")
             .execute()
         ).map((insight) => insight.kind),
-      ).size,
-    ).toBeGreaterThanOrEqual(4);
+      ),
+    ).toEqual(new Set(["venture", "media", "work", "learning", "artifact", "influence"]));
   });
 
   it("publishes only insights that clear every autonomous gate", () => {

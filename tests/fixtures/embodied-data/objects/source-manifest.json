@@ -1,0 +1,86 @@
+[
+  {
+    "objectSlug": "droid",
+    "objectType": "dataset",
+    "sourceRole": "official-project",
+    "url": "https://droid-dataset.github.io/",
+    "verifiedAt": "2026-09-19T00:00:00.000Z"
+  },
+  {
+    "objectSlug": "droid",
+    "objectType": "dataset",
+    "sourceRole": "original-paper",
+    "url": "https://arxiv.org/abs/2403.12945",
+    "verifiedAt": "2026-09-19T00:00:00.000Z"
+  },
+  {
+    "objectSlug": "open-x-embodiment",
+    "objectType": "dataset",
+    "sourceRole": "official-project",
+    "url": "https://robotics-transformer-x.github.io/",
+    "verifiedAt": "2026-09-19T00:00:00.000Z"
+  },
+  {
+    "objectSlug": "open-x-embodiment",
+    "objectType": "dataset",
+    "sourceRole": "original-paper",
+    "url": "https://arxiv.org/abs/2310.08864",
+    "verifiedAt": "2026-09-19T00:00:00.000Z"
+  },
+  {
+    "objectSlug": "bridgedata-v2",
+    "objectType": "dataset",
+    "sourceRole": "official-project",
+    "url": "https://rail-berkeley.github.io/bridgedata/",
+    "verifiedAt": "2026-09-19T00:00:00.000Z"
+  },
+  {
+    "objectSlug": "bridgedata-v2",
+    "objectType": "dataset",
+    "sourceRole": "original-paper",
+    "url": "https://arxiv.org/abs/2308.12952",
+    "verifiedAt": "2026-09-19T00:00:00.000Z"
+  },
+  {
+    "objectSlug": "rlds",
+    "objectType": "standard",
+    "sourceRole": "official-repository",
+    "url": "https://github.com/google-research/rlds",
+    "verifiedAt": "2026-09-19T00:00:00.000Z"
+  },
+  {
+    "objectSlug": "lerobot-dataset-v3",
+    "objectType": "standard",
+    "sourceRole": "official-documentation",
+    "url": "https://huggingface.co/docs/lerobot/lerobot-dataset-v3",
+    "verifiedAt": "2026-09-19T00:00:00.000Z"
+  },
+  {
+    "objectSlug": "ros2-rosbag2",
+    "objectType": "standard",
+    "sourceRole": "official-repository",
+    "url": "https://github.com/ros2/rosbag2",
+    "verifiedAt": "2026-09-19T00:00:00.000Z"
+  },
+  {
+    "objectSlug": "bilateral-vr-teleoperation",
+    "objectType": "collection-method",
+    "sourceRole": "original-paper",
+    "url": "https://arxiv.org/abs/2403.12945",
+    "verifiedAt": "2026-09-19T00:00:00.000Z"
+  },
+  {
+    "objectSlug": "simulation-synthetic-generation",
+    "objectType": "collection-method",
+    "sourceRole": "official-documentation",
+    "url": "https://developer.nvidia.com/isaac/sim/",
+    "verifiedAt": "2026-09-19T00:00:00.000Z"
+  },
+  {
+    "objectSlug": "scripted-autonomous-rollout",
+    "objectType": "collection-method",
+    "sourceRole": "official-project",
+    "url": "https://rail-berkeley.github.io/bridgedata/",
+    "verifiedAt": "2026-09-19T00:00:00.000Z"
+  }
+]

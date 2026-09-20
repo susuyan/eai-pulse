@@ -1,0 +1,112 @@
+[
+  {
+    "slug": "bilateral-vr-teleoperation",
+    "profile": {
+      "name": "VR-assisted robot teleoperation",
+      "methodKind": "teleoperation",
+      "canonicalUrl": "https://arxiv.org/abs/2403.12945",
+      "pipelineStages": ["acquisition-route", "multimodal-capture", "production-operations"],
+      "scenarios": ["in-the-wild manipulation demonstrations"],
+      "embodiments": ["single-arm"],
+      "tasks": ["manipulation"],
+      "requiredEquipment": [
+        "robot arm",
+        "VR headset and controllers",
+        "external cameras",
+        "wrist camera"
+      ],
+      "operatorRoles": ["teleoperator", "data collector"],
+      "environmentRequirements": ["safe robot workspace", "task objects", "camera-visible scene"],
+      "modalities": ["rgb", "joint-state", "pose", "action", "language"],
+      "qualityBoundaries": [
+        "operator skill and fatigue affect trajectory consistency",
+        "camera placement and robot visibility require collection checks"
+      ],
+      "throughputClaims": [],
+      "costClaims": [],
+      "deploymentComplexity": "high",
+      "safetyRisks": ["robot-human collision", "unsafe commanded motion"],
+      "advantages": ["captures human task intent", "supports diverse tasks and scenes"],
+      "limitations": ["requires trained operators and physical robot time"],
+      "failureModes": [
+        "operator enters camera view",
+        "robot is occluded",
+        "demonstration is unsuccessful"
+      ],
+      "maturity": "operational",
+      "evidenceStatus": "verified"
+    }
+  },
+  {
+    "slug": "simulation-synthetic-generation",
+    "profile": {
+      "name": "Simulation-based synthetic data generation",
+      "methodKind": "simulation",
+      "canonicalUrl": "https://developer.nvidia.com/isaac/sim/",
+      "pipelineStages": ["acquisition-route", "multimodal-capture", "production-operations"],
+      "scenarios": ["virtual robot training and validation"],
+      "embodiments": [
+        "humanoid",
+        "mobile-manipulator",
+        "single-arm",
+        "mobile-robot",
+        "quadruped",
+        "other"
+      ],
+      "tasks": ["manipulation", "locomotion", "navigation", "inspection", "other"],
+      "requiredEquipment": ["GPU compute", "robot and environment assets", "physics simulator"],
+      "operatorRoles": ["simulation engineer", "robot learning engineer"],
+      "environmentRequirements": ["validated virtual scene", "configured physics and sensors"],
+      "modalities": ["rgb", "depth", "point-cloud", "joint-state", "pose", "action"],
+      "qualityBoundaries": [
+        "simulation fidelity limits real-world transfer",
+        "asset and sensor configuration determine coverage"
+      ],
+      "throughputClaims": [],
+      "costClaims": [],
+      "deploymentComplexity": "high",
+      "safetyRisks": ["unsafe sim-to-real transfer assumptions"],
+      "advantages": ["parallel generation", "controlled labels", "repeatable scenarios"],
+      "limitations": ["synthetic observations and dynamics can differ from real deployment"],
+      "failureModes": ["invalid physics", "unrepresentative assets", "sensor-domain mismatch"],
+      "maturity": "operational",
+      "evidenceStatus": "verified"
+    }
+  },
+  {
+    "slug": "scripted-autonomous-rollout",
+    "profile": {
+      "name": "Scripted autonomous policy rollout",
+      "methodKind": "autonomous",
+      "canonicalUrl": "https://rail-berkeley.github.io/bridgedata/",
+      "pipelineStages": ["acquisition-route", "production-operations", "quality-training-feedback"],
+      "scenarios": ["repeatable pick-and-place collection"],
+      "embodiments": ["single-arm"],
+      "tasks": ["manipulation"],
+      "requiredEquipment": ["robot arm", "camera system", "scripted policy"],
+      "operatorRoles": ["robot operator", "collection engineer"],
+      "environmentRequirements": [
+        "structured task workspace",
+        "policy-compatible object placement"
+      ],
+      "modalities": ["rgb", "rgbd", "action", "language"],
+      "qualityBoundaries": ["coverage is limited by scripted policy behavior and task setup"],
+      "throughputClaims": [
+        {
+          "metric": "BridgeData V2 scripted policy rollouts",
+          "value": 9731,
+          "unit": "trajectories",
+          "sourceUrl": "https://rail-berkeley.github.io/bridgedata/"
+        }
+      ],
+      "costClaims": [],
+      "deploymentComplexity": "medium",
+      "safetyRisks": ["policy execution can produce unintended robot motion"],
+      "advantages": ["repeatable behavior", "reduced continuous teleoperator input"],
+      "limitations": ["task and behavior diversity depend on the scripted policy"],
+      "failureModes": ["policy failure", "out-of-distribution object placement", "sensor dropout"],
+      "maturity": "operational",
+      "evidenceStatus": "verified"
+    }
+  }
+]

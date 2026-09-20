@@ -16,6 +16,46 @@ const TRACKING_PARAMS = new Set([
   "utm_term",
 ]);
 
+const SENSITIVE_PARAMETER_MARKERS = [
+  "apikey",
+  "authorization",
+  "credential",
+  "oauth",
+  "password",
+  "secret",
+  "signature",
+  "token",
+];
+
+export function isSensitiveParameterName(value: string): boolean {
+  const normalized = value
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+  return (
+    normalized === "auth" ||
+    normalized === "cookie" ||
+    SENSITIVE_PARAMETER_MARKERS.some((marker) => normalized.includes(marker))
+  );
+}
+
+export function isSensitiveObjectKey(value: string): boolean {
+  const normalized = value
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+  if (["auth", "cookie", "signature"].includes(normalized)) return true;
+  return [
+    "apikey",
+    "authorization",
+    "credential",
+    "password",
+    "privatekey",
+    "secret",
+    "token",
+  ].some((marker) => normalized.endsWith(marker));
+}
+
 export function canonicalizeUrl(input: string): string {
   const url = new URL(input);
   if (url.protocol !== "http:" && url.protocol !== "https:") {

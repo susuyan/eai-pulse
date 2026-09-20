@@ -40,6 +40,16 @@ export const capabilities = [
       "DeepSeek V4 Flash produces schema-validated Event drafts and weekly decision cards behind evidence, readiness and public-DTO gates",
   },
   {
+    slug: "embodied-data-foundation",
+    name: "具身数据领域基础",
+    domain: "intelligence",
+    status: "experimental",
+    maturity: 24,
+    release: "unreleased",
+    evidence:
+      "strict controlled vocabularies and Event DataProfile schema, additive content-scope migration, Dataset, Standard, CollectionMethod and sourced peer capability objects, evidence relations, backward-compatible snapshot restore, nine-case relevance golden set and a private read-only migration preview",
+  },
+  {
     slug: "public-source-observations",
     name: "公开来源观察流",
     domain: "sensing",
@@ -551,6 +561,8 @@ export const releases = [
       "AI 可读站点索引",
     ],
     changes: [
+      "新增具身数据方向的实验性领域基础：受控词表、Event DataProfile、可审计 content scope 和只读迁移预览。公开站、现有数据和发布规则尚未切换。",
+      "具身数据实验性领域基础新增 Dataset、Standard、CollectionMethod 与同行能力声明对象，支持严格校验、Event 证据关联和事务性快照恢复；危险证据 URL、缺失引用、未知 schema 版本与事件合并证据丢失会被阻断，对象 fixture 尚未进入当前数据或公开站。",
       "GitHub Pages、数据刷新与监控动态使用当前仓库站点 URL，健康监控按标签和审计 marker 查找来源健康 Issue，使 fork 不依赖上游 URL 与固定 Issue 编号即可独立部署",
       "直接研究源采集失败时，Actions warning 只陈述本次未采集、生命周期不变与批次继续，不再把实际 quarantined 状态误写成 shadow",
       "Source Audit 与 Data Refresh 在远端快照 merge 后重新执行来源对账，防止旧生命周期覆盖已满足连续健康门槛的隔离来源恢复结果",

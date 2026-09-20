@@ -1,4 +1,11 @@
 import type { Generated, Insertable, Selectable, Updateable } from "kysely";
+import type { ContentScope } from "../domain/embodied-data.js";
+import type {
+  ActorCapabilityEvidenceRole,
+  CollectionMethodEventRole,
+  DatasetEventRole,
+  StandardEventRole,
+} from "../domain/embodied-data-objects.js";
 
 export interface SourceTable {
   id: string;
@@ -38,6 +45,7 @@ export interface SourceTable {
   license_note: Generated<string>;
   quality_score: Generated<number>;
   last_verified_at: Generated<string | null>;
+  content_scope: Generated<ContentScope>;
   created_at: string;
   updated_at: string;
 }
@@ -191,6 +199,7 @@ export interface SignalTable {
   metrics_json: string;
   raw_meta_json: string;
   content_hash: string;
+  content_scope: Generated<ContentScope>;
   created_at: string;
   updated_at: string;
 }
@@ -246,6 +255,7 @@ export interface EventTable {
   manual_override: number;
   happened_at: string;
   published_at: string | null;
+  content_scope: Generated<ContentScope>;
   created_at: string;
   updated_at: string;
 }
@@ -325,6 +335,7 @@ export interface ActorTable {
   table_score: number;
   website_url: string;
   enabled: number;
+  content_scope: Generated<ContentScope>;
   created_at: string;
   updated_at: string;
 }
@@ -335,6 +346,79 @@ export interface EventActorTable {
   actor_role: string;
   progress_stage: string;
   relevance_score: number;
+  created_at: string;
+}
+
+export interface EventDataProfileTable {
+  event_id: string;
+  profile_json: string;
+  schema_version: Generated<number>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DatasetTable {
+  id: string;
+  slug: string;
+  profile_json: string;
+  schema_version: Generated<number>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DatasetEventTable {
+  dataset_id: string;
+  event_id: string;
+  relation_role: DatasetEventRole;
+  created_at: string;
+}
+
+export interface StandardTable {
+  id: string;
+  slug: string;
+  profile_json: string;
+  schema_version: Generated<number>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StandardEventTable {
+  standard_id: string;
+  event_id: string;
+  relation_role: StandardEventRole;
+  created_at: string;
+}
+
+export interface CollectionMethodTable {
+  id: string;
+  slug: string;
+  profile_json: string;
+  schema_version: Generated<number>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CollectionMethodEventTable {
+  collection_method_id: string;
+  event_id: string;
+  relation_role: CollectionMethodEventRole;
+  created_at: string;
+}
+
+export interface ActorDataCapabilityTable {
+  id: string;
+  actor_id: string;
+  capability_key: string;
+  profile_json: string;
+  schema_version: Generated<number>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ActorCapabilityEvidenceTable {
+  capability_id: string;
+  event_id: string;
+  evidence_role: ActorCapabilityEvidenceRole;
   created_at: string;
 }
 
@@ -393,6 +477,15 @@ export interface DatabaseSchema {
   event_tracks: EventTrackTable;
   actors: ActorTable;
   event_actors: EventActorTable;
+  event_data_profiles: EventDataProfileTable;
+  datasets: DatasetTable;
+  dataset_events: DatasetEventTable;
+  standards: StandardTable;
+  standard_events: StandardEventTable;
+  collection_methods: CollectionMethodTable;
+  collection_method_events: CollectionMethodEventTable;
+  actor_data_capabilities: ActorDataCapabilityTable;
+  actor_capability_evidence: ActorCapabilityEvidenceTable;
   model_resources: ModelResourceTable;
   views: ViewTable;
   scout_insights: ScoutInsightTable;
@@ -412,5 +505,11 @@ export type SignalRow = Selectable<SignalTable>;
 export type NewSignalRow = Insertable<SignalTable>;
 export type EventRow = Selectable<EventTable>;
 export type NewEventRow = Insertable<EventTable>;
+export type EventDataProfileRow = Selectable<EventDataProfileTable>;
+export type NewEventDataProfileRow = Insertable<EventDataProfileTable>;
+export type DatasetRow = Selectable<DatasetTable>;
+export type StandardRow = Selectable<StandardTable>;
+export type CollectionMethodRow = Selectable<CollectionMethodTable>;
+export type ActorDataCapabilityRow = Selectable<ActorDataCapabilityTable>;
 
 export type IgnoreGenerated = Generated<never>;

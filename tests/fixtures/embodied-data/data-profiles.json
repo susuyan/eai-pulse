@@ -1,0 +1,86 @@
+{
+  "valid": [
+    {
+      "pipelineStages": ["acquisition-route", "multimodal-capture", "production-operations"],
+      "scenarios": ["warehouse picking"],
+      "embodiments": ["humanoid"],
+      "tasks": ["manipulation"],
+      "modalities": ["rgbd", "action", "joint-state", "force-torque"],
+      "acquisitionMethods": ["teleoperation"],
+      "dataFormats": ["rosbag2", "parquet"],
+      "standards": ["ROS 2"],
+      "scaleClaims": [
+        {
+          "metric": "trajectories",
+          "value": 1000,
+          "unit": "episodes",
+          "sourceUrl": "https://example.com/teleoperation-dataset"
+        }
+      ],
+      "qualityMetrics": ["task completion", "sensor synchronization"],
+      "costSignals": ["operator minutes per accepted episode"],
+      "deliveryImpact": "The route changes how operators, devices, and accepted episodes are planned for delivery.",
+      "evidenceStatus": "claimed"
+    },
+    {
+      "pipelineStages": ["acquisition-route", "data-engineering-standards"],
+      "scenarios": ["factory assembly"],
+      "embodiments": ["dual-arm"],
+      "tasks": ["manipulation"],
+      "modalities": ["rgb", "depth", "pose", "action"],
+      "acquisitionMethods": ["simulation", "synthetic"],
+      "dataFormats": ["usd", "jsonl"],
+      "standards": ["OpenUSD"],
+      "scaleClaims": [
+        {
+          "metric": "generated scenes",
+          "value": 240,
+          "unit": "scenes",
+          "sourceUrl": "https://example.com/synthetic-assembly-data"
+        }
+      ],
+      "qualityMetrics": ["sim-to-real validation", "scene diversity"],
+      "costSignals": ["simulation compute per accepted trajectory"],
+      "deliveryImpact": "The synthetic route adds provenance and sim-to-real acceptance requirements to each release.",
+      "evidenceStatus": "verified"
+    },
+    {
+      "pipelineStages": ["quality-training-feedback"],
+      "scenarios": ["mobile manipulation"],
+      "embodiments": ["mobile-manipulator"],
+      "tasks": ["loco-manipulation"],
+      "modalities": ["rgbd", "action", "joint-state"],
+      "acquisitionMethods": ["hybrid"],
+      "dataFormats": ["lerobot"],
+      "standards": ["dataset card"],
+      "scaleClaims": [
+        {
+          "metric": "evaluation tasks",
+          "value": 20,
+          "unit": "tasks",
+          "sourceUrl": "https://example.com/training-feedback-study"
+        }
+      ],
+      "qualityMetrics": ["held-out task success", "duplicate episode rate"],
+      "costSignals": ["accepted hours per percentage-point gain"],
+      "deliveryImpact": "Training feedback changes the acceptance threshold and the next collection batch definition.",
+      "evidenceStatus": "conflicting"
+    }
+  ],
+  "invalid": {
+    "pipelineStages": [],
+    "scenarios": ["warehouse picking"],
+    "embodiments": ["humanoid"],
+    "tasks": ["manipulation"],
+    "modalities": ["thermal-array"],
+    "acquisitionMethods": ["teleoperation"],
+    "dataFormats": ["rosbag2"],
+    "standards": [],
+    "scaleClaims": [],
+    "qualityMetrics": [],
+    "costSignals": [],
+    "deliveryImpact": "This invalid fixture must fail strict validation.",
+    "evidenceStatus": "claimed",
+    "unexpectedField": true
+  }
+}

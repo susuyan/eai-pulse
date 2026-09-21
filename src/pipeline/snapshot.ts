@@ -754,11 +754,13 @@ async function restoreSnapshot(
       optionalString(value.lastCollectedAt),
     );
     const currentLatest = latestTimestamp(current.last_verified_at, current.last_collected_at);
-    const incomingIsNewer = compareTimestamp(incomingLatest, currentLatest) >= 0;
+    // A reused slug retains history, but controls and cursors belong to its current scope.
+    const incomingIsNewer =
+      snapshotContentScope(value.contentScope) === current.content_scope &&
+      compareTimestamp(incomingLatest, currentLatest) >= 0;
     await db
       .updateTable("sources")
       .set({
-        content_scope: snapshotContentScope(value.contentScope),
         enabled: incomingIsNewer ? requiredNumber(value, "enabled") : current.enabled,
         observation_enabled: incomingIsNewer
           ? typeof value.observationEnabled === "number"

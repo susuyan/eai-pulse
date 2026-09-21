@@ -143,10 +143,9 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
   }));
   const checksBySourceId = new Map(latestSourceChecks.map((check) => [check.source_id, check]));
   const publicSources: PublicSource[] = sources.map((source) => {
-    const restricted =
-      source.map_status === "restricted" ||
-      source.acquisition === "manual" ||
-      source.adapter === "manual";
+    const manual = source.acquisition === "manual" || source.adapter === "manual";
+    const mapStatus =
+      manual && source.map_status === "integrated" ? "restricted" : source.map_status;
     const check = checksBySourceId.get(source.id);
     return {
       slug: source.slug,
@@ -158,7 +157,7 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
       role: source.role,
       acquisition: source.acquisition,
       topics: parsePublicStringArray(source.topics_json),
-      mapStatus: restricted ? "restricted" : source.map_status,
+      mapStatus,
       pipelineStages: parsePublicPipelineStages(source.pipeline_stages_json),
       substituteFor: parsePublicStringArray(source.substitute_for_json),
       restrictionNote: source.restriction_note,
@@ -167,7 +166,8 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
       observationEnabled: source.observation_enabled === 1,
       qualityScore: source.quality_score,
       cadence: source.cadence,
-      healthStatus: restricted ? "unchecked" : normalizePublicHealth(check?.status),
+      healthStatus:
+        manual || mapStatus === "restricted" ? "unchecked" : normalizePublicHealth(check?.status),
       lastCheckedAt: check?.finished_at ?? null,
       latestItemAt: check?.latest_item_at ?? null,
       healthErrorCode: check?.error_code ?? null,

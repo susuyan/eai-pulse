@@ -27,6 +27,50 @@ async function setup(seed = false) {
 }
 
 describe("embodied source governance schema", () => {
+  it.each([
+    ["invalid map status", { mapStatus: "unknown" }],
+    ["empty pipeline coverage", { pipelineStages: [] }],
+    ["unknown pipeline stage", { pipelineStages: ["unknown-stage"] }],
+    ["unknown substitute reference", { substituteFor: ["missing-source"] }],
+    ["self substitute reference", { substituteFor: ["samr-standards"] }],
+    ["blank restriction note", { mapStatus: "restricted", restrictionNote: "  " }],
+    ["integrated manual source", { mapStatus: "integrated" }],
+  ])("rejects %s before persisting catalog rows", async (_name, invalid) => {
+    const db = await setup();
+    const source = embodiedSourceCatalog.find((candidate) => candidate.slug === "samr-standards");
+    if (!source) throw new Error("Missing SAMR source");
+    const original = { ...source };
+    try {
+      Object.assign(source, invalid);
+      await expect(seedDatabase(db)).rejects.toThrow();
+      expect(await db.selectFrom("sources").select("slug").execute()).toEqual([]);
+    } finally {
+      Object.assign(source, original);
+    }
+  });
+
+  it("normalizes pipeline coverage before persisting the current catalog", async () => {
+    const db = await setup();
+    const source = embodiedSourceCatalog.find((candidate) => candidate.slug === "samr-standards");
+    if (!source) throw new Error("Missing SAMR source");
+    const original = source.pipelineStages;
+    try {
+      source.pipelineStages = ["multimodal-capture", "multimodal-capture", "demand-definition"];
+      await seedDatabase(db);
+      const stored = await db
+        .selectFrom("sources")
+        .select("pipeline_stages_json")
+        .where("slug", "=", source.slug)
+        .executeTakeFirstOrThrow();
+      expect(JSON.parse(stored.pipeline_stages_json)).toEqual([
+        "multimodal-capture",
+        "demand-definition",
+      ]);
+    } finally {
+      source.pipelineStages = original;
+    }
+  });
+
   it("provides a reviewed China-first source portfolio with explicit pipeline coverage", () => {
     expect(embodiedSourceCatalog.length).toBeGreaterThanOrEqual(80);
     expect(embodiedSourceCatalog.length).toBeLessThanOrEqual(100);

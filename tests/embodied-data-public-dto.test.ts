@@ -10,11 +10,14 @@ import { seedDatabase } from "../src/db/seed.js";
 import type { DatasetProfile, PeerCompanyProfile } from "../src/domain/embodied-data-objects.js";
 import type { PublicEvent } from "../src/domain/types.js";
 import { exportStaticSite } from "../src/pipeline/export.js";
+import type { PublicSource } from "../src/pipeline/static-site/dto.js";
 import {
   projectPublicDataset,
   projectPublicEmbodiedEvent,
   projectPublicPeer,
 } from "../src/pipeline/static-site/embodied-intelligence.js";
+import { summarizeSourceCoverageGaps } from "../src/pipeline/static-site/intelligence.js";
+import { embodiedSiteModel } from "./fixtures/embodied-site-model.js";
 
 const profile = {
   pipelineStages: ["acquisition-route"],
@@ -83,6 +86,55 @@ const event: PublicEvent = {
 };
 
 describe("embodied public DTOs", () => {
+  it("preserves manual map decisions and exports a usable substitute card", async () => {
+    const root = await mkdtemp(join(tmpdir(), "agent-pulse-manual-map-"));
+    const base = loadConfig({ NODE_ENV: "test", DATABASE_URL: "sqlite::memory:" });
+    const config = { ...base, distDir: join(root, "dist") };
+    const db = createDatabase(config);
+    try {
+      await migrateToLatest(db, config);
+      await seedDatabase(db);
+      await exportStaticSite(db, config);
+      const sources = JSON.parse(
+        await readFile(join(config.distDir, "data/sources.json"), "utf8"),
+      ) as PublicSource[];
+      const manual = sources.filter((source) => source.acquisition === "manual");
+      expect(manual.every((source) => source.healthStatus === "unchecked")).toBe(true);
+      const substitute = sources.find((source) => source.slug === "samr-standards");
+      expect(substitute).toMatchObject({
+        mapStatus: "substitute",
+        substituteFor: ["cesi-embodied-standards"],
+        healthStatus: "unchecked",
+      });
+      expect(manual.some((source) => source.mapStatus === "pending")).toBe(true);
+      expect(sources.find((source) => source.slug === "cesi-embodied-standards")).toMatchObject({
+        mapStatus: "restricted",
+        healthStatus: "unchecked",
+      });
+      if (!substitute) throw new Error("Missing SAMR substitute");
+      const stages = embodiedSiteModel().pipelineStages;
+      expect(
+        summarizeSourceCoverageGaps([substitute], stages).some((gap) =>
+          substitute.pipelineStages.includes(gap.stage),
+        ),
+      ).toBe(false);
+      const restricted = { ...substitute, mapStatus: "restricted" as const };
+      expect(summarizeSourceCoverageGaps([restricted], stages)).toHaveLength(stages.length);
+      const page = await readFile(join(config.distDir, "sources/index.html"), "utf8");
+      expect(page).toContain('data-source-filter-map="substitute"');
+      const cards =
+        page.match(
+          /<article class="source-card"[^>]*data-source-map-status="substitute"[\s\S]*?<\/article>/g,
+        ) ?? [];
+      expect(cards).toHaveLength(1);
+      expect(cards[0]).toContain("cesi-embodied-standards");
+      expect(cards[0]).toContain('data-status="unchecked"');
+    } finally {
+      await db.destroy();
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("projects a strict event profile without internal identifiers", () => {
     const projected = projectPublicEmbodiedEvent(event, profile, {
       tracks: [

@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { embodiedLaunchEvents } from "../src/catalog/embodied-data/events.js";
+import { embodiedSourceCatalog } from "../src/catalog/embodied-data/sources.js";
 import { loadConfig } from "../src/config/env.js";
 import { bootstrapRepositoryDatabase } from "../src/db/bootstrap.js";
 import { createDatabase } from "../src/db/database.js";
@@ -24,6 +25,54 @@ afterEach(async () => {
 });
 
 describe("embodied public-site integrity", () => {
+  it("preserves current source controls while restoring cross-scope history", async () => {
+    const root = await mkdtemp(join(tmpdir(), "agent-pulse-cross-scope-source-"));
+    directories.push(root);
+    const config = loadConfig({ NODE_ENV: "test", DATABASE_URL: "sqlite::memory:" });
+    const db = createDatabase(config);
+    databases.push(db);
+    await migrateToLatest(db, config);
+    await seedDatabase(db);
+    await db
+      .updateTable("sources")
+      .set({
+        content_scope: "legacy-ai",
+        enabled: 1,
+        observation_enabled: 1,
+        lifecycle_status: "active",
+        success_count: 12,
+        failure_count: 3,
+        state_json: JSON.stringify({ cursor: "legacy-cursor" }),
+        last_verified_at: "2026-09-21T00:00:00.000Z",
+      })
+      .where("slug", "=", "figure-ai")
+      .execute();
+    await writeRepositorySnapshot(db, root);
+    await seedDatabase(db);
+    await db
+      .updateTable("sources")
+      .set({ state_json: "{}", success_count: 0, failure_count: 0 })
+      .where("slug", "=", "figure-ai")
+      .execute();
+    await restoreRepositorySnapshot(db, root);
+
+    expect(
+      await db
+        .selectFrom("sources")
+        .selectAll()
+        .where("slug", "=", "figure-ai")
+        .executeTakeFirstOrThrow(),
+    ).toMatchObject({
+      content_scope: "embodied-data",
+      lifecycle_status: "draft",
+      enabled: 0,
+      observation_enabled: 0,
+      success_count: 12,
+      failure_count: 3,
+      state_json: "{}",
+    });
+  });
+
   it("does not reactivate a retired source from repository snapshot state", async () => {
     const root = await mkdtemp(join(tmpdir(), "agent-pulse-retired-source-"));
     directories.push(root);
@@ -69,6 +118,18 @@ describe("embodied public-site integrity", () => {
     const db = createDatabase(config);
     databases.push(db);
     await bootstrapRepositoryDatabase(db, config);
+    expect(
+      await db
+        .selectFrom("sources")
+        .selectAll()
+        .where("slug", "=", "figure-ai")
+        .executeTakeFirstOrThrow(),
+    ).toMatchObject({
+      content_scope: "embodied-data",
+      lifecycle_status: "draft",
+      enabled: 0,
+      observation_enabled: 0,
+    });
     await exportStaticSite(db, config);
 
     const report = await validatePublicSite(config.distDir, "2026-09-20T00:00:00.000Z");
@@ -90,6 +151,7 @@ describe("embodied public-site integrity", () => {
     const sources = JSON.parse(
       await readFile(join(config.distDir, "data/sources.json"), "utf8"),
     ) as Array<{
+      slug: string;
       lifecycle?: string;
       maintenanceStatus?: string;
       mapStatus?: string;
@@ -104,6 +166,9 @@ describe("embodied public-site integrity", () => {
 
     expect(sources.length).toBeGreaterThanOrEqual(80);
     expect(sources.length).toBeLessThanOrEqual(100);
+    expect(sources.map((source) => source.slug).sort()).toEqual(
+      embodiedSourceCatalog.map((source) => source.slug).sort(),
+    );
     expect(events).toHaveLength(embodiedLaunchEvents.length);
     expect(events.some((event) => (event.happenedAt ?? "") >= "2026-08-01T00:00:00.000Z")).toBe(
       true,

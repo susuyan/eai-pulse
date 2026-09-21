@@ -12,6 +12,10 @@ import { embodiedTracks } from "../catalog/embodied-data/tracks.js";
 import { type CuratedEventSeed, historicalEvents } from "../catalog/history.js";
 import { recentDensityEvents } from "../catalog/recent-density.js";
 import { type CatalogSource, legacySourceCatalog, sourceCatalog } from "../catalog/sources.js";
+import {
+  SourceMapStatusSchema,
+  SourcePipelineCoverageSchema,
+} from "../domain/embodied-source-map.js";
 import { canonicalizeUrl, sha256 } from "../domain/url.js";
 import { Repository } from "./repository.js";
 import type { DatabaseSchema } from "./types.js";
@@ -686,6 +690,26 @@ const allEvents = [
 ] as const;
 
 export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
+  const embodiedSlugs = new Set(sourceCatalog.map((source) => source.slug));
+  const validatedSources = sourceCatalog.map((source) => {
+    const mapStatus = SourceMapStatusSchema.parse(source.mapStatus);
+    const pipelineStages = SourcePipelineCoverageSchema.parse(source.pipelineStages);
+    for (const slug of source.substituteFor) {
+      if (slug === source.slug || !embodiedSlugs.has(slug)) {
+        throw new Error(`Invalid substitute reference for ${source.slug}: ${slug}`);
+      }
+    }
+    if (mapStatus === "restricted" && !source.restrictionNote.trim()) {
+      throw new Error(`Restricted source requires a restriction note: ${source.slug}`);
+    }
+    if (
+      mapStatus === "integrated" &&
+      (source.acquisition === "manual" || source.adapter === "manual")
+    ) {
+      throw new Error(`Manual source cannot be integrated: ${source.slug}`);
+    }
+    return { ...source, mapStatus, pipelineStages };
+  });
   const repository = new Repository(db);
   const timestamp = isoNow();
 
@@ -757,7 +781,6 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
     }
   };
 
-  const embodiedSlugs = new Set(sourceCatalog.map((source) => source.slug));
   for (const source of legacySourceCatalog) {
     if (embodiedSlugs.has(source.slug)) continue;
     await saveCatalogEntry(source, "legacy-ai");
@@ -772,7 +795,7 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
     });
   }
 
-  for (const source of sourceCatalog) {
+  for (const source of validatedSources) {
     await saveCatalogEntry(source, "embodied-data");
   }
   const catalogSlugs = new Set(

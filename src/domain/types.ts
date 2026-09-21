@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { HtmlExtractionSchema } from "./html-extraction.js";
 
 export const SourceConfigSchema = z.object({
   url: z.string().url(),
@@ -10,6 +11,7 @@ export const SourceConfigSchema = z.object({
   identityHosts: z.array(z.string().min(1)).optional(),
   socialHandles: z.array(z.string().min(1)).optional(),
   dataPath: z.string().min(1).max(200).optional(),
+  html: HtmlExtractionSchema.optional(),
 });
 
 export type SourceConfig = z.infer<typeof SourceConfigSchema>;

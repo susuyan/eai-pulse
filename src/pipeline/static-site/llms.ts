@@ -36,6 +36,7 @@ Consumption guidance:
 - [Pipeline stages](${baseUrl}data/pipeline.json): The ordered six-stage production taxonomy.
 - [Data assets](${baseUrl}data/assets.json): Allowlisted datasets, standards, and collection methods.
 - [Peer capabilities](${baseUrl}data/peers.json): Sourced peer capability claims and evidence relations.
+- [Embodied evolution](${baseUrl}data/evolution.json): Curated phases and cross-Event trends with resolved Event relations.
 - [Source metadata](${baseUrl}data/sources.json): Public source catalog and latest allowlisted health state.
 - [Scout hypotheses](${baseUrl}data/scout.json): Action ideas that remain hypotheses rather than facts.
 - [Product metadata](${baseUrl}data/product.json): Versioned public capabilities and release history.

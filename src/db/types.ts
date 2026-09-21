@@ -6,6 +6,7 @@ import type {
   DatasetEventRole,
   StandardEventRole,
 } from "../domain/embodied-data-objects.js";
+import type { SourceMapStatus } from "../domain/embodied-source-map.js";
 
 export interface SourceTable {
   id: string;
@@ -50,6 +51,10 @@ export interface SourceTable {
   freshness_slo_hours: Generated<number>;
   adapter_version: Generated<string>;
   content_scope: Generated<ContentScope>;
+  map_status: Generated<SourceMapStatus>;
+  pipeline_stages_json: Generated<string>;
+  substitute_for_json: Generated<string>;
+  restriction_note: Generated<string>;
   created_at: string;
   updated_at: string;
 }
@@ -80,6 +85,7 @@ export interface SourceCheckTable {
   status: string;
   adapter: string;
   adapter_version: string;
+  contract_fingerprint: Generated<string | null>;
   access_status: string;
   fetch_status: string;
   parse_status: string;

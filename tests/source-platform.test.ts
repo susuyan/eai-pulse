@@ -1,5 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createSafeFetcher, type FetchError } from "../src/collectors/fetcher.js";
+import { createDefaultRateLimiter, RateLimiter } from "../src/collectors/rate-limiter.js";
 import { loadConfig } from "../src/config/env.js";
 import {
   applySourceFailure,
@@ -15,6 +16,129 @@ const config = loadConfig({
 });
 
 describe("resilient fetcher", () => {
+  afterEach(() => vi.useRealTimers());
+  it("revalidates and paces proxy fallback after a failed direct dispatch", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-21T00:00:00Z"));
+    const start = Date.now();
+    const validated: number[] = [];
+    const dispatched: number[] = [];
+    const limiter = createDefaultRateLimiter();
+    const fetchText = createSafeFetcher(config, {
+      validateUrl: async () => {
+        validated.push(Date.now() - start);
+      },
+      fetchImpl: () => {
+        dispatched.push(Date.now() - start);
+        throw new Error("Direct network failure");
+      },
+      proxyFetchImpl: async (_url, init) => {
+        expect(init?.signal?.aborted).toBe(false);
+        dispatched.push(Date.now() - start);
+        return new Response("proxy ok");
+      },
+    });
+    const request = fetchText(
+      "https://example.com/list",
+      {},
+      {
+        maxRetries: 0,
+        timeoutMs: 1000,
+        dispatchRequest: (url, validate, dispatch) =>
+          limiter.dispatch(RateLimiter.domainFromUrl(url), 30, "source", validate, dispatch),
+      },
+    );
+    await vi.runAllTimersAsync();
+    expect(await request).toMatchObject({ body: "proxy ok", transport: "env-proxy" });
+    expect(validated).toEqual([0, 2000]);
+    expect(dispatched).toEqual([0, 2000]);
+  });
+  it("keeps physical dispatches spaced when the first URL validation is slow", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-21T00:00:00Z"));
+    const start = Date.now();
+    const dispatched: number[] = [];
+    const validated: Array<{ url: string; at: number }> = [];
+    const limiter = createDefaultRateLimiter();
+    const fetchText = createSafeFetcher(config, {
+      validateUrl: async (url) => {
+        if (url.endsWith("first")) await new Promise((resolve) => setTimeout(resolve, 2000));
+        validated.push({ url, at: Date.now() - start });
+      },
+      fetchImpl: async (url, init) => {
+        expect(init?.signal?.aborted).toBe(false);
+        expect(validated.find((entry) => entry.url === String(url))?.at).toBe(Date.now() - start);
+        dispatched.push(Date.now() - start);
+        return new Response("ok");
+      },
+    });
+    const requests = ["first", "second"].map((source) =>
+      fetchText(
+        `https://example.com/${source}`,
+        {},
+        {
+          maxRetries: 0,
+          timeoutMs: 1000,
+          dispatchRequest: (url, validate, dispatch) =>
+            limiter.dispatch(RateLimiter.domainFromUrl(url), 30, source, validate, dispatch),
+        },
+      ),
+    );
+    await vi.runAllTimersAsync();
+    await Promise.all(requests);
+    expect(dispatched).toEqual([2000, 4000]);
+  });
+  it("paces retries and redirects without replacing Retry-After or consuming the request timeout", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-21T00:00:00Z"));
+    const start = Date.now();
+    const attempts: number[] = [];
+    const limiter = createDefaultRateLimiter();
+    const fetchText = createSafeFetcher(config, {
+      validateUrl: async () => undefined,
+      fetchImpl: async (_url, init) => {
+        expect(init?.signal?.aborted).toBe(false);
+        attempts.push(Date.now() - start);
+        if (attempts.length === 1)
+          return new Response("busy", { status: 429, headers: { "retry-after": "3" } });
+        if (attempts.length === 2)
+          return new Response(null, { status: 302, headers: { location: "/final" } });
+        return new Response("ok");
+      },
+    });
+    const request = fetchText(
+      "https://example.com/list",
+      {},
+      {
+        maxRetries: 1,
+        timeoutMs: 1000,
+        dispatchRequest: (url, validate, dispatch) =>
+          limiter.dispatch(RateLimiter.domainFromUrl(url), 30, "source", validate, dispatch),
+      },
+    );
+    await vi.runAllTimersAsync();
+    expect(await request).toMatchObject({ body: "ok", attemptCount: 2 });
+    expect(attempts).toEqual([0, 3000, 5000]);
+  });
+  it.each([
+    "https://outside.example/detail",
+    "http://example.com/detail",
+    "https://user:secret@example.com/detail",
+  ])("blocks constrained redirect before fetching %s", async (location) => {
+    const fetchImpl = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location } }))
+      .mockResolvedValue(new Response("outside"));
+    const fetchText = createSafeFetcher(config, { fetchImpl, validateUrl: async () => undefined });
+    await expect(
+      fetchText(
+        "https://example.com/list",
+        {},
+        { allowedOrigin: "https://example.com", maxRetries: 0 },
+      ),
+    ).rejects.toMatchObject({ type: "security", code: "ORIGIN_MISMATCH" });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
   it("retries recoverable upstream failures and records attempts", async () => {
     const fetchImpl = vi
       .fn<typeof fetch>()

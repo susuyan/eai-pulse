@@ -6,6 +6,16 @@ async function workflow(name: string): Promise<string> {
 }
 
 describe("GitHub source governance workflows", () => {
+  it("audits the exact priority cohort with bounded concurrency and enforces report freshness", async () => {
+    const audit = await workflow("source-audit.yml");
+    expect(audit).toContain(
+      "--cohort=embodied-priority --concurrency=4 --report=data/reports/embodied-priority-source-health.json",
+    );
+    expect(audit).toContain("npm run sources:priority:check");
+    expect(audit).toContain("data/reports/embodied-priority-source-health.json");
+    expect(audit).toContain("agent-pulse-source-health-summary:v1");
+    expect(await workflow("monitor.yml")).toContain("npm run sources:priority:check");
+  });
   it("serializes repository data writers and persists audit checks through the snapshot", async () => {
     const [audit, refresh] = await Promise.all([
       workflow("source-audit.yml"),

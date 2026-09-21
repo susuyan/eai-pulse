@@ -1,6 +1,7 @@
 import { mkdtemp, readdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { gzipSync } from "node:zlib";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { capitalHistoryEvents } from "../src/catalog/capital-history-2023-2025.js";
@@ -121,6 +122,7 @@ describe("SQLite application", () => {
     expect((await readdir(join(config.distDir, "data"))).sort()).toEqual([
       "assets.json",
       "events.json",
+      "evolution.json",
       "peers.json",
       "pipeline.json",
       "product.json",
@@ -141,6 +143,16 @@ describe("SQLite application", () => {
       pipelineStages: expect.any(Array),
       dataProfile: { evidenceStatus: expect.any(String) },
     });
+    const evolution = JSON.parse(
+      await readFile(join(config.distDir, "data/evolution.json"), "utf8"),
+    );
+    expect(evolution).toMatchObject({
+      schemaVersion: 1,
+      generatedAt: "2026-07-13T12:00:00.000Z",
+    });
+    expect(evolution.phases).toHaveLength(6);
+    expect(evolution.trends).toHaveLength(8);
+    expect(JSON.stringify(evolution)).not.toMatch(/raw_|private-|\/Users\//i);
     const publicPipeline = JSON.parse(
       await readFile(join(config.distDir, "data/pipeline.json"), "utf8"),
     );
@@ -207,7 +219,7 @@ describe("SQLite application", () => {
       ["pipeline/index.html", "数据管线 · Agent Pulse"],
       ["assets/index.html", "数据资产 · Agent Pulse"],
       ["peers/index.html", "行业同行 · Agent Pulse"],
-      ["timeline/index.html", "事件时间线 · Agent Pulse"],
+      ["timeline/index.html", "具身数据发展脉络 · Agent Pulse"],
       ["scout/index.html", "行动建议 · Agent Pulse"],
       ["changelog/index.html", "产品更新 · Agent Pulse"],
       ["sources/index.html", "来源地图 · Agent Pulse"],
@@ -243,7 +255,8 @@ describe("SQLite application", () => {
     const css = await readFile(join(config.distDir, "assets/app.css"), "utf8");
     const home = await readFile(join(config.distDir, "index.html"), "utf8");
     const llms = await readFile(join(config.distDir, "llms.txt"), "utf8");
-    expect(Buffer.byteLength(css)).toBeLessThan(100_000);
+    // The baseline is 99,139 bytes; the home evidence board adds about 2.4 KB.
+    expect(Buffer.byteLength(css)).toBeLessThan(103_000);
     expect(llms).toMatch(/^# Agent Pulse\n\n> /);
     expect(llms).toContain("## Core Machine-Readable Data");
     expect(llms).toContain("published Events");
@@ -251,6 +264,7 @@ describe("SQLite application", () => {
     expect(llms).toContain("analysis and forecasts remain separate fields");
     expect(llms).toContain("https://susuyan.github.io/eai-pulse/data/pipeline.json");
     expect(llms).toContain("https://susuyan.github.io/eai-pulse/data/assets.json");
+    expect(llms).toContain("https://susuyan.github.io/eai-pulse/data/evolution.json");
     expect(llms).not.toContain("https://susuyan.github.io/eai-pulse/data/timeline.json");
     expect(llms).not.toContain("https://susuyan.github.io/eai-pulse/data/signals.json");
     expect(home).toContain("https://github.com/susuyan/eai-pulse");
@@ -261,6 +275,24 @@ describe("SQLite application", () => {
     expect(llms).toContain("6 pipeline stages");
     expect(home.indexOf('src="./assets/core.js"')).toBeLessThan(home.indexOf("</head>"));
     expect(home.match(/src="\.\/assets\/core\.js"/g)).toHaveLength(1);
+    expect(home.match(/data-embodied-trend="/g)).toHaveLength(8);
+    expect(home).toContain("data-home-evolution");
+    const trendSource = await readFile(
+      join(config.rootDir, "web/public/assets/embodied-trends.js"),
+      "utf8",
+    );
+    const trendScript = await readFile(join(config.distDir, "assets/embodied-trends.js"), "utf8");
+    const homeCore = await readFile(join(config.distDir, "assets/core.js"), "utf8");
+    expect(Buffer.byteLength(trendScript)).toBeLessThan(Buffer.byteLength(trendSource));
+    expect(Buffer.byteLength(trendScript)).toBeLessThan(3_000);
+    expect(homeCore).toContain('import("./embodied-trends.js")');
+    expect(homeCore).toContain('document.querySelector("[data-embodied-trends]")');
+    expect(homeCore).not.toContain("data-random-trend");
+    const trendModule = await import(
+      pathToFileURL(join(config.distDir, "assets/embodied-trends.js")).href
+    );
+    expect(trendModule.shanghaiDateKey(new Date("2026-09-19T16:00:00Z"))).toBe("2026-09-20");
+    expect(typeof trendModule.setupDailyEmbodiedTrends).toBe("function");
     const rendersLegacyUiContract = home.includes("GPT-5.6");
     if (rendersLegacyUiContract) {
       expect(home).toContain("GPT-5.6");

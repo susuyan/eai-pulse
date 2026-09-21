@@ -7,6 +7,11 @@ import { createDatabase } from "../src/db/database.js";
 import { migrateToLatest } from "../src/db/migrate.js";
 import { seedDatabase } from "../src/db/seed.js";
 import { exportStaticSite } from "../src/pipeline/export.js";
+import {
+  buildPrioritySourceHealthReport,
+  validatePrioritySourceHealthReport,
+} from "../src/pipeline/priority-source-health.js";
+import { auditSources } from "../src/pipeline/source-audit.js";
 
 const databases: ReturnType<typeof createDatabase>[] = [];
 
@@ -23,6 +28,64 @@ describe("static-site privacy boundary", () => {
     databases.push(db);
     await migrateToLatest(db, config);
     await seedDatabase(db);
+    const prioritySource = await db
+      .selectFrom("sources")
+      .select("id")
+      .where("slug", "=", "horizon-holomotion")
+      .executeTakeFirstOrThrow();
+    const audit = await auditSources(
+      db,
+      config,
+      { sourceId: prioritySource.id },
+      { adapterFor: () => ({ kind: "fixture", collect: async () => [] }) },
+    );
+    const auditJob = await db
+      .selectFrom("jobs")
+      .selectAll()
+      .where("id", "=", audit.jobId)
+      .executeTakeFirstOrThrow();
+    expect(JSON.parse(auditJob.details_json).targetSourceIds).toEqual([prioritySource.id]);
+    await db
+      .updateTable("source_checks")
+      .set({
+        sample_json: '{"raw":"PRIVATE_AUDIT_SAMPLE"}',
+        error_summary: "/Users/private/PRIVATE_AUDIT_ERROR",
+      })
+      .where("source_id", "=", prioritySource.id)
+      .execute();
+    const cohortReport = await buildPrioritySourceHealthReport(db);
+    const serializedCohort = JSON.stringify(cohortReport);
+    for (const sentinel of [
+      "PRIVATE_AUDIT_SAMPLE",
+      "PRIVATE_AUDIT_ERROR",
+      prioritySource.id,
+      audit.jobId,
+      "targetSourceIds",
+      "sample_json",
+      "/Users/",
+    ])
+      expect(serializedCohort).not.toContain(sentinel);
+    expect(() =>
+      validatePrioritySourceHealthReport({
+        ...cohortReport,
+        results: cohortReport.results.map((row) => ({ ...row, raw: "PRIVATE_AUDIT_SAMPLE" })),
+      }),
+    ).toThrow();
+    await db
+      .updateTable("jobs")
+      .set({
+        details_json: JSON.stringify({
+          ...JSON.parse(auditJob.details_json),
+          targetSourceIds: [prioritySource.id, "PRIVATE_TARGET_MEMBER_SENTINEL"],
+        }),
+      })
+      .where("id", "=", audit.jobId)
+      .execute();
+    await db
+      .updateTable("source_checks")
+      .set({ contract_fingerprint: "a".repeat(64) })
+      .where("source_id", "=", prioritySource.id)
+      .execute();
 
     const legacyEvent = await db
       .selectFrom("events")
@@ -68,6 +131,7 @@ describe("static-site privacy boundary", () => {
     expect(files).toEqual([
       "assets.json",
       "events.json",
+      "evolution.json",
       "peers.json",
       "pipeline.json",
       "product.json",
@@ -88,6 +152,11 @@ describe("static-site privacy boundary", () => {
       '"profile_json"',
       '"raw_meta_json"',
       '"config_json"',
+      '"contract_fingerprint"',
+      '"contractFingerprint"',
+      '"targetSourceIds"',
+      "PRIVATE_TARGET_MEMBER_SENTINEL",
+      "a".repeat(64),
       '"readiness_blockers_json"',
       '"manual_override"',
     ]) {

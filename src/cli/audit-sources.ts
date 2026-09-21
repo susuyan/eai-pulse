@@ -1,21 +1,25 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { embodiedPrioritySourceSlugs } from "../catalog/embodied-data/priority-sources.js";
 import { loadConfig } from "../config/env.js";
 import { createDatabase } from "../db/database.js";
 import { migrateToLatest } from "../db/migrate.js";
 import { seedDatabase } from "../db/seed.js";
+import { buildPrioritySourceHealthReport } from "../pipeline/priority-source-health.js";
 import { auditSources } from "../pipeline/source-audit.js";
 
 export interface AuditCliOptions {
-  sourceSlug?: string;
+  sourceSlugs: string[];
   concurrency?: number;
   reportPath?: string;
   help: boolean;
+  cohort?: "embodied-priority";
+  reportOnly?: boolean;
 }
 
 export function parseAuditArgs(args: string[]): AuditCliOptions {
-  const options: AuditCliOptions = { help: false };
+  const options: AuditCliOptions = { sourceSlugs: [], help: false };
   for (let index = 0; index < args.length; index++) {
     const argument = args[index];
     if (!argument) continue;
@@ -27,13 +31,23 @@ export function parseAuditArgs(args: string[]): AuditCliOptions {
       options.help = true;
       continue;
     }
-    if (!["--source", "--concurrency", "--report", "--output"].includes(flag)) {
+    if (flag === "--report-only") {
+      if (inlineValue !== undefined) throw new Error("--report-only does not take a value");
+      options.reportOnly = true;
+      continue;
+    }
+    if (!["--source", "--cohort", "--concurrency", "--report", "--output"].includes(flag)) {
       throw new Error(`Unknown option: ${flag}`);
     }
     const value = inlineValue ?? args[++index];
     if (!value || value.startsWith("--")) throw new Error(`${flag} requires a value`);
 
-    if (flag === "--source") options.sourceSlug = value;
+    if (flag === "--source" && !options.sourceSlugs.includes(value))
+      options.sourceSlugs.push(value);
+    if (flag === "--cohort") {
+      if (value !== "embodied-priority") throw new Error("Unknown cohort");
+      options.cohort = value;
+    }
     if (flag === "--report" || flag === "--output") options.reportPath = value;
     if (flag === "--concurrency") {
       const concurrency = Number(value);
@@ -43,6 +57,9 @@ export function parseAuditArgs(args: string[]): AuditCliOptions {
       options.concurrency = concurrency;
     }
   }
+  if (options.cohort && (options.sourceSlugs.length || (options.concurrency ?? 4) > 4))
+    throw new Error("Priority cohort requires an exact selection and concurrency at most 4");
+  if (options.reportOnly && !options.cohort) throw new Error("--report-only requires a cohort");
   return options;
 }
 
@@ -51,7 +68,9 @@ export async function runAuditCli(args = process.argv.slice(2)): Promise<void> {
   if (options.help) {
     console.log(`Usage: npm run sources:audit -- [options]
 
-  --source <slug>       Audit one configured source
+  --source <slug>       Audit a configured source; repeat to select a cohort
+  --cohort embodied-priority  Audit the exact priority cohort with reviewed policy
+  --report-only        Refresh cohort evidence without a new audit
   --concurrency <1-32>  Override bounded audit concurrency
   --report <path>       Write a privacy-safe report below data/reports
   --output <path>       Alias for --report
@@ -69,21 +88,45 @@ export async function runAuditCli(args = process.argv.slice(2)): Promise<void> {
       .executeTakeFirstOrThrow();
     if (Number(sourceCount.count) === 0) await seedDatabase(db);
 
-    const sourceId = options.sourceSlug
-      ? (
-          await db
-            .selectFrom("sources")
-            .select("id")
-            .where("slug", "=", options.sourceSlug)
-            .executeTakeFirst()
-        )?.id
-      : undefined;
-    if (options.sourceSlug && !sourceId) throw new Error(`Source not found: ${options.sourceSlug}`);
+    if (options.reportOnly) {
+      const report = await buildPrioritySourceHealthReport(db);
+      if (options.reportPath) await writePublicReport(config.rootDir, options.reportPath, report);
+      console.log(JSON.stringify(report, null, 2));
+      return;
+    }
 
-    const report = await auditSources(db, config, {
-      ...(sourceId ? { sourceId } : {}),
-      ...(options.concurrency ? { concurrency: options.concurrency } : {}),
+    const slugs = options.cohort ? embodiedPrioritySourceSlugs : options.sourceSlugs;
+    let sourceIds: string[] | undefined;
+    if (slugs.length) {
+      const sources = await db
+        .selectFrom("sources")
+        .select(["id", "slug"])
+        .where("slug", "in", slugs)
+        .execute();
+      const idsBySlug = new Map(sources.map((source) => [source.slug, source.id]));
+      sourceIds = slugs.map((slug) => {
+        const id = idsBySlug.get(slug);
+        if (!id) throw new Error(`Source not found: ${slug}`);
+        return id;
+      });
+    }
+
+    const audit = await auditSources(db, config, {
+      ...(sourceIds ? { sourceIds } : {}),
+      ...(options.cohort
+        ? { concurrency: options.concurrency ?? 4 }
+        : options.concurrency
+          ? { concurrency: options.concurrency }
+          : {}),
     });
+    const report = options.cohort
+      ? await buildPrioritySourceHealthReport(db)
+      : {
+          schemaVersion: 1,
+          ...audit,
+          jobId: undefined,
+          results: audit.results.map(({ sourceId: _sourceId, ...result }) => result),
+        };
     if (options.reportPath) await writePublicReport(config.rootDir, options.reportPath, report);
     console.log(JSON.stringify(report, null, 2));
   } finally {
@@ -94,7 +137,7 @@ export async function runAuditCli(args = process.argv.slice(2)): Promise<void> {
 async function writePublicReport(
   rootDir: string,
   reportArgument: string,
-  report: Awaited<ReturnType<typeof auditSources>>,
+  report: unknown,
 ): Promise<void> {
   const reportsRoot = resolve(rootDir, "data/reports");
   const reportPath = resolve(rootDir, reportArgument);
@@ -107,19 +150,7 @@ async function writePublicReport(
     throw new Error("Audit reports must be written below data/reports");
   }
   await mkdir(dirname(reportPath), { recursive: true });
-  await writeFile(
-    reportPath,
-    `${JSON.stringify(
-      {
-        schemaVersion: 1,
-        ...report,
-        results: report.results.map(({ sourceId: _sourceId, ...result }) => result),
-      },
-      null,
-      2,
-    )}\n`,
-    "utf8",
-  );
+  await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
 }
 
 const currentFile = fileURLToPath(import.meta.url);

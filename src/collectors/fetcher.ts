@@ -30,6 +30,12 @@ export class FetchError extends Error {
 }
 
 export interface FetchPolicy {
+  allowedOrigin?: string;
+  dispatchRequest?: (
+    url: string,
+    validate: () => Promise<void>,
+    start: () => Promise<Response>,
+  ) => Promise<Response>;
   timeoutMs?: number;
   maxRetries?: number;
   baseBackoffMs?: number;
@@ -71,6 +77,8 @@ export function createSafeFetcher(config: AppConfig, dependencies: FetcherDepend
           timeoutMs,
           fetchImpl,
           validateUrl,
+          policy.allowedOrigin,
+          policy.dispatchRequest,
         );
         return { ...result, attemptCount: attempt, transport: "direct" as const };
       } catch (error) {
@@ -83,6 +91,8 @@ export function createSafeFetcher(config: AppConfig, dependencies: FetcherDepend
               timeoutMs,
               proxyFetchImpl,
               validateUrl,
+              policy.allowedOrigin,
+              policy.dispatchRequest,
             );
             return { ...result, attemptCount: attempt, transport: "env-proxy" as const };
           } catch (proxyError) {
@@ -128,27 +138,49 @@ async function fetchWithRedirects(
   timeoutMs: number,
   fetchImpl: typeof fetch,
   validateUrl: (url: string) => Promise<void>,
+  allowedOrigin?: string,
+  dispatchRequest?: FetchPolicy["dispatchRequest"],
 ): Promise<Omit<FetchResult, "attemptCount">> {
   let currentUrl = initialUrl;
   for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
-    try {
-      await validateUrl(currentUrl);
-    } catch (error) {
-      throw new FetchError(message(error), "security", false, null, "URL_BLOCKED");
+    if (allowedOrigin && !isAllowedOrigin(currentUrl, allowedOrigin)) {
+      throw new FetchError(
+        "Source response origin mismatch",
+        "security",
+        false,
+        null,
+        "ORIGIN_MISMATCH",
+      );
     }
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const validate = async () => {
+      try {
+        await validateUrl(currentUrl);
+      } catch (error) {
+        throw new FetchError(message(error), "security", false, null, "URL_BLOCKED");
+      }
+    };
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     try {
-      const response = await fetchImpl(currentUrl, {
-        headers: {
-          accept:
-            "application/json, application/rss+xml, application/atom+xml, text/html;q=0.9, */*;q=0.5",
-          "user-agent": headers["user-agent"] ?? headers["User-Agent"] ?? "agent-pulse",
-          ...headers,
-        },
-        redirect: "manual",
-        signal: controller.signal,
-      });
+      const start = () => {
+        const controller = new AbortController();
+        timeout = setTimeout(() => controller.abort(), timeoutMs);
+        return fetchImpl(currentUrl, {
+          headers: {
+            accept:
+              "application/json, application/rss+xml, application/atom+xml, text/html;q=0.9, */*;q=0.5",
+            "user-agent": headers["user-agent"] ?? headers["User-Agent"] ?? "agent-pulse",
+            ...headers,
+          },
+          redirect: "manual",
+          signal: controller.signal,
+        });
+      };
+      let response: Response;
+      if (dispatchRequest) response = await dispatchRequest(currentUrl, validate, start);
+      else {
+        await validate();
+        response = await start();
+      }
       if (isRedirect(response.status)) {
         const location = response.headers.get("location");
         if (!location) throw new FetchError("Redirect is missing Location", "upstream", true);
@@ -201,6 +233,20 @@ async function fetchWithRedirects(
     }
   }
   throw new FetchError("Too many redirects", "permanent_http", false);
+}
+
+function isAllowedOrigin(value: string, origin: string): boolean {
+  try {
+    const target = new URL(value);
+    return (
+      target.origin === origin &&
+      target.protocol === "https:" &&
+      !target.username &&
+      !target.password
+    );
+  } catch {
+    return false;
+  }
 }
 
 async function readLimitedBody(

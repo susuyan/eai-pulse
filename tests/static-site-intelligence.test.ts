@@ -1,6 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { embodiedLaunchEvents } from "../src/catalog/embodied-data/events.js";
+import { embodiedTrends, evolutionPhases } from "../src/catalog/embodied-data/evolution.js";
 import { legacySourceCatalog as sourceCatalog } from "../src/catalog/sources.js";
 import { githubReleasesAdapter } from "../src/collectors/github-releases.js";
 import { rssAdapter } from "../src/collectors/rss.js";
@@ -12,6 +14,7 @@ import type {
   PublicSource,
   StaticSiteModel,
 } from "../src/pipeline/static-site/dto.js";
+import { buildPublicEmbodiedNarrative } from "../src/pipeline/static-site/embodied-narrative.js";
 import {
   analyzeTechnologyCoverage,
   eventDevelopments,
@@ -29,9 +32,223 @@ import {
   summarizeSourcePortfolio,
   timelineEventsForPresentation,
 } from "../src/pipeline/static-site/intelligence.js";
+import { renderEmbodiedHome } from "../src/pipeline/static-site/pages/home.js";
+import { renderScoutPage } from "../src/pipeline/static-site/pages/scout.js";
 import { renderStaticPages, renderTimeline } from "../src/pipeline/static-site/pages.js";
 
 describe("static-site intelligence consumption model", () => {
+  it("shows the proposed artifact and trigger fact on every action card", () => {
+    const model = embodiedSiteModel();
+    model.scout = [
+      {
+        slug: "collection-route-example",
+        kind: "collection-route",
+        title: "验证采集路线",
+        observation: "触发事实",
+        hypothesis: "验证假设",
+        whyNow: "验证时机",
+        targetAudience: "采集运营负责人",
+        suggestedAction: "执行一个小规模验证",
+        artifactIdea: "路线对比记录与继续或停止决策",
+        counterSignals: "无法复现时停止",
+        horizon: "7-30d",
+        confidenceScore: 90,
+        evidenceScore: 90,
+        noveltyScore: 80,
+        leverageScore: 85,
+        totalScore: 86,
+        publishedAt: "2026-09-20T00:00:00.000Z",
+        evidence: [
+          {
+            slug: "embodied-event",
+            title: "Embodied event",
+            factSummary: "Verified collection workflow with a reproducible audit trail.",
+          },
+        ],
+      },
+    ];
+
+    const page = renderScoutPage(model, "zh-CN");
+    expect(page).toContain("建议产物");
+    expect(page).toContain("路线对比记录与继续或停止决策");
+    expect(page).toContain("依据事实");
+    expect(page).toContain("Verified collection workflow with a reproducible audit trail.");
+  });
+
+  it("server-renders the phase handoff and all eight trends in curated order", () => {
+    const model = evolutionModel();
+    model.generatedAt = "2027-01-01T00:00:00Z";
+    const home = renderEmbodiedHome(model, "zh-CN");
+    const handoff = home.match(/<section[^>]*data-home-evolution[\s\S]*?<\/section>/)?.[0] ?? "";
+    const previous = model.evolutionPhases[4];
+    const current = model.evolutionPhases[5];
+    if (!previous || !current) throw new Error("Missing phase fixture");
+    expect(handoff.indexOf(previous.title)).toBeGreaterThan(-1);
+    expect(handoff.indexOf(current.title)).toBeGreaterThan(handoff.indexOf(previous.title));
+    expect(handoff).toContain(previous.turningPoint);
+    expect(handoff).toContain(current.thesis);
+    expect(handoff).toContain(current.start);
+    expect(handoff).toContain(current.end);
+    expect(handoff).toContain("策展截止");
+    expect(handoff).toContain("最新事件日期");
+    expect(handoff).not.toContain("2027-01-01");
+    expect(handoff).toContain('href="__PREFIX__timeline/"');
+    expect(home).toContain("data-embodied-trends");
+    const cards = [
+      ...home.matchAll(/<article[^>]*data-embodied-trend="([^"]+)"[\s\S]*?<\/article>/g),
+    ];
+    expect(cards.map((card) => card[1])).toEqual(model.embodiedTrends.map((trend) => trend.slug));
+    expect(cards).toHaveLength(8);
+    for (const [index, card] of cards.entries()) {
+      const trend = model.embodiedTrends[index];
+      if (!trend) throw new Error("Missing trend fixture");
+      expect(card[0]).toContain(trend.title);
+      expect(card[0]).toContain(trend.thesis);
+      expect(card[0]).toContain(trend.whyNow);
+      expect(card[0]).toContain("反证与未知");
+      expect(card[0]).toContain("尚未收录独立反证");
+      for (const next of trend.nextWatch) expect(card[0]).toContain(next);
+      for (const event of trend.events) {
+        expect(card[0]).toContain(`href="__PREFIX__events/${event.slug}/"`);
+      }
+      for (const stage of trend.pipelineStages) {
+        expect(card[0]).toContain(model.pipelineStages.find((item) => item.slug === stage)?.name);
+      }
+      expect(card[0]).not.toMatch(/\bhidden\b|<template|https?:\/\//);
+    }
+    expect(home).not.toMatch(/\/lines\/|六个领域趋势|随机趋势/);
+  });
+
+  it("pins the homepage latest Event date to the Shanghai calendar", () => {
+    const model = evolutionModel();
+    const current = model.evolutionPhases.at(-1);
+    if (!current) throw new Error("Missing current phase fixture");
+    const currentEventSlugs = new Set(current.events.map((event) => event.slug));
+    const latestEvent = model.embodiedEvents.find((event) => currentEventSlugs.has(event.slug));
+    if (!latestEvent) throw new Error("Missing current phase Event fixture");
+    for (const event of model.embodiedEvents) {
+      if (currentEventSlugs.has(event.slug)) event.happenedAt = "2026-09-19T15:59:59Z";
+    }
+    latestEvent.happenedAt = "2026-09-19T16:00:00Z";
+
+    const originalTimeZone = process.env.TZ;
+    try {
+      process.env.TZ = "America/Los_Angeles";
+      const losAngeles = renderEmbodiedHome(model, "zh-CN");
+      process.env.TZ = "Pacific/Kiritimati";
+      const kiritimati = renderEmbodiedHome(model, "zh-CN");
+      const phaseSummary = (home: string) =>
+        home.match(/<section[^>]*data-home-evolution[\s\S]*?<\/section>/)?.[0] ?? "";
+
+      expect(phaseSummary(losAngeles)).toBe(phaseSummary(kiritimati));
+      expect(phaseSummary(losAngeles)).toContain(
+        '<time datetime="2026-09-19T16:00:00Z">2026年9月20日</time>',
+      );
+      expect(phaseSummary(losAngeles)).toContain("策展截止 2026-09-20");
+      expect(phaseSummary(renderEmbodiedHome(model, "en"))).toContain(
+        '<time datetime="2026-09-19T16:00:00Z">Sep 20, 2026</time>',
+      );
+    } finally {
+      if (originalTimeZone === undefined) delete process.env.TZ;
+      else process.env.TZ = originalTimeZone;
+    }
+  });
+
+  it("escapes homepage editorial fields and separates linked counter-evidence", () => {
+    const model = evolutionModel();
+    const trend = model.embodiedTrends[0];
+    const current = model.evolutionPhases.at(-1);
+    if (!trend || !current) throw new Error("Missing narrative fixture");
+    current.title = '<img src=x onerror="alert(1)">';
+    current.thesis = "<script>unsafe</script>";
+    trend.title = '<svg onload="alert(1)">';
+    trend.thesis = "<em>Thesis</em>";
+    trend.whyNow = "A & B";
+    trend.nextWatch = ["<iframe>Watch</iframe>"];
+    trend.counterEvents = [
+      { slug: 'counter" onclick="alert(1)', title: "<b>Counter</b>", role: "counter-evidence" },
+    ];
+    for (const locale of ["zh-CN", "en"] as const) {
+      const home = renderEmbodiedHome(model, locale);
+      expect(home).not.toMatch(/<img|<script|<svg|<em>|<iframe|<b>|onclick="alert/);
+      expect(home).toContain("&lt;img");
+      expect(home).toContain("&lt;em&gt;Thesis&lt;/em&gt;");
+      expect(home).toContain("A &amp; B");
+      expect(home).toContain("&lt;b&gt;Counter&lt;/b&gt;");
+      expect(home).toContain('href="__PREFIX__events/counter%22%20onclick%3D%22alert(1)/"');
+    }
+  });
+
+  it("renders chronological phases, six evidence-bound impacts, and every Event in reverse order", () => {
+    const model = evolutionModel();
+    const page = renderTimeline(model, "zh-CN");
+    const phases = model.evolutionPhases;
+    const anchors = [...page.matchAll(/data-evolution-phase-link="([^"]+)"/g)].map((m) => m[1]);
+    expect(anchors).toEqual(phases.map((phase) => phase.slug));
+    expect(page.match(/data-evolution-phase="/g)).toHaveLength(6);
+    expect(page.match(/data-evolution-stage="/g)).toHaveLength(36);
+    for (const phase of phases) {
+      expect(page).toContain(`id="phase-${phase.slug}"`);
+      expect(page).toContain(phase.title);
+      expect(page).toContain(phase.thesis);
+      expect(page).toContain(phase.turningPoint);
+      for (const signal of phase.nextSignals) expect(page).toContain(signal);
+      for (const relation of [...phase.events, ...phase.counterEvents]) {
+        expect(page).toContain(`href="__PREFIX__events/${relation.slug}/"`);
+      }
+    }
+    expect(page).toContain("暂无公开证据");
+    expect(page).toContain("反证与未知");
+    const index = page.split("data-evolution-event-index")[1] ?? "";
+    const eventSlugs = [...index.matchAll(/data-evolution-event="([^"]+)"/g)].map((m) => m[1]);
+    expect(eventSlugs).toHaveLength(42);
+    expect(eventSlugs).toEqual(
+      [...model.embodiedEvents]
+        .sort((left, right) => Date.parse(right.happenedAt) - Date.parse(left.happenedAt))
+        .map((event) => event.slug),
+    );
+    expect(page).not.toMatch(/\/lines\/|六个领域趋势|模型价格|随机趋势|https?:\/\//);
+  });
+
+  it("bounds the latest-phase summary by the curation cutoff and actual Event date", () => {
+    const model = evolutionModel();
+    model.generatedAt = "2027-01-01T00:00:00Z";
+    const page = renderTimeline(model, "zh-CN");
+    const summary = page.match(/<section[^>]*data-evolution-summary[\s\S]*?<\/section>/)?.[0] ?? "";
+    expect(summary).toContain(model.evolutionPhases[5]?.title);
+    expect(summary).toContain(model.evolutionPhases[4]?.turningPoint);
+    expect(summary).toContain("2026-09-20");
+    expect(summary).toContain("最新事件日期");
+    expect(summary).not.toContain("2027-01-01");
+    expect(summary.match(/data-evolution-impact-summary="/g)).toHaveLength(6);
+  });
+
+  it("escapes narrative content and retains internal Event routes in both locales", () => {
+    const model = evolutionModel();
+    const phase = model.evolutionPhases[0];
+    if (!phase) throw new Error("Missing narrative fixture");
+    phase.title = '<img src=x onerror="alert(1)">';
+    phase.thesis = "<script>unsafe</script>";
+    phase.turningPoint = "A & B";
+    phase.nextSignals = ["<em>Watch</em>"];
+    phase.stageImpacts["demand-definition"].summary = '<iframe src="https://unsafe.test">';
+    phase.events[0] = {
+      slug: 'event" onclick="alert(1)',
+      title: "<svg>unsafe</svg>",
+      role: "supporting-evidence",
+    };
+    for (const locale of ["zh-CN", "en"] as const) {
+      const page = renderTimeline(model, locale);
+      expect(page).not.toMatch(/<img|<script|<iframe|<svg|<em>/);
+      expect(page).toContain("&lt;img");
+      expect(page).toContain("A &amp; B");
+      expect(page).toContain("&lt;em&gt;Watch&lt;/em&gt;");
+      expect(page).toContain("&lt;svg&gt;unsafe&lt;/svg&gt;");
+      expect(page).not.toContain('onclick="alert');
+    }
+    expect(renderTimeline(model, "en")).toContain("No public evidence");
+  });
+
   it("renders the exact embodied-data route and navigation contract", () => {
     const model = embodiedSiteModel();
     const pages = renderStaticPages(model);
@@ -169,6 +386,49 @@ describe("static-site intelligence consumption model", () => {
     expect(sources).toContain("Example Source");
     expect(peers).toContain('id="example-lab"');
     expect(assets).toContain('href="../events/embodied-event/"');
+  });
+
+  it("renders every governed source with map states and computed coverage gaps", () => {
+    const model = embodiedSiteModel();
+    const exampleSource = model.sources[0];
+    if (!exampleSource) throw new Error("Missing public source fixture");
+    model.sources = [
+      {
+        ...exampleSource,
+        mapStatus: "integrated",
+        pipelineStages: ["acquisition-route"],
+        substituteFor: [],
+        restrictionNote: "",
+      },
+      {
+        ...exampleSource,
+        slug: "restricted-manual-source",
+        name: "Restricted Manual Source",
+        acquisition: "manual",
+        mapStatus: "restricted",
+        pipelineStages: ["demand-definition"],
+        restrictionNote: "Manual review only.",
+        healthStatus: "unchecked",
+      },
+    ];
+
+    const sourcesPage =
+      renderStaticPages(model).find((page) => page.path === "sources/index.html")?.content ?? "";
+
+    expect(sourcesPage).toContain("已接入");
+    expect(sourcesPage).toContain("待接入");
+    expect(sourcesPage).toContain("受限");
+    expect(sourcesPage).toContain("替代来源");
+    expect(sourcesPage).toContain("覆盖缺口");
+    expect(sourcesPage).toContain("需求与任务定义 · official");
+    expect(sourcesPage.match(/class="source-card"/g)).toHaveLength(2);
+    expect(sourcesPage).toContain("Restricted Manual Source");
+    expect(sourcesPage).toContain('data-status="restricted"');
+    expect(sourcesPage).toContain('data-status="unchecked"');
+    const restrictedCard = sourcesPage.match(
+      /<article class="source-card"[^>]*data-source-map-status="restricted"[\s\S]*?<\/article>/,
+    )?.[0];
+    expect(restrictedCard).not.toContain('data-status="healthy"');
   });
 
   it("sorts one event per card by its latest evidence update", () => {
@@ -563,6 +823,29 @@ function event(
   };
 }
 
+function evolutionModel(): StaticSiteModel {
+  const model = embodiedSiteModel();
+  const template = model.embodiedEvents[0];
+  if (!template) throw new Error("Missing embodied Event fixture");
+  model.embodiedEvents = embodiedLaunchEvents.map((event) => ({
+    ...template,
+    slug: event.slug,
+    title: event.title,
+    happenedAt: event.date,
+    publishedAt: event.date,
+    dataProfile: event.dataProfile,
+    pipelineStages: event.dataProfile.pipelineStages,
+  }));
+  const narrative = buildPublicEmbodiedNarrative(
+    model.embodiedEvents,
+    evolutionPhases,
+    embodiedTrends,
+  );
+  model.evolutionPhases = narrative.phases;
+  model.embodiedTrends = narrative.trends;
+  return model;
+}
+
 function embodiedSiteModel(): StaticSiteModel {
   const legacyEvent = event("embodied-event", "2026-09-20T00:00:00.000Z", [
     evidence("Primary evidence", "primary", "2026-09-20T00:00:00.000Z"),
@@ -678,6 +961,10 @@ function embodiedSiteModel(): StaticSiteModel {
         role: "official",
         acquisition: "rss",
         topics: ["embodied-data"],
+        mapStatus: "pending",
+        pipelineStages: ["acquisition-route"],
+        substituteFor: [],
+        restrictionNote: "",
         maintenanceStatus: "maintained",
         lifecycle: "shadow",
         observationEnabled: false,
@@ -772,6 +1059,9 @@ function embodiedSiteModel(): StaticSiteModel {
         ],
       },
     ],
+    evolutionPhases: [],
+    embodiedTrends: [],
+    sourceCoverageGaps: [],
   } as StaticSiteModel;
 }
 
@@ -853,6 +1143,10 @@ function source(
     role: "primary",
     acquisition,
     topics,
+    mapStatus: "pending",
+    pipelineStages: [],
+    substituteFor: [],
+    restrictionNote: "",
     maintenanceStatus: "candidate",
     lifecycle: "shadow",
     observationEnabled: false,

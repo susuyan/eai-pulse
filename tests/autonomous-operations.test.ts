@@ -139,6 +139,11 @@ describe("autonomous quality operations", () => {
       lifecycle_status: "degraded",
       enabled: 1,
     });
+    await repository.updateSource(shadow?.id ?? "missing", {
+      lifecycle_status: "shadow",
+      enabled: 0,
+      observation_enabled: 1,
+    });
     await addFailedChecks(db, active?.id ?? "missing", 2);
     await addFailedChecks(db, degraded?.id ?? "missing", 5);
     await addFailedChecks(db, shadow?.id ?? "missing", 5);
@@ -147,7 +152,7 @@ describe("autonomous quality operations", () => {
 
     expect(result.degraded).toContain(active?.slug);
     expect(result.quarantined).toContain(degraded?.slug);
-    expect(result.quarantined).toContain(shadow?.slug);
+    expect(result.quarantined).not.toContain(shadow?.slug);
     expect(await repository.getSource(active?.id ?? "missing")).toMatchObject({
       lifecycle_status: "degraded",
       enabled: 1,
@@ -157,8 +162,9 @@ describe("autonomous quality operations", () => {
       enabled: 0,
     });
     expect(await repository.getSource(shadow?.id ?? "missing")).toMatchObject({
-      lifecycle_status: "quarantined",
+      lifecycle_status: "shadow",
       enabled: 0,
+      observation_enabled: 0,
     });
   });
 });

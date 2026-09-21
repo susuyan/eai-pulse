@@ -51,6 +51,12 @@ jobs:
       - name: Audit every configured source
         run: npm run sources:audit -- --concurrency=4 --report=data/reports/source-health.json
 
+      - name: Audit the reviewed priority cohort
+        run: npm run sources:audit -- --cohort=embodied-priority --concurrency=4 --report=data/reports/embodied-priority-source-health.json
+
+      - name: Verify priority audit freshness and allowlist
+        run: npm run sources:priority:check
+
       - name: Reconcile unstable sources and radar
         run: npm run ops:reconcile
 
@@ -108,11 +114,15 @@ jobs:
       - name: Write privacy-safe snapshot with accumulated checks
         run: npm run db:snapshot -- write
 
+      - name: Refresh cohort lifecycle evidence after reconciliation
+        run: npm run sources:audit -- --cohort=embodied-priority --report-only --report=data/reports/embodied-priority-source-health.json
+
       - name: Validate report privacy and shape
         shell: bash
         run: |
           set -euo pipefail
           test -s data/reports/source-health.json
+          npm run sources:priority:check
           test -s data/snapshot/v1.json
           node -e 'JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"))' "$RUNNER_TEMP/source-audit-evaluation.json"
           git diff --check -- data/reports/source-health.json data/snapshot/v1.json
@@ -167,7 +177,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git add -- data/reports/source-health.json data/snapshot/v1.json
+          git add -- data/reports/source-health.json data/snapshot/v1.json data/reports/embodied-priority-source-health.json
           if git diff --cached --quiet; then
             echo "No report changes."
             echo "changed=false" >> "$GITHUB_OUTPUT"

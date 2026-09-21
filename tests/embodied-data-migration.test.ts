@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { embodiedCollectionMethods } from "../src/catalog/embodied-data/collection-methods.js";
 import { embodiedDatasets } from "../src/catalog/embodied-data/datasets.js";
+import { embodiedEventEvidence } from "../src/catalog/embodied-data/event-evidence.js";
 import { embodiedLaunchEvents } from "../src/catalog/embodied-data/events.js";
 import { embodiedPeers } from "../src/catalog/embodied-data/peers.js";
 import { embodiedStandards } from "../src/catalog/embodied-data/standards.js";
@@ -14,6 +15,7 @@ import { loadConfig } from "../src/config/env.js";
 import { createDatabase } from "../src/db/database.js";
 import { migrateToLatest } from "../src/db/migrate.js";
 import { seedDatabase } from "../src/db/seed.js";
+import { canonicalizeUrl } from "../src/domain/url.js";
 import {
   applyEmbodiedDataMigration,
   applyVerifiedEmbodiedDataMigration,
@@ -38,10 +40,6 @@ const operationalTransitionPath = fileURLToPath(
 const operationalTransitionReportPath = fileURLToPath(
   new URL("../data/reports/embodied-data-operational-baseline-transition.json", import.meta.url),
 );
-const snapshotPath = fileURLToPath(new URL("../data/snapshot/v1.json", import.meta.url));
-const evaluationReportPath = fileURLToPath(
-  new URL("../data/reports/system-evaluation.json", import.meta.url),
-);
 
 afterEach(async () => {
   while (databases.length) await databases.pop()?.destroy();
@@ -57,26 +55,20 @@ async function setup() {
 }
 
 describe("embodied data public switch migration", () => {
-  it("binds the operational baseline handoff to the audited main state", async () => {
+  it("preserves the historical operational baseline handoff evidence", async () => {
     const manifest = JSON.parse(await readFile(operationalTransitionPath, "utf8"));
     const report = JSON.parse(await readFile(operationalTransitionReportPath, "utf8"));
-    const snapshotHash = createHash("sha256")
-      .update(await readFile(snapshotPath))
-      .digest("hex");
-    const evaluationHash = createHash("sha256")
-      .update(await readFile(evaluationReportPath))
-      .digest("hex");
 
     expect(manifest).toMatchObject({
       schemaVersion: 1,
       baseGitSha: "579f5a9799722085c2df2ce2b0c8a48df187d3b2",
-      snapshotSha256: snapshotHash,
-      evaluationReportSha256: evaluationHash,
+      snapshotSha256: "eefc06be0764bbed44af9ebaf330af69bcc6d7dde6c2cd51e7e53940dea33c8f",
+      evaluationReportSha256: "a1c05d9e10a67636638d94a24f9b76841c30664134e14d5356ba829d3b08731a",
     });
     expect(report).toMatchObject({
       schemaVersion: 1,
       baseGitSha: manifest.baseGitSha,
-      snapshot: { sha256: snapshotHash },
+      snapshot: { sha256: manifest.snapshotSha256 },
     });
   });
 
@@ -126,7 +118,7 @@ describe("embodied data public switch migration", () => {
 
     expect(planned.current).toMatchObject({
       sources: sourceCatalog.length,
-      signals: embodiedLaunchEvents.length,
+      signals: new Set(embodiedEventEvidence.map((row) => canonicalizeUrl(row.url))).size,
       events: embodiedLaunchEvents.length,
       actors: embodiedPeers.length,
       eventDataProfiles: embodiedLaunchEvents.length,

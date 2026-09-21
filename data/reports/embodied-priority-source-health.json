@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-21T07:41:55.489Z",
+  "completedAt": "2026-09-21T07:20:43.825Z",
+  "freshnessHours": 24,
+  "total": 12,
+  "newlyShadow": 0,
+  "window": {
+    "status": "incomplete",
+    "completedSpacedRuns": 1,
+    "requiredRuns": 3,
+    "minimumSpacingHours": 6
+  },
+  "results": [
+    {
+      "slug": "samr-standards",
+      "lifecycle": "draft",
+      "policy": "pending",
+      "status": "skipped",
+      "itemCount": 0,
+      "adapterVersion": "1",
+      "contractFingerprint": "b39e1f2eebc829e87c3b7b3893f0848e19980df6f94c4af89859c727420d70ab",
+      "startedAt": "2026-09-21T07:20:42.184Z",
+      "finishedAt": "2026-09-21T07:20:42.184Z",
+      "evidenceWindow": {
+        "requiredChecks": 3,
+        "minimumSpacingHours": 6,
+        "qualifyingChecks": 0,
+        "eligible": false,
+        "observationEnabled": false
+      }
+    },
+    {
+      "slug": "beijing-humanoid-center",
+      "lifecycle": "draft",
+      "policy": "pending",
+      "status": "skipped",
+      "itemCount": 0,
+      "adapterVersion": "1",
+      "contractFingerprint": "17959412e3ac704a68f284a11be4a58ea758f885f83e6a3e087c2e9a22a94f89",
+      "startedAt": "2026-09-21T07:20:42.185Z",
+      "finishedAt": "2026-09-21T07:20:42.185Z",
+      "evidenceWindow": {
+        "requiredChecks": 3,
+        "minimumSpacingHours": 6,
+        "qualifyingChecks": 0,
+        "eligible": false,
+        "observationEnabled": false
+      }
+    },
+    {
+      "slug": "internrobotics",
+      "lifecycle": "draft",
+      "policy": "pending",
+      "status": "skipped",
+      "itemCount": 0,
+      "adapterVersion": "1",
+      "contractFingerprint": "a253a2a8911de68333176fddf50c09c114e39889204aa9cb240fec370d9527b9",
+      "startedAt": "2026-09-21T07:20:42.186Z",
+      "finishedAt": "2026-09-21T07:20:42.186Z",
+      "evidenceWindow": {
+        "requiredChecks": 3,
+        "minimumSpacingHours": 6,
+        "qualifyingChecks": 0,
+        "eligible": false,
+        "observationEnabled": false
+      }
+    },
+    {
+      "slug": "horizon-holomotion",
+      "lifecycle": "draft",
+      "policy": "pending",
+      "status": "skipped",
+      "itemCount": 0,
+      "adapterVersion": "1",
+      "contractFingerprint": "53b2bd337ea7bacd0fa1835f9bc8b72c5f8caae5b867cdefaf17e1950fe3793a",
+      "startedAt": "2026-09-21T07:20:42.186Z",
+      "finishedAt": "2026-09-21T07:20:42.186Z",
+      "evidenceWindow": {
+        "requiredChecks": 3,
+        "minimumSpacingHours": 6,
+        "qualifyingChecks": 0,
+        "eligible": false,
+        "observationEnabled": false
+      }
+    },
+    {
+      "slug": "opendrivelab",
+      "lifecycle": "draft",
+      "policy": "pending",
+      "status": "skipped",
+      "itemCount": 0,
+      "adapterVersion": "1",
+      "contractFingerprint": "ad00974e5f7a69d59776747607c591eef198e1bc8dd7c0773ed95c399138f7de",
+      "startedAt": "2026-09-21T07:20:42.186Z",
+      "finishedAt": "2026-09-21T07:20:42.186Z",
+      "evidenceWindow": {
+        "requiredChecks": 3,
+        "minimumSpacingHours": 6,
+        "qualifyingChecks": 0,
+        "eligible": false,
+        "observationEnabled": false
+      }
+    },
+    {
+      "slug": "pnp-robotics",
+      "lifecycle": "draft",
+      "policy": "pending",
+      "status": "skipped",
+      "itemCount": 0,
+      "adapterVersion": "1",
+      "contractFingerprint": "5399c94b28e183576ca99057c95997c82120c325bed44a6329239cec6423bfa4",
+      "startedAt": "2026-09-21T07:20:42.186Z",
+      "finishedAt": "2026-09-21T07:20:42.186Z",
+      "evidenceWindow": {
+        "requiredChecks": 3,
+        "minimumSpacingHours": 6,
+        "qualifyingChecks": 0,
+        "eligible": false,
+        "observationEnabled": false
+      }
+    },
+    {
+      "slug": "nvidia-isaac-groot",
+      "lifecycle": "draft",
+      "policy": "pending",
+      "status": "skipped",
+      "itemCount": 0,
+      "adapterVersion": "1",
+      "contractFingerprint": "36ba40e0296ae2e595c4d60c8a40812111326cf9959bcfe2fd065518804f6a08",
+      "startedAt": "2026-09-21T07:20:42.187Z",
+      "finishedAt": "2026-09-21T07:20:42.187Z",
+      "evidenceWindow": {
+        "requiredChecks": 3,
+        "minimumSpacingHours": 6,
+        "qualifyingChecks": 0,
+        "eligible": false,
+        "observationEnabled": false
+      }
+    },
+    {
+      "slug": "figure-ai",
+      "lifecycle": "draft",
+      "policy": "restricted",
+      "status": "skipped",
+      "itemCount": 0,
+      "adapterVersion": "1",
+      "contractFingerprint": "1bd880e6447ba7fdacf14c09740205dc19154fca99096725b660cc9418390184",
+      "startedAt": "2026-09-21T07:20:42.187Z",
+      "finishedAt": "2026-09-21T07:20:42.187Z",
+      "evidenceWindow": {
+        "requiredChecks": 3,
+        "minimumSpacingHours": 6,
+        "qualifyingChecks": 0,
+        "eligible": false,
+        "observationEnabled": false
+      }
+    },
+    {
+      "slug": "one-x",
+      "lifecycle": "draft",
+      "policy": "pending",
+      "status": "skipped",
+      "itemCount": 0,
+      "adapterVersion": "1",
+      "contractFingerprint": "422b7408c59aac81337b1a087b1ccdba98cf5db02a030c9a81c4b741a09e82b0",
+      "startedAt": "2026-09-21T07:20:42.187Z",
+      "finishedAt": "2026-09-21T07:20:42.187Z",
+      "evidenceWindow": {
+        "requiredChecks": 3,
+        "minimumSpacingHours": 6,
+        "qualifyingChecks": 0,
+        "eligible": false,
+        "observationEnabled": false
+      }
+    },
+    {
+      "slug": "robocasa",
+      "lifecycle": "shadow",
+      "policy": "pending",
+      "status": "skipped",
+      "itemCount": 0,
+      "adapterVersion": "1",
+      "contractFingerprint": "56e9ff107f7f73138acbfcf4d3e0288afd31c500451d70ab4ff7a7e05550bb94",
+      "startedAt": "2026-09-21T07:20:42.187Z",
+      "finishedAt": "2026-09-21T07:20:42.187Z",
+      "evidenceWindow": {
+        "requiredChecks": 3,
+        "minimumSpacingHours": 6,
+        "qualifyingChecks": 0,
+        "eligible": false,
+        "observationEnabled": false
+      }
+    },
+    {
+      "slug": "nist-physical-ai",
+      "lifecycle": "draft",
+      "policy": "allowed_metadata",
+      "status": "healthy",
+      "itemCount": 1,
+      "adapterVersion": "1",
+      "contractFingerprint": "3ac42c3eee0437533a9668649219f5c370168999ed8a6f4d050f82efc8ef986a",
+      "startedAt": "2026-09-21T07:20:42.187Z",
+      "finishedAt": "2026-09-21T07:20:43.824Z",
+      "evidenceWindow": {
+        "requiredChecks": 3,
+        "minimumSpacingHours": 6,
+        "qualifyingChecks": 0,
+        "eligible": false,
+        "observationEnabled": false
+      }
+    },
+    {
+      "slug": "itu-robot-data-factory",
+      "lifecycle": "draft",
+      "policy": "pending",
+      "status": "skipped",
+      "itemCount": 0,
+      "adapterVersion": "1",
+      "contractFingerprint": "55b74427a7c4257d939dd3d82114af5a34d7aa30fe907250b50665d9c1c27990",
+      "startedAt": "2026-09-21T07:20:42.191Z",
+      "finishedAt": "2026-09-21T07:20:42.191Z",
+      "evidenceWindow": {
+        "requiredChecks": 3,
+        "minimumSpacingHours": 6,
+        "qualifyingChecks": 0,
+        "eligible": false,
+        "observationEnabled": false
+      }
+    }
+  ]
+}

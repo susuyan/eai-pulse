@@ -19,10 +19,16 @@ setupBackToTop();
 setupPipelineFocus();
 const timeline = document.querySelector("[data-timeline]");
 if (timeline) import("./timeline.js").then(({ setupTimeline }) => setupTimeline(timeline));
-const embodiedTimeline = document.querySelector("[data-embodied-timeline]");
-if (embodiedTimeline) {
-  import("./timeline.js").then(({ setupEmbodiedTimeline }) =>
-    setupEmbodiedTimeline(embodiedTimeline),
+const embodiedEvolution = document.querySelector("[data-embodied-evolution]");
+if (embodiedEvolution) {
+  import("./timeline.js").then(({ setupEmbodiedEvolutionTimeline }) =>
+    setupEmbodiedEvolutionTimeline(embodiedEvolution),
+  );
+}
+const embodiedTrends = document.querySelector("[data-embodied-trends]");
+if (embodiedTrends) {
+  import("./embodied-trends.js").then(({ setupDailyEmbodiedTrends }) =>
+    setupDailyEmbodiedTrends(embodiedTrends),
   );
 }
 setupCardFilters();
@@ -112,32 +118,6 @@ function setupBackToTop() {
 }
 
 function setupHomeDynamics() {
-  const trendItems = [...document.querySelectorAll("[data-random-trend]")];
-  if (trendItems.length) {
-    let selectedIndex = -1;
-    const showRandomTrend = () => {
-      if (trendItems.length === 1) selectedIndex = 0;
-      else {
-        const offset = 1 + Math.floor(Math.random() * (trendItems.length - 1));
-        selectedIndex = (Math.max(0, selectedIndex) + offset) % trendItems.length;
-      }
-      trendItems.forEach((item, index) => {
-        item.hidden = index !== selectedIndex;
-      });
-      const selected = trendItems[selectedIndex];
-      selected?.classList.remove("trend-refresh-in");
-      if (selected) void selected.offsetWidth;
-      selected?.classList.add("trend-refresh-in");
-    };
-    trendItems.forEach((item) => {
-      item.querySelector("[data-random-trend-next]")?.addEventListener("click", showRandomTrend);
-    });
-    selectedIndex = Math.floor(Math.random() * trendItems.length);
-    trendItems.forEach((item, index) => {
-      item.hidden = index !== selectedIndex;
-    });
-  }
-
   revealRandomItems("[data-random-recent-list]", "[data-random-recent]");
 
   document.querySelectorAll("[data-industry-carousel]").forEach(setupIndustryCarousel);
@@ -930,32 +910,36 @@ function setupCardFilters() {
 }
 
 function setupSourceFilters() {
-  const grid = document.querySelector("[data-source-grid]");
+  const root = document.querySelector("[data-source-map]");
+  const grid = root?.querySelector("[data-source-grid]");
   if (!grid) return;
-  const search = document.querySelector("[data-source-search]");
-  let filter = "all";
+  const filters = { region: "all", stage: "all", map: "all" };
   const apply = () => {
-    const query = String(search?.value || "")
-      .trim()
-      .toLowerCase();
-    grid.querySelectorAll("[data-source-value]").forEach((row) => {
-      const filterMatch =
-        filter === "all" || String(row.dataset.sourceValue || "").includes(filter);
-      const queryMatch = !query || String(row.dataset.sourceSearchValue || "").includes(query);
-      row.hidden = !(filterMatch && queryMatch);
+    grid.querySelectorAll("[data-source-map-status]").forEach((card) => {
+      const regionMatch = filters.region === "all" || card.dataset.sourceRegion === filters.region;
+      const stageMatch =
+        filters.stage === "all" ||
+        String(card.dataset.sourceStages || "")
+          .split(" ")
+          .includes(filters.stage);
+      const mapMatch = filters.map === "all" || card.dataset.sourceMapStatus === filters.map;
+      card.hidden = !(regionMatch && stageMatch && mapMatch);
     });
     grid.dispatchEvent(new Event("mobile-list:refresh"));
   };
-  document.querySelectorAll("[data-source-filter]").forEach((button) => {
-    button.addEventListener("click", () => {
-      filter = button.dataset.sourceFilter || "all";
-      document.querySelectorAll("[data-source-filter]").forEach((item) => {
-        item.classList.toggle("active", item === button);
+  ["region", "stage", "map"].forEach((kind) => {
+    root.querySelectorAll(`[data-source-filter-${kind}]`).forEach((button) => {
+      button.addEventListener("click", () => {
+        filters[kind] =
+          button.dataset[`sourceFilter${kind[0].toUpperCase()}${kind.slice(1)}`] || "all";
+        root.querySelectorAll(`[data-source-filter-${kind}]`).forEach((item) => {
+          item.setAttribute("aria-pressed", String(item === button));
+          item.classList.toggle("active", item === button);
+        });
+        apply();
       });
-      apply();
     });
   });
-  search?.addEventListener("input", apply);
 }
 
 function setupMobileListPagination() {

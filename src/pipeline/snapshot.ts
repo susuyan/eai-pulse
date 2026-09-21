@@ -20,6 +20,7 @@ import {
   StandardEventRoleSchema,
   StandardProfileSchema,
 } from "../domain/embodied-data-objects.js";
+import { isEmbodiedScoutKind } from "../domain/embodied-scout.js";
 import {
   canonicalizeUrl,
   isSensitiveObjectKey,
@@ -27,6 +28,12 @@ import {
   sha256,
 } from "../domain/url.js";
 import { type EvaluationGateMode, parseEvaluationInstant } from "./evaluation-context.js";
+import {
+  exportPriorityAuditEvidence,
+  type PriorityAuditEvidence,
+  restorePriorityAuditEvidence,
+  validatePriorityAuditEvidence,
+} from "./priority-audit-evidence.js";
 
 export const SNAPSHOT_SCHEMA_VERSION = 1;
 export const DEFAULT_SNAPSHOT_PATH = join("data", "snapshot", "v1.json");
@@ -35,6 +42,7 @@ interface RepositorySnapshot {
   schemaVersion: number;
   sources: Array<Record<string, unknown>>;
   sourceChecks?: Array<Record<string, unknown>>;
+  priorityAuditEvidence?: PriorityAuditEvidence[];
   sourceRuns?: Array<Record<string, unknown>>;
   signals: Array<Record<string, unknown>>;
   signalObservations?: Array<Record<string, unknown>>;
@@ -144,6 +152,7 @@ export async function restoreRepositorySnapshot(
 }
 
 async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<RepositorySnapshot> {
+  const priorityEvidence = await exportPriorityAuditEvidence(db);
   const [
     sourceRows,
     sourceCheckRows,
@@ -345,12 +354,16 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
       }))
       .sort(byString("slug")),
     sourceChecks: sourceCheckRows
+      .filter((check) => !priorityEvidence.checkIds.has(check.id))
       .map((check) => ({
         id: check.id,
         sourceSlug: check.sourceSlug,
         status: check.status,
         adapter: check.adapter,
         adapterVersion: check.adapter_version,
+        ...(/^[a-f0-9]{64}$/.test(check.contract_fingerprint ?? "")
+          ? { contractFingerprint: check.contract_fingerprint }
+          : {}),
         accessStatus: check.access_status,
         fetchStatus: check.fetch_status,
         parseStatus: check.parse_status,
@@ -383,6 +396,7 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
           `${right.sourceSlug}:${right.finishedAt}:${right.id}`,
         ),
       ),
+    priorityAuditEvidence: priorityEvidence.records,
     sourceRuns: sourceRunRows
       .map((run) => ({
         id: run.id,
@@ -746,16 +760,21 @@ async function restoreSnapshot(
     if (!sourceId) continue;
     const current = sources.find((source) => source.id === sourceId);
     if (!current) continue;
+    // Catalog retirement is authoritative over historical operational state.
+    if (current.lifecycle_status === "retired" || current.maintenance_status === "retired")
+      continue;
     const incomingLatest = latestTimestamp(
       optionalString(value.lastVerifiedAt),
       optionalString(value.lastCollectedAt),
     );
     const currentLatest = latestTimestamp(current.last_verified_at, current.last_collected_at);
-    const incomingIsNewer = compareTimestamp(incomingLatest, currentLatest) >= 0;
+    // A reused slug retains history, but controls and cursors belong to its current scope.
+    const incomingIsNewer =
+      snapshotContentScope(value.contentScope) === current.content_scope &&
+      compareTimestamp(incomingLatest, currentLatest) >= 0;
     await db
       .updateTable("sources")
       .set({
-        content_scope: snapshotContentScope(value.contentScope),
         enabled: incomingIsNewer ? requiredNumber(value, "enabled") : current.enabled,
         observation_enabled: incomingIsNewer
           ? typeof value.observationEnabled === "number"
@@ -790,6 +809,9 @@ async function restoreSnapshot(
       .execute();
   }
 
+  if (snapshot.priorityAuditEvidence)
+    await restorePriorityAuditEvidence(db, snapshot.priorityAuditEvidence);
+
   for (const value of snapshot.sourceChecks ?? []) {
     const sourceId = sourceIdBySlug.get(requiredString(value, "sourceSlug"));
     if (!sourceId) continue;
@@ -805,6 +827,11 @@ async function restoreSnapshot(
       status: requiredString(value, "status"),
       adapter: requiredString(value, "adapter"),
       adapter_version: requiredString(value, "adapterVersion"),
+      contract_fingerprint:
+        typeof value.contractFingerprint === "string" &&
+        /^[a-f0-9]{64}$/.test(value.contractFingerprint)
+          ? value.contractFingerprint
+          : null,
       access_status: requiredString(value, "accessStatus"),
       fetch_status: requiredString(value, "fetchStatus"),
       parse_status: requiredString(value, "parseStatus"),
@@ -1643,6 +1670,8 @@ async function restoreSnapshot(
   const scoutIdBySlug = new Map<string, string>();
   for (const value of snapshot.scoutInsights ?? []) {
     const slug = requiredString(value, "slug");
+    const kind = requiredString(value, "kind");
+    const isPublicKind = isEmbodiedScoutKind(kind);
     const existing = await db
       .selectFrom("scout_insights")
       .select("id")
@@ -1651,8 +1680,8 @@ async function restoreSnapshot(
     const id = existing?.id ?? requiredString(value, "id");
     const row = {
       slug,
-      kind: requiredString(value, "kind"),
-      status: "published",
+      kind,
+      status: isPublicKind ? "published" : "archived",
       title: requiredString(value, "title"),
       observation: requiredString(value, "observation"),
       hypothesis: requiredString(value, "hypothesis"),
@@ -1670,7 +1699,7 @@ async function restoreSnapshot(
       cooldown_key: `snapshot:${slug}`,
       generated_at: requiredString(value, "generatedAt"),
       expires_at: optionalString(value.expiresAt),
-      published_at: optionalString(value.publishedAt),
+      published_at: isPublicKind ? optionalString(value.publishedAt) : null,
       created_at: requiredString(value, "createdAt"),
       updated_at: requiredString(value, "createdAt"),
     };
@@ -1836,6 +1865,8 @@ function validateSnapshot(value: RepositorySnapshot): void {
   if (!value || value.schemaVersion !== SNAPSHOT_SCHEMA_VERSION) {
     throw new Error(`Unsupported repository snapshot schema: ${value?.schemaVersion ?? "missing"}`);
   }
+  if (value.priorityAuditEvidence !== undefined)
+    validatePriorityAuditEvidence(value.priorityAuditEvidence);
   for (const key of ["sources", "signals", "discoveries", "events", "eventSignals"] as const) {
     if (!Array.isArray(value[key])) throw new Error(`Invalid repository snapshot field: ${key}`);
   }

@@ -25,6 +25,7 @@ import {
   type StandardProfile,
   StandardProfileSchema,
 } from "../domain/embodied-data-objects.js";
+import { embodiedScoutKinds } from "../domain/embodied-scout.js";
 import {
   type CollectedSignal,
   type OriginReference,
@@ -215,6 +216,10 @@ export class Repository {
         freshness_slo_hours: input.freshness_slo_hours,
         adapter_version: input.adapter_version,
         content_scope: input.content_scope,
+        map_status: input.map_status,
+        pipeline_stages_json: input.pipeline_stages_json,
+        substitute_for_json: input.substitute_for_json,
+        restriction_note: input.restriction_note,
         updated_at: timestamp,
       })
       .where("id", "=", existing.id)
@@ -439,7 +444,9 @@ export class Repository {
           .innerJoin("events", "events.id", "scout_evidence.event_id")
           .select("scout_insights.id")
           .where("scout_insights.status", "=", "published")
+          .where("scout_insights.kind", "in", [...embodiedScoutKinds])
           .where("events.content_scope", "=", "embodied-data")
+          .where("events.status", "=", "published")
           .groupBy("scout_insights.id")
           .execute()
       ).map((row) => row.id),
@@ -471,6 +478,7 @@ export class Repository {
           .select(["events.slug", "events.title", "events.fact_summary as factSummary"])
           .where("scout_evidence.insight_id", "=", insight.id)
           .where("events.content_scope", "=", "embodied-data")
+          .where("events.status", "=", "published")
           .execute();
         return {
           slug: insight.slug,
@@ -1797,7 +1805,11 @@ export class Repository {
       .execute();
   }
 
-  async startJob(type: string, sourceId: string | null = null): Promise<string> {
+  async startJob(
+    type: string,
+    sourceId: string | null = null,
+    details: Record<string, unknown> = {},
+  ): Promise<string> {
     const id = randomUUID();
     await this.db
       .insertInto("jobs")
@@ -1813,7 +1825,7 @@ export class Repository {
         skipped_count: 0,
         error_count: 0,
         error_summary: null,
-        details_json: "{}",
+        details_json: json(details),
       })
       .execute();
     return id;
@@ -1821,7 +1833,13 @@ export class Repository {
 
   async finishJob(
     id: string,
-    result: { collected: number; created: number; skipped: number; errors: string[] },
+    result: {
+      collected: number;
+      created: number;
+      skipped: number;
+      errors: string[];
+      details?: Record<string, unknown>;
+    },
   ): Promise<void> {
     await this.db
       .updateTable("jobs")
@@ -1833,7 +1851,7 @@ export class Repository {
         skipped_count: result.skipped,
         error_count: result.errors.length,
         error_summary: result.errors.slice(0, 5).join(" | ").slice(0, 4_000) || null,
-        details_json: json({ errors: result.errors.slice(0, 20) }),
+        details_json: json({ ...result.details, errors: result.errors.slice(0, 20) }),
       })
       .where("id", "=", id)
       .execute();

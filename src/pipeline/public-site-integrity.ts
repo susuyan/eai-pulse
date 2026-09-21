@@ -18,6 +18,8 @@ export interface PublicSiteIntegrityReport {
     standards: number;
     collectionMethods: number;
     peers: number;
+    evolutionPhases: number;
+    embodiedTrends: number;
     sources: number;
     scout: number;
     sitemapUrls: number;
@@ -47,11 +49,39 @@ const PIPELINE_STAGES = [
   "quality-training-feedback",
 ] as const;
 
+const EVOLUTION_ROOT_KEYS = ["schemaVersion", "generatedAt", "phases", "trends"] as const;
+const EVOLUTION_PHASE_KEYS = [
+  "slug",
+  "start",
+  "end",
+  "title",
+  "thesis",
+  "turningPoint",
+  "events",
+  "stageImpacts",
+  "counterEvents",
+  "nextSignals",
+] as const;
+const EVOLUTION_STAGE_IMPACT_KEYS = ["summary", "events", "evidenceState"] as const;
+const EVOLUTION_TREND_KEYS = [
+  "slug",
+  "title",
+  "thesis",
+  "whyNow",
+  "pipelineStages",
+  "events",
+  "counterEvents",
+  "nextWatch",
+] as const;
+const EVOLUTION_RELATION_KEYS = ["slug", "title", "role"] as const;
+const EVOLUTION_EVIDENCE_STATES = new Set(["supported", "limited", "no-public-evidence"]);
+
 const DATA_PATHS = {
   events: "data/events.json",
   pipeline: "data/pipeline.json",
   assets: "data/assets.json",
   peers: "data/peers.json",
+  evolution: "data/evolution.json",
   sources: "data/sources.json",
   scout: "data/scout.json",
   product: "data/product.json",
@@ -126,6 +156,12 @@ export async function validatePublicSite(
     dataText.peers,
     {},
   );
+  const evolutionPayload = parse<{
+    schemaVersion?: unknown;
+    generatedAt?: string;
+    phases?: unknown;
+    trends?: unknown;
+  }>(DATA_PATHS.evolution, dataText.evolution, {});
   const sources = parse<unknown[]>(DATA_PATHS.sources, dataText.sources, []);
   const scoutPayload = parse<{ generatedAt?: string; insights?: unknown[] }>(
     DATA_PATHS.scout,
@@ -142,6 +178,8 @@ export async function validatePublicSite(
     ? assetsPayload.collectionMethods
     : [];
   const peers = Array.isArray(peersPayload.peers) ? peersPayload.peers : [];
+  const evolutionPhases = Array.isArray(evolutionPayload.phases) ? evolutionPayload.phases : [];
+  const embodiedTrends = Array.isArray(evolutionPayload.trends) ? evolutionPayload.trends : [];
   const scout = Array.isArray(scoutPayload.insights) ? scoutPayload.insights : [];
   const generatedAtValue = eventsPayload.generatedAt;
   const generatedAt = validTimestamp(generatedAtValue) ? generatedAtValue : null;
@@ -152,6 +190,7 @@ export async function validatePublicSite(
     pipeline: pipelinePayload.generatedAt,
     assets: assetsPayload.generatedAt,
     peers: peersPayload.generatedAt,
+    evolution: evolutionPayload.generatedAt,
     scout: scoutPayload.generatedAt,
     product: productPayload.generatedAt,
   })) {
@@ -166,6 +205,19 @@ export async function validatePublicSite(
 
   if (JSON.stringify(stages.map((stage) => stage.slug)) !== JSON.stringify(PIPELINE_STAGES)) {
     add("pipeline_stage_mismatch", DATA_PATHS.pipeline, "Pipeline stages are missing or unordered");
+  }
+  if (evolutionPayload.schemaVersion !== 1) {
+    add("invalid_evolution_schema", DATA_PATHS.evolution, "schemaVersion must be 1");
+  }
+  if (!Array.isArray(evolutionPayload.phases)) {
+    add("invalid_evolution_phases", DATA_PATHS.evolution, "phases must be an array");
+  } else if (evolutionPhases.length < 5 || evolutionPhases.length > 7) {
+    add("invalid_evolution_phase_count", DATA_PATHS.evolution, "Expected 5 through 7 phases");
+  }
+  if (!Array.isArray(evolutionPayload.trends)) {
+    add("invalid_evolution_trends", DATA_PATHS.evolution, "trends must be an array");
+  } else if (embodiedTrends.length < 8) {
+    add("invalid_evolution_trend_count", DATA_PATHS.evolution, "Expected at least 8 trends");
   }
   for (const event of events) {
     const slug = String(event.slug ?? "");
@@ -197,6 +249,23 @@ export async function validatePublicSite(
     }
     validateNoLegacyLeak(DATA_PATHS[name as keyof typeof DATA_PATHS], text, add, true);
   }
+  if (!hasAllowlistedEvolutionShape(evolutionPayload)) {
+    add(
+      "private_evolution_field",
+      DATA_PATHS.evolution,
+      "Evolution JSON exceeds the public allowlist",
+    );
+  }
+  if (/legacy-ai|industry-narratives|six strategic lines|model pricing/i.test(dataText.evolution)) {
+    add("legacy_evolution_content", DATA_PATHS.evolution, "Evolution JSON contains legacy content");
+  }
+  await validateEvolutionReferences(
+    evolutionPhases,
+    embodiedTrends,
+    new Set(events.map((event) => String(event.slug ?? "")).filter(Boolean)),
+    distDir,
+    add,
+  );
 
   for (const path of LEGACY_FILES) {
     if (await exists(join(distDir, path))) {
@@ -317,6 +386,8 @@ export async function validatePublicSite(
       standards: standards.length,
       collectionMethods: collectionMethods.length,
       peers: peers.length,
+      evolutionPhases: evolutionPhases.length,
+      embodiedTrends: embodiedTrends.length,
       sources: sources.length,
       scout: scout.length,
       sitemapUrls: sitemapUrls.size,
@@ -462,6 +533,179 @@ function validateNoLegacyLeak(
       "Conflict marker, template token, or local path remains public",
     );
   }
+}
+
+async function validateEvolutionReferences(
+  phases: unknown[],
+  trends: unknown[],
+  eventSlugs: Set<string>,
+  distDir: string,
+  add: (code: string, path: string, message: string) => void,
+): Promise<void> {
+  const relations: unknown[] = [];
+  for (const phase of phases) {
+    if (!isRecord(phase)) {
+      add("invalid_evolution_phase", DATA_PATHS.evolution, "Each phase must be an object");
+      continue;
+    }
+    collectEvolutionRelations(phase.events, relations, add, "phase events");
+    collectEvolutionRelations(phase.counterEvents, relations, add, "phase counterEvents");
+    if (!isRecord(phase.stageImpacts)) {
+      add(
+        "invalid_evolution_stage_impacts",
+        DATA_PATHS.evolution,
+        "Phase stageImpacts must be an object",
+      );
+      continue;
+    }
+    for (const stage of PIPELINE_STAGES) {
+      const impact = phase.stageImpacts[stage];
+      if (!isRecord(impact)) {
+        add(
+          "invalid_evolution_stage_impact",
+          DATA_PATHS.evolution,
+          `Missing stage impact for ${stage}`,
+        );
+        continue;
+      }
+      collectEvolutionRelations(impact.events, relations, add, `${stage} stage events`);
+    }
+  }
+  for (const trend of trends) {
+    if (!isRecord(trend)) {
+      add("invalid_embodied_trend", DATA_PATHS.evolution, "Each trend must be an object");
+      continue;
+    }
+    collectEvolutionRelations(trend.events, relations, add, "trend events");
+    collectEvolutionRelations(trend.counterEvents, relations, add, "trend counterEvents");
+  }
+  for (const relation of relations) {
+    if (
+      !isRecord(relation) ||
+      typeof relation.slug !== "string" ||
+      !eventSlugs.has(relation.slug)
+    ) {
+      add(
+        "unknown_evolution_event",
+        DATA_PATHS.evolution,
+        `Evolution relation does not resolve to a published Event: ${String(
+          isRecord(relation) ? relation.slug : "unknown",
+        )}`,
+      );
+      continue;
+    }
+    if (!(await exists(join(distDir, `events/${relation.slug}/index.html`)))) {
+      add(
+        "missing_evolution_event_page",
+        DATA_PATHS.evolution,
+        `Evolution relation has no generated Event detail page: ${relation.slug}`,
+      );
+    }
+  }
+}
+
+function collectEvolutionRelations(
+  value: unknown,
+  relations: unknown[],
+  add: (code: string, path: string, message: string) => void,
+  label: string,
+): void {
+  if (!Array.isArray(value)) {
+    add("invalid_evolution_relations", DATA_PATHS.evolution, `${label} must be an array`);
+    return;
+  }
+  relations.push(...value);
+}
+
+function hasAllowlistedEvolutionShape(value: unknown): boolean {
+  if (!hasExactKeys(value, EVOLUTION_ROOT_KEYS)) return false;
+  return (
+    typeof value.schemaVersion === "number" &&
+    typeof value.generatedAt === "string" &&
+    Array.isArray(value.phases) &&
+    value.phases.every(hasAllowlistedEvolutionPhaseShape) &&
+    Array.isArray(value.trends) &&
+    value.trends.every(hasAllowlistedEvolutionTrendShape)
+  );
+}
+
+function hasAllowlistedEvolutionPhaseShape(value: unknown): boolean {
+  if (!hasExactKeys(value, EVOLUTION_PHASE_KEYS)) return false;
+  return (
+    typeof value.slug === "string" &&
+    typeof value.start === "string" &&
+    typeof value.end === "string" &&
+    typeof value.title === "string" &&
+    typeof value.thesis === "string" &&
+    typeof value.turningPoint === "string" &&
+    hasAllowlistedRelations(value.events) &&
+    hasAllowlistedStageImpacts(value.stageImpacts) &&
+    hasAllowlistedRelations(value.counterEvents) &&
+    isStringArray(value.nextSignals)
+  );
+}
+
+function hasAllowlistedStageImpacts(value: unknown): boolean {
+  return (
+    hasExactKeys(value, PIPELINE_STAGES) &&
+    PIPELINE_STAGES.every((stage) => hasAllowlistedStageImpactShape(value[stage]))
+  );
+}
+
+function hasAllowlistedStageImpactShape(value: unknown): boolean {
+  return (
+    hasExactKeys(value, EVOLUTION_STAGE_IMPACT_KEYS) &&
+    typeof value.summary === "string" &&
+    hasAllowlistedRelations(value.events) &&
+    typeof value.evidenceState === "string" &&
+    EVOLUTION_EVIDENCE_STATES.has(value.evidenceState)
+  );
+}
+
+function hasAllowlistedEvolutionTrendShape(value: unknown): boolean {
+  if (!hasExactKeys(value, EVOLUTION_TREND_KEYS)) return false;
+  return (
+    typeof value.slug === "string" &&
+    typeof value.title === "string" &&
+    typeof value.thesis === "string" &&
+    typeof value.whyNow === "string" &&
+    isStringArray(value.pipelineStages) &&
+    hasAllowlistedRelations(value.events) &&
+    hasAllowlistedRelations(value.counterEvents) &&
+    isStringArray(value.nextWatch)
+  );
+}
+
+function hasAllowlistedRelations(value: unknown): boolean {
+  return Array.isArray(value) && value.every(hasAllowlistedRelationShape);
+}
+
+function hasAllowlistedRelationShape(value: unknown): boolean {
+  return (
+    hasExactKeys(value, EVOLUTION_RELATION_KEYS) &&
+    typeof value.slug === "string" &&
+    typeof value.title === "string" &&
+    typeof value.role === "string"
+  );
+}
+
+function hasExactKeys(
+  value: unknown,
+  expectedKeys: readonly string[],
+): value is Record<string, unknown> {
+  return (
+    isRecord(value) &&
+    Object.keys(value).length === expectedKeys.length &&
+    Object.keys(value).every((key) => expectedKeys.includes(key))
+  );
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((entry) => typeof entry === "string");
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function assertCount(

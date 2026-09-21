@@ -49,15 +49,3 @@ export function renderPipelinePage(model: StaticSiteModel, locale: Locale): stri
     })
     .join("")}</ol></section>`;
 }
-
-export function renderEmbodiedTimeline(model: StaticSiteModel, locale: Locale): string {
-  const events = [...model.embodiedEvents].sort(
-    (left, right) => Date.parse(right.happenedAt) - Date.parse(left.happenedAt),
-  );
-  return `${pageHero("EVIDENCE TIMELINE", localize(locale, "关键变化时间线", "Material-shift timeline"), localize(locale, "按发生时间浏览具身数据生产事件；时间线是辅助入口，判断仍以管线阶段和原始证据为准。", "Browse embodied data production events by date. Pipeline stages and original evidence remain the primary decision frame."))}<section class="section shell embodied-timeline" data-embodied-timeline><div class="embodied-timeline-controls"><label><span>${escapeHtml(localize(locale, "搜索事件", "Search events"))}</span><input type="search" data-embodied-timeline-search aria-label="${escapeHtml(localize(locale, "搜索事件", "Search events"))}" autocomplete="off"></label><p data-embodied-timeline-count aria-live="polite">${escapeHtml(localize(locale, `${events.length} 个事件`, `${events.length} events`))}</p></div><ol class="timeline-list">${events
-    .map(
-      (event) =>
-        `<li><article data-event="${escapeHtml(event.slug)}" data-search="${escapeHtml(`${event.title} ${event.factSummary}`.toLowerCase())}"><time datetime="${escapeHtml(event.happenedAt)}">${escapeHtml(event.happenedAt.slice(0, 10))}</time><div><h2><a href="__PREFIX__events/${escapeHtml(event.slug)}/">${escapeHtml(event.title)}</a></h2><p>${escapeHtml(event.factSummary)}</p></div></article></li>`,
-    )
-    .join("")}</ol></section>`;
-}

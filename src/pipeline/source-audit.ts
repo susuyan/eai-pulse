@@ -2,10 +2,13 @@ import { randomUUID } from "node:crypto";
 import type { Kysely } from "kysely";
 import { createSafeFetcher, FetchError } from "../collectors/fetcher.js";
 import { getAdapter } from "../collectors/index.js";
-import type { FetchResult } from "../collectors/types.js";
+import { createDefaultRateLimiter, RateLimiter } from "../collectors/rate-limiter.js";
+import type { CollectContext, FetchResult } from "../collectors/types.js";
 import type { AppConfig } from "../config/env.js";
 import { Repository } from "../db/repository.js";
 import type { DatabaseSchema, NewSourceCheckRow, SourceRow } from "../db/types.js";
+import { sourceAuditPolicy } from "../domain/source-audit-policy.js";
+import { sourceRowContractFingerprint } from "../domain/source-contract.js";
 import type { CollectedSignal, SourceDescriptor } from "../domain/types.js";
 import { canonicalizeUrl } from "../domain/url.js";
 import { concurrentMap } from "./collect.js";
@@ -53,12 +56,15 @@ export interface SourceAuditReport {
 
 interface AuditOptions {
   sourceId?: string;
+  sourceIds?: string[];
   concurrency?: number;
+  policies?: Record<string, "pending" | "restricted" | "allowed_metadata">;
 }
 
 interface AuditDependencies {
   fetcher?: ReturnType<typeof createSafeFetcher>;
   adapterFor?: typeof getAdapter;
+  rateLimiter?: RateLimiter;
 }
 
 interface FetchDiagnostics {
@@ -78,35 +84,92 @@ export async function auditSources(
 ): Promise<SourceAuditReport> {
   const repository = new Repository(db);
   const startedAt = new Date().toISOString();
-  const sources = options.sourceId
-    ? [await repository.getSource(options.sourceId)].filter((source): source is SourceRow =>
-        Boolean(source),
-      )
-    : await repository.listSources();
-  if (options.sourceId && sources.length === 0) throw new Error("Source not found");
+  const selectedIds = options.sourceIds ?? (options.sourceId ? [options.sourceId] : undefined);
+  let sources: SourceRow[];
+  if (selectedIds) {
+    const ids = [...new Set(selectedIds)];
+    const rows = ids.length
+      ? await db.selectFrom("sources").selectAll().where("id", "in", ids).execute()
+      : [];
+    const sourcesById = new Map(rows.map((source) => [source.id, source]));
+    sources = ids.map((id) => {
+      const source = sourcesById.get(id);
+      if (!source) throw new Error(`Source not found: ${id}`);
+      return source;
+    });
+  } else {
+    sources = await repository.listSources();
+  }
 
-  const jobId = await repository.startJob("source-audit", options.sourceId ?? null);
-  const runtimeDependencies: AuditDependencies = {
-    ...dependencies,
-    fetcher: dependencies.fetcher ?? createSafeFetcher(config),
+  const auditTargets = {
+    targetSourceIds: sources.map((source) => source.id),
+    expectedSourceCount: sources.length,
   };
+  const jobId = await repository.startJob(
+    "source-audit",
+    selectedIds && sources.length === 1 ? (sources[0]?.id ?? null) : null,
+    { ...auditTargets, auditComplete: false },
+  );
   let results: SourceCheckResult[] = [];
+  const fatalErrors: unknown[] = [];
   try {
-    results = await concurrentMap(
+    const runtimeDependencies: AuditDependencies = {
+      ...dependencies,
+      fetcher: dependencies.fetcher ?? createSafeFetcher(config),
+      rateLimiter: dependencies.rateLimiter ?? createDefaultRateLimiter(),
+    };
+    const outcomes = await concurrentMap(
       sources,
       Math.min(options.concurrency ?? config.COLLECTOR_CONCURRENCY, 8),
-      (source) => auditOneSource(repository, config, source, jobId, runtimeDependencies),
+      async (source) => {
+        try {
+          return {
+            result: await auditOneSource(
+              repository,
+              config,
+              source,
+              jobId,
+              runtimeDependencies,
+              options.policies?.[source.id],
+            ),
+          };
+        } catch (error) {
+          // Drain the cohort before finalizing a job with incomplete persisted evidence.
+          return { error };
+        }
+      },
     );
+    results = outcomes.flatMap((outcome) => (outcome.result ? [outcome.result] : []));
+    const failures = outcomes.filter((outcome) => "error" in outcome);
+    if (failures.length) {
+      throw new AggregateError(
+        failures.map((outcome) => outcome.error),
+        "Source audit incomplete",
+      );
+    }
+  } catch (error) {
+    fatalErrors.push(error);
   } finally {
     const errors = results
       .filter((result) => result.status === "failed")
       .map((result) => `${result.slug}:${result.errorCode ?? result.errorType ?? "failed"}`);
-    await repository.finishJob(jobId, {
-      collected: results.length,
-      created: results.filter((result) => result.status === "healthy").length,
-      skipped: results.filter((result) => result.status === "skipped").length,
-      errors,
-    });
+    if (fatalErrors.length) errors.push("AUDIT_INCOMPLETE");
+    try {
+      await repository.finishJob(jobId, {
+        collected: results.length,
+        created: results.filter((result) => result.status === "healthy").length,
+        skipped: results.filter((result) => result.status === "skipped").length,
+        errors,
+        details: { ...auditTargets, auditComplete: fatalErrors.length === 0 },
+      });
+    } catch (error) {
+      fatalErrors.push(error);
+    }
+  }
+
+  if (fatalErrors.length === 1) throw fatalErrors[0];
+  if (fatalErrors.length > 1) {
+    throw new AggregateError(fatalErrors, "Source audit and finalization failed");
   }
 
   return summarizeAudit(jobId, startedAt, results);
@@ -118,6 +181,7 @@ async function auditOneSource(
   source: SourceRow,
   jobId: string,
   dependencies: AuditDependencies,
+  reviewedPolicy?: "pending" | "restricted" | "allowed_metadata",
 ): Promise<SourceCheckResult> {
   const startedAt = new Date().toISOString();
   const startedMs = Date.now();
@@ -130,14 +194,20 @@ async function auditOneSource(
     proxyUsed: false,
   };
 
-  if (source.acquisition === "social" || source.maintenance_status === "restricted") {
+  reviewedPolicy = sourceAuditPolicy(source, reviewedPolicy);
+  if (
+    reviewedPolicy === "pending" ||
+    reviewedPolicy === "restricted" ||
+    source.acquisition === "social" ||
+    source.maintenance_status === "restricted"
+  ) {
     return persistCheck(repository, source, jobId, startedAt, startedMs, diagnostics, {
       status: "skipped",
       accessStatus: "not_checked",
       fetchStatus: "policy_skipped",
       parseStatus: "not_applicable",
       schemaStatus: "not_applicable",
-      policyStatus: "restricted",
+      policyStatus: reviewedPolicy === "pending" ? "pending" : "restricted",
       items: [],
       qualityScore: 0,
       errorType: "policy",
@@ -168,11 +238,21 @@ async function auditOneSource(
   }
 
   const safeFetch = dependencies.fetcher ?? createSafeFetcher(config);
-  const fetchText = async (url: string, headers: Record<string, string> = {}) => {
+  const rateLimiter = dependencies.rateLimiter ?? createDefaultRateLimiter();
+  const fetchText: CollectContext["fetchText"] = async (url, headers = {}, constraints = {}) => {
     const result = await safeFetch(url, headers, {
       timeoutMs: Math.min(source.timeout_ms, 30_000),
       maxRetries: Math.min(source.max_retries, 1),
       baseBackoffMs: source.base_backoff_ms,
+      ...constraints,
+      dispatchRequest: (requestUrl, validate, start) =>
+        rateLimiter.dispatch(
+          RateLimiter.domainFromUrl(requestUrl),
+          source.rate_limit_per_minute,
+          source.id,
+          validate,
+          start,
+        ),
     });
     recordFetch(diagnostics, result);
     return result;
@@ -310,6 +390,12 @@ async function persistCheck(
   const finishedAt = new Date().toISOString();
   const duplicate = duplicateStats(draft.items);
   const latestItemAt = latestDate(draft.items);
+  let contractFingerprint: string | null = null;
+  try {
+    contractFingerprint = sourceRowContractFingerprint(source);
+  } catch {
+    // Invalid configuration must still produce a failed check, without a reusable identity.
+  }
   const freshnessHours = latestItemAt
     ? Math.max(0, Math.round((Date.now() - new Date(latestItemAt).getTime()) / 3_600_000))
     : null;
@@ -319,7 +405,8 @@ async function persistCheck(
     job_id: jobId,
     status: draft.status,
     adapter: source.adapter,
-    adapter_version: "1",
+    adapter_version: source.adapter_version,
+    contract_fingerprint: contractFingerprint,
     access_status: draft.accessStatus,
     fetch_status: draft.fetchStatus,
     parse_status: draft.parseStatus,

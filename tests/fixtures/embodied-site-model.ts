@@ -154,6 +154,10 @@ export function embodiedSiteModel(): StaticSiteModel {
         role: "official",
         acquisition: "rss",
         topics: ["embodied-data"],
+        mapStatus: "pending",
+        pipelineStages: ["acquisition-route"],
+        substituteFor: [],
+        restrictionNote: "",
         maintenanceStatus: "maintained",
         lifecycle: "shadow",
         observationEnabled: false,
@@ -248,5 +252,8 @@ export function embodiedSiteModel(): StaticSiteModel {
         ],
       },
     ],
+    evolutionPhases: [],
+    embodiedTrends: [],
+    sourceCoverageGaps: [],
   } as StaticSiteModel;
 }

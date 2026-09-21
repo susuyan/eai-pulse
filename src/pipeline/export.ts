@@ -2,6 +2,7 @@ import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { transform } from "esbuild";
 import type { Kysely } from "kysely";
+import { embodiedTrends, evolutionPhases } from "../catalog/embodied-data/evolution.js";
 import { influencerCatalog } from "../catalog/influencers.js";
 import { capabilities, productVersion, releases, roadmap } from "../catalog/product.js";
 import type { AppConfig } from "../config/env.js";
@@ -24,7 +25,9 @@ import type {
   StaticSiteModel,
 } from "./static-site/dto.js";
 import { buildEmbodiedPublicData } from "./static-site/embodied-intelligence.js";
+import { buildPublicEmbodiedNarrative } from "./static-site/embodied-narrative.js";
 import { githubDataAtBuildTime } from "./static-site/github.js";
+import { summarizeSourceCoverageGaps } from "./static-site/intelligence.js";
 import { renderLlmsTxt } from "./static-site/llms.js";
 import type { StaticPage } from "./static-site/pages.js";
 import { renderStaticPages } from "./static-site/pages.js";
@@ -124,6 +127,11 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
     actors,
     eventTracks: eventRelations.tracks,
   });
+  const embodiedNarrative = buildPublicEmbodiedNarrative(
+    embodiedData.events,
+    evolutionPhases,
+    embodiedTrends,
+  );
   const enrichedEvents = events.map((event) => ({
     ...event,
     tracks: eventRelations.tracks.get(event.id) ?? [],
@@ -141,26 +149,37 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
     icon: track.icon,
   }));
   const checksBySourceId = new Map(latestSourceChecks.map((check) => [check.source_id, check]));
-  const publicSources: PublicSource[] = sources.map((source) => ({
-    slug: source.slug,
-    name: source.name,
-    homepageUrl: source.homepage_url,
-    category: source.source_category,
-    region: source.region,
-    tier: source.tier,
-    role: source.role,
-    acquisition: source.acquisition,
-    topics: parseJson(source.topics_json, []),
-    maintenanceStatus: source.maintenance_status,
-    lifecycle: source.lifecycle_status,
-    observationEnabled: source.observation_enabled === 1,
-    qualityScore: source.quality_score,
-    cadence: source.cadence,
-    healthStatus: normalizePublicHealth(checksBySourceId.get(source.id)?.status),
-    lastCheckedAt: checksBySourceId.get(source.id)?.finished_at ?? null,
-    latestItemAt: checksBySourceId.get(source.id)?.latest_item_at ?? null,
-    healthErrorCode: checksBySourceId.get(source.id)?.error_code ?? null,
-  }));
+  const publicSources: PublicSource[] = sources.map((source) => {
+    const manual = source.acquisition === "manual" || source.adapter === "manual";
+    const mapStatus =
+      manual && source.map_status === "integrated" ? "restricted" : source.map_status;
+    const check = checksBySourceId.get(source.id);
+    return {
+      slug: source.slug,
+      name: source.name,
+      homepageUrl: source.homepage_url,
+      category: source.source_category,
+      region: source.region,
+      tier: source.tier,
+      role: source.role,
+      acquisition: source.acquisition,
+      topics: parsePublicStringArray(source.topics_json),
+      mapStatus,
+      pipelineStages: parsePublicPipelineStages(source.pipeline_stages_json),
+      substituteFor: parsePublicStringArray(source.substitute_for_json),
+      restrictionNote: source.restriction_note,
+      maintenanceStatus: source.maintenance_status,
+      lifecycle: source.lifecycle_status,
+      observationEnabled: source.observation_enabled === 1,
+      qualityScore: source.quality_score,
+      cadence: source.cadence,
+      healthStatus:
+        manual || mapStatus === "restricted" ? "unchecked" : normalizePublicHealth(check?.status),
+      lastCheckedAt: check?.finished_at ?? null,
+      latestItemAt: check?.latest_item_at ?? null,
+      healthErrorCode: check?.error_code ?? null,
+    };
+  });
   const publicActors: PublicActor[] = actors.map((actor) => ({
     slug: actor.slug,
     name: actor.name,
@@ -277,6 +296,12 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
       generatedAt,
       peers: embodiedData.peers,
     }),
+    writeJson(join(config.distDir, "data/evolution.json"), {
+      schemaVersion: 1,
+      generatedAt,
+      phases: embodiedNarrative.phases,
+      trends: embodiedNarrative.trends,
+    }),
     writeJson(join(config.distDir, "data/scout.json"), {
       schemaVersion: 1,
       generatedAt,
@@ -326,6 +351,9 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
     standards: embodiedData.standards,
     collectionMethods: embodiedData.collectionMethods,
     peers: embodiedData.peers,
+    evolutionPhases: embodiedNarrative.phases,
+    embodiedTrends: embodiedNarrative.trends,
+    sourceCoverageGaps: summarizeSourceCoverageGaps(publicSources, embodiedData.pipelineStages),
   };
 
   const allPages = renderStaticPages(model);
@@ -551,6 +579,30 @@ function normalizePublicHealth(value: string | undefined): PublicSource["healthS
   return "unchecked";
 }
 
+function parsePublicStringArray(value: string): string[] {
+  const parsed = parseJson<unknown>(value, []);
+  return Array.isArray(parsed)
+    ? parsed.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+type PublicPipelineStageSlug = PublicSource["pipelineStages"][number];
+
+const publicPipelineStageSlugs = new Set<PublicPipelineStageSlug>([
+  "demand-definition",
+  "acquisition-route",
+  "multimodal-capture",
+  "production-operations",
+  "data-engineering-standards",
+  "quality-training-feedback",
+]);
+
+function parsePublicPipelineStages(value: string): PublicPipelineStageSlug[] {
+  return parsePublicStringArray(value).filter((stage): stage is PublicPipelineStageSlug =>
+    publicPipelineStageSlugs.has(stage as PublicPipelineStageSlug),
+  );
+}
+
 async function writeJson(path: string, value: unknown): Promise<void> {
   await writeFile(path, `${JSON.stringify(value)}\n`, "utf8");
 }
@@ -559,10 +611,12 @@ async function optimizeStaticAssets(distDir: string): Promise<void> {
   const cssPath = join(distDir, "assets/app.css");
   const scriptPath = join(distDir, "assets/core.js");
   const timelineScriptPath = join(distDir, "assets/timeline.js");
-  const [css, script, timelineScript] = await Promise.all([
+  const trendsScriptPath = join(distDir, "assets/embodied-trends.js");
+  const [css, script, timelineScript, trendsScript] = await Promise.all([
     readFile(cssPath, "utf8"),
     readFile(scriptPath, "utf8"),
     readFile(timelineScriptPath, "utf8"),
+    readFile(trendsScriptPath, "utf8"),
   ]);
   const scriptOptions = {
     loader: "js" as const,
@@ -572,14 +626,17 @@ async function optimizeStaticAssets(distDir: string): Promise<void> {
     legalComments: "none" as const,
     target: "es2022",
   };
-  const [optimizedCss, optimizedScript, optimizedTimelineScript] = await Promise.all([
-    transform(css, { loader: "css", minify: true, legalComments: "none" }),
-    transform(script, scriptOptions),
-    transform(timelineScript, scriptOptions),
-  ]);
+  const [optimizedCss, optimizedScript, optimizedTimelineScript, optimizedTrendsScript] =
+    await Promise.all([
+      transform(css, { loader: "css", minify: true, legalComments: "none" }),
+      transform(script, scriptOptions),
+      transform(timelineScript, scriptOptions),
+      transform(trendsScript, scriptOptions),
+    ]);
   await Promise.all([
     writeFile(cssPath, optimizedCss.code, "utf8"),
     writeFile(scriptPath, optimizedScript.code, "utf8"),
     writeFile(timelineScriptPath, optimizedTimelineScript.code, "utf8"),
+    writeFile(trendsScriptPath, optimizedTrendsScript.code, "utf8"),
   ]);
 }

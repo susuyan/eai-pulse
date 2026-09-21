@@ -21,7 +21,14 @@ afterEach(async () => {
 });
 
 const event = {
+  slug: "agent-capability",
   title: "A new agent capability ships",
+  fact_summary: "An official source published a bounded workflow with measurable results.",
+  summary: "The workflow provides a stable trigger for an evidence-bound action card.",
+  technical_insight: "The workflow defines explicit inputs, outputs, controls, and failures.",
+  industry_insight: "The change can affect a real operating workflow and delivery decision.",
+  future_outlook: "Verify adoption, cost, completion rate, and takeover frequency.",
+  business_value: "Run a reversible pilot with success, cost, and stop thresholds this week.",
   confidence_score: 82,
   heat_score: 76,
   impact_score: 91,

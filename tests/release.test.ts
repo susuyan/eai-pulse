@@ -65,7 +65,7 @@ describe("release contract", () => {
     expect(unreleased?.name).toBe("Embodied Data Public Switch");
     expect(unreleased?.summary).toContain("具身数据生产公开站");
     expect(unreleased?.changes).toContain(
-      "36 个具身数据来源保持 shadow，作为发现与观察目录；没有来源被描述为 active 生产采集器。",
+      "当前具身数据目录收录 83 个来源；公开地图为非退休条目展示接入、待接入、受限或替代状态，以及六阶段覆盖和计算出的覆盖缺口。这些目录状态不等同于已完成重点 adapter 接入，也没有来源被描述为 active 生产采集器。",
     );
   });
 

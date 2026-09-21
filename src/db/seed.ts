@@ -6,11 +6,17 @@ import { embodiedDatasets } from "../catalog/embodied-data/datasets.js";
 import { embodiedEventEvidence } from "../catalog/embodied-data/event-evidence.js";
 import { embodiedLaunchEvents } from "../catalog/embodied-data/events.js";
 import { embodiedPeers } from "../catalog/embodied-data/peers.js";
+import type { EmbodiedCatalogSource } from "../catalog/embodied-data/sources.js";
 import { embodiedStandards } from "../catalog/embodied-data/standards.js";
 import { embodiedTracks } from "../catalog/embodied-data/tracks.js";
 import { type CuratedEventSeed, historicalEvents } from "../catalog/history.js";
 import { recentDensityEvents } from "../catalog/recent-density.js";
 import { type CatalogSource, legacySourceCatalog, sourceCatalog } from "../catalog/sources.js";
+import { buildEmbodiedScoutCard, embodiedScoutKinds } from "../domain/embodied-scout.js";
+import {
+  SourceMapStatusSchema,
+  SourcePipelineCoverageSchema,
+} from "../domain/embodied-source-map.js";
 import { canonicalizeUrl, sha256 } from "../domain/url.js";
 import { Repository } from "./repository.js";
 import type { DatabaseSchema } from "./types.js";
@@ -685,14 +691,35 @@ const allEvents = [
 ] as const;
 
 export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
+  const embodiedSlugs = new Set(sourceCatalog.map((source) => source.slug));
+  const validatedSources = sourceCatalog.map((source) => {
+    const mapStatus = SourceMapStatusSchema.parse(source.mapStatus);
+    const pipelineStages = SourcePipelineCoverageSchema.parse(source.pipelineStages);
+    for (const slug of source.substituteFor) {
+      if (slug === source.slug || !embodiedSlugs.has(slug)) {
+        throw new Error(`Invalid substitute reference for ${source.slug}: ${slug}`);
+      }
+    }
+    if (mapStatus === "restricted" && !source.restrictionNote.trim()) {
+      throw new Error(`Restricted source requires a restriction note: ${source.slug}`);
+    }
+    if (
+      mapStatus === "integrated" &&
+      (source.acquisition === "manual" || source.adapter === "manual")
+    ) {
+      throw new Error(`Manual source cannot be integrated: ${source.slug}`);
+    }
+    return { ...source, mapStatus, pipelineStages };
+  });
   const repository = new Repository(db);
   const timestamp = isoNow();
 
   const saveCatalogEntry = async (
-    source: CatalogSource,
+    source: CatalogSource | EmbodiedCatalogSource,
     contentScope: "legacy-ai" | "embodied-data",
   ) => {
     const previous = await repository.getSourceByIdOrSlug(source.slug);
+    const mapSource = "mapStatus" in source ? source : undefined;
     await repository.saveCatalogSource({
       id: stableId("source", source.slug),
       slug: source.slug,
@@ -716,6 +743,7 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
         acquisition: source.acquisition,
         ...(source.identityHosts ? { identityHosts: source.identityHosts } : {}),
         ...(source.socialHandles ? { socialHandles: source.socialHandles } : {}),
+        ...(source.html ? { html: source.html } : {}),
       }),
       state_json: "{}",
       last_collected_at: null,
@@ -734,6 +762,10 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
       freshness_slo_hours: source.freshnessSloHours ?? 168,
       adapter_version: source.adapterVersion ?? "1",
       content_scope: contentScope,
+      map_status: mapSource?.mapStatus ?? "pending",
+      pipeline_stages_json: JSON.stringify(mapSource?.pipelineStages ?? []),
+      substitute_for_json: JSON.stringify(mapSource?.substituteFor ?? []),
+      restriction_note: mapSource?.restrictionNote ?? "",
     });
     if (
       contentScope === "embodied-data" &&
@@ -751,7 +783,6 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
     }
   };
 
-  const embodiedSlugs = new Set(sourceCatalog.map((source) => source.slug));
   for (const source of legacySourceCatalog) {
     if (embodiedSlugs.has(source.slug)) continue;
     await saveCatalogEntry(source, "legacy-ai");
@@ -766,7 +797,7 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
     });
   }
 
-  for (const source of sourceCatalog) {
+  for (const source of validatedSources) {
     await saveCatalogEntry(source, "embodied-data");
   }
   const catalogSlugs = new Set(
@@ -1032,6 +1063,12 @@ async function seedEmbodiedLaunchCatalog(
     embodiedEventEvidence.map((evidence) => [evidence.slug, evidence]),
   );
   for (const event of embodiedLaunchEvents) {
+    const eventEvidence = event.evidenceSlugs.map((slug) => {
+      const row = evidenceBySlug.get(slug);
+      if (!row) throw new Error(`Missing embodied event evidence: ${slug}`);
+      return row;
+    });
+    const independentSources = new Set(eventEvidence.map((row) => row.sourceIdentity)).size;
     const existing = await db
       .selectFrom("events")
       .select("id")
@@ -1057,10 +1094,10 @@ async function seedEmbodiedLaunchCatalog(
       value_score: 90,
       score_factors_json: JSON.stringify({
         authority: 90,
-        corroboration: event.evidenceSlugs.length > 1 ? 90 : 75,
+        corroboration: independentSources > 1 ? 90 : 75,
         primaryEvidence: 100,
-        uniqueAuthors: event.evidenceSlugs.length,
-        independentSources: event.evidenceSlugs.length,
+        uniqueAuthors: independentSources,
+        independentSources,
         platformBreadth: 1,
         regionBreadth: 1,
         velocity: 0,
@@ -1103,9 +1140,7 @@ async function seedEmbodiedLaunchCatalog(
         .execute();
     }
 
-    for (const evidenceSlug of event.evidenceSlugs) {
-      const evidence = evidenceBySlug.get(evidenceSlug);
-      if (!evidence) throw new Error(`Missing embodied event evidence: ${evidenceSlug}`);
+    for (const evidence of eventEvidence) {
       const source = await repository.getSourceByIdOrSlug(evidence.sourceSlug);
       if (!source) throw new Error(`Missing embodied evidence source: ${evidence.sourceSlug}`);
       const inserted = await repository.insertSignal(source.id, {
@@ -1117,7 +1152,7 @@ async function seedEmbodiedLaunchCatalog(
         publishedAt: evidence.publishedAt,
         category: event.category,
         tags: [...event.keywords],
-        metrics: { independentSources: event.evidenceSlugs.length, platforms: ["official"] },
+        metrics: { independentSources, platforms: ["official"] },
         rawMeta: { seeded: true, evidenceRole: evidence.role },
       });
       const signalId =
@@ -1246,24 +1281,17 @@ async function seedScout(db: Kysely<DatabaseSchema>, timestamp: string) {
   await db
     .updateTable("scout_insights")
     .set({ status: "archived", published_at: null, updated_at: timestamp })
-    .where("kind", "not in", [
-      "collection-route",
-      "capture-system",
-      "production-operations",
-      "data-standard",
-      "quality-feedback",
-      "peer-opportunity",
-    ])
+    .where("kind", "not in", [...embodiedScoutKinds])
     .execute();
   const opportunities = [
-    ["collection-route", "droid-distributed-collection", "验证分布式采集路线的可复制边界"],
-    ["capture-system", "rh20t-force-aware-capture", "验证力觉与多视角采集系统"],
-    ["production-operations", "droid-consortium-site-operations", "建立跨站点数据生产审计包"],
-    ["data-standard", "open-x-standardized-datasets", "建立跨本体数据转换契约"],
-    ["quality-feedback", "gello-policy-feedback-capture", "把训练失败转成返采闭环"],
-    ["peer-opportunity", "nexdata-embodied-delivery-scope", "核验同行交付能力与采购缺口"],
+    ["collection-route", "droid-distributed-collection"],
+    ["capture-system", "rh20t-force-aware-capture"],
+    ["production-operations", "droid-consortium-site-operations"],
+    ["data-standard", "open-x-standardized-datasets"],
+    ["quality-feedback", "gello-policy-feedback-capture"],
+    ["peer-opportunity", "nexdata-embodied-delivery-scope"],
   ] as const;
-  for (const [kind, eventSlug, title] of opportunities) {
+  for (const [kind, eventSlug] of opportunities) {
     const slug = `scout-${kind}`;
     const existing = await db
       .selectFrom("scout_insights")
@@ -1271,28 +1299,17 @@ async function seedScout(db: Kysely<DatabaseSchema>, timestamp: string) {
       .where("slug", "=", slug)
       .executeTakeFirst();
     const id = existing?.id ?? stableId("scout", slug);
+    const event = await db
+      .selectFrom("events")
+      .selectAll()
+      .where("slug", "=", eventSlug)
+      .executeTakeFirstOrThrow();
     const value = {
       id,
       slug,
       kind,
       status: "published",
-      title: `星探建议：${title}`,
-      observation: `触发事件「${eventSlug}」提供了可回链的具身数据生产证据。`,
-      hypothesis:
-        "非共识点：客户更可能为可验证的生产结果和风险边界付费，而不是为泛化能力叙事付费。",
-      why_now: "公开项目已经给出可复现入口，适合在 7 天内用真实项目验证需求、成本和交付边界。",
-      target_audience: "具身数据负责人、采集运营负责人、机器人研发负责人和采购验收负责人",
-      suggested_action:
-        "选择一个真实项目，定义成功指标与停止条件，完成首个小实验并记录可复核结果。",
-      artifact_idea: "一页机会 brief、证据清单、实验记录、风险清单和继续或停止决策",
-      counter_signals:
-        "风险：证据可能仅代表发布方。失效条件：独立复现失败、客户无预算或实验结果不能改善质量、成本或交付周期。",
-      horizon: "7-30d",
-      confidence_score: 80,
-      evidence_score: 82,
-      novelty_score: 78,
-      leverage_score: 86,
-      total_score: 82,
+      ...buildEmbodiedScoutCard(event, kind),
       cooldown_key: `${kind}:${eventSlug}`,
       generated_at: timestamp,
       expires_at: null,
@@ -1302,12 +1319,11 @@ async function seedScout(db: Kysely<DatabaseSchema>, timestamp: string) {
     };
     if (existing) await db.updateTable("scout_insights").set(value).where("id", "=", id).execute();
     else await db.insertInto("scout_insights").values(value).execute();
-    const eventId = stableId("event", eventSlug);
     await db
       .insertInto("scout_evidence")
       .values({
         insight_id: id,
-        event_id: eventId,
+        event_id: event.id,
         evidence_role: "trigger",
         weight: 100,
         created_at: timestamp,

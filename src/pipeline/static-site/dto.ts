@@ -5,6 +5,7 @@ import type {
   DatasetProfile,
   StandardProfile,
 } from "../../domain/embodied-data-objects.js";
+import type { PhaseStageImpact } from "../../domain/embodied-narrative.js";
 import type { PublicEvent } from "../../domain/types.js";
 import type { ResearchImpactAssessment } from "../research-impact.js";
 
@@ -12,6 +13,41 @@ export interface PublicEventRelation {
   slug: string;
   title: string;
   role: string;
+}
+
+export interface PublicPhaseStageImpact {
+  summary: string;
+  events: PublicEventRelation[];
+  evidenceState: PhaseStageImpact["evidenceState"];
+}
+
+export interface PublicEvolutionPhase {
+  slug: string;
+  start: string;
+  end: string;
+  title: string;
+  thesis: string;
+  turningPoint: string;
+  events: PublicEventRelation[];
+  stageImpacts: Record<EmbodiedPipelineStage, PublicPhaseStageImpact>;
+  counterEvents: PublicEventRelation[];
+  nextSignals: string[];
+}
+
+export interface PublicEmbodiedTrend {
+  slug: string;
+  title: string;
+  thesis: string;
+  whyNow: string;
+  pipelineStages: EmbodiedPipelineStage[];
+  events: PublicEventRelation[];
+  counterEvents: PublicEventRelation[];
+  nextWatch: string[];
+}
+
+export interface PublicEmbodiedNarrative {
+  phases: PublicEvolutionPhase[];
+  trends: PublicEmbodiedTrend[];
 }
 
 export type PublicEventDataProfile = EventDataProfile;
@@ -169,6 +205,10 @@ export interface PublicSource {
   role: string;
   acquisition: string;
   topics: string[];
+  mapStatus: "integrated" | "pending" | "restricted" | "substitute";
+  pipelineStages: EmbodiedPipelineStage[];
+  substituteFor: string[];
+  restrictionNote: string;
   maintenanceStatus: string;
   lifecycle: string;
   observationEnabled: boolean;
@@ -178,6 +218,11 @@ export interface PublicSource {
   lastCheckedAt: string | null;
   latestItemAt: string | null;
   healthErrorCode: string | null;
+}
+
+export interface SourceCoverageGap {
+  stage: EmbodiedPipelineStage;
+  category: string;
 }
 
 export interface PublicSignal {
@@ -396,4 +441,7 @@ export interface StaticSiteModel {
   standards: PublicStandard[];
   collectionMethods: PublicCollectionMethod[];
   peers: PublicPeer[];
+  evolutionPhases: PublicEvolutionPhase[];
+  embodiedTrends: PublicEmbodiedTrend[];
+  sourceCoverageGaps: SourceCoverageGap[];
 }

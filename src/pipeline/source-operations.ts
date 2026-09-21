@@ -60,8 +60,8 @@ export async function sourceOperationReadiness(
           },
           observe: {
             allowed:
-              source.lifecycle_status === "shadow" &&
-              (source.observation_enabled === 1 || observationState?.eligible === true),
+              observationState?.eligible === true ||
+              (source.lifecycle_status === "shadow" && source.observation_enabled === 1),
             reason:
               source.observation_enabled === 1
                 ? null

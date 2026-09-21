@@ -157,6 +157,44 @@ export const embodiedPrioritySources: readonly EmbodiedPrioritySource[] = [
 
 export const embodiedPrioritySourceSlugs = embodiedPrioritySources.map((entry) => entry.slug);
 
+export interface PrioritySourceContract {
+  slug: string;
+  adapter: string;
+  adapterVersion: string;
+  status: "passed" | "failed";
+  policy: {
+    status: "pending" | "restricted" | "allowed_metadata";
+    reviewedAt: string | null;
+    reviewer: string | null;
+    reason: string | null;
+  };
+}
+
+// Pinned independently of the cohort: a version edit must not inherit a passing contract.
+// The fixture suite verifies these records. No automation policy has been approved.
+export const prioritySourceContracts: readonly PrioritySourceContract[] = (
+  [
+    ["samr-standards", "web-scraper", "1"],
+    ["beijing-humanoid-center", "web-scraper", "1"],
+    ["internrobotics", "json-api", "1"],
+    ["horizon-holomotion", "json-api", "1"],
+    ["opendrivelab", "web-scraper", "1"],
+    ["pnp-robotics", "web-scraper", "1"],
+    ["nvidia-isaac-groot", "json-api", "1"],
+    ["figure-ai", "web-scraper", "1"],
+    ["one-x", "web-scraper", "1"],
+    ["robocasa", "json-api", "1"],
+    ["nist-physical-ai", "web-scraper", "1"],
+    ["itu-robot-data-factory", "web-scraper", "1"],
+  ] as const
+).map(([slug, adapter, adapterVersion]) => ({
+  slug,
+  adapter,
+  adapterVersion,
+  status: "passed",
+  policy: { status: "pending", reviewedAt: null, reviewer: null, reason: null },
+}));
+
 const acquisitionByAdapter: Readonly<Record<string, Acquisition>> = {
   rss: "rss",
   "github-releases": "github",

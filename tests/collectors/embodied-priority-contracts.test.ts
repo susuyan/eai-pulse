@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { embodiedPrioritySources } from "../../src/catalog/embodied-data/priority-sources.js";
+import {
+  embodiedPrioritySources,
+  prioritySourceContracts,
+} from "../../src/catalog/embodied-data/priority-sources.js";
 import { embodiedSourceCatalog } from "../../src/catalog/embodied-data/sources.js";
 import { getAdapter } from "../../src/collectors/index.js";
 import type { CollectContext } from "../../src/collectors/types.js";
@@ -65,12 +68,23 @@ describe("embodied priority fixture contracts", () => {
         .sort(),
     ).toEqual(embodiedPrioritySources.map((entry) => entry.slug).sort());
     expect(fixtures()).toHaveLength(12);
+    expect(prioritySourceContracts.map((record) => record.slug).sort()).toEqual(
+      fixtures()
+        .map((record) => record.slug)
+        .sort(),
+    );
     expect(fixtures().some((fixture) => fixture.slug === "galbot")).toBe(false);
     expect(embodiedSourceCatalog.some((source) => source.slug === "galbot")).toBe(true);
     for (const fixture of fixtures()) {
       const source = embodiedSourceCatalog.find((item) => item.slug === fixture.slug);
       expect(fixture.capturedOn).toBe("2026-09-21");
       expect(fixture.policyStatus).toBe("pending");
+      expect(prioritySourceContracts.find((record) => record.slug === fixture.slug)).toMatchObject({
+        adapter: fixture.adapter,
+        adapterVersion: source?.adapterVersion,
+        status: "passed",
+        policy: { status: fixture.policyStatus, reviewer: null, reviewedAt: null },
+      });
       expect(source?.enabled).toBe(false);
       expect(source?.lifecycleStatus).not.toBe("active");
       expect(source?.robotsPolicy).toMatch(/pending/i);

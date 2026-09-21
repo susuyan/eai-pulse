@@ -376,7 +376,7 @@ async function persistCheck(
     job_id: jobId,
     status: draft.status,
     adapter: source.adapter,
-    adapter_version: "1",
+    adapter_version: source.adapter_version,
     access_status: draft.accessStatus,
     fetch_status: draft.fetchStatus,
     parse_status: draft.parseStatus,

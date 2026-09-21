@@ -1,0 +1,11 @@
+{
+  "testOnly": true,
+  "description": "Synthetic deterministic gate inputs. Not live audit or policy evidence.",
+  "now": "2026-09-21T18:00:00.000Z",
+  "sourceSlug": "horizon-holomotion",
+  "checks": [
+    { "startedAt": "2026-09-21T17:00:00.000Z", "finishedAt": "2026-09-21T17:00:01.000Z" },
+    { "startedAt": "2026-09-21T10:00:00.000Z", "finishedAt": "2026-09-21T10:00:01.000Z" },
+    { "startedAt": "2026-09-21T03:00:00.000Z", "finishedAt": "2026-09-21T03:00:01.000Z" }
+  ]
+}

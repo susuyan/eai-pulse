@@ -20,15 +20,26 @@ export async function runObserveSources(args = process.argv.slice(2)): Promise<v
   try {
     await migrateToLatest(db, config);
 
-    if (auto) {
+    if (auto && confirm) {
       const result = await autoEnableObservation(db);
       console.log(JSON.stringify(result, null, 2));
       return;
     }
 
-    const eligibility = await observationEligibility(db);
+    let eligibility = await observationEligibility(db);
+    if (auto) {
+      const shadows = await db
+        .selectFrom("sources")
+        .select("id")
+        .where("lifecycle_status", "=", "shadow")
+        .execute();
+      const shadowIds = new Set(shadows.map((source) => source.id));
+      eligibility = eligibility.filter((item) => shadowIds.has(item.sourceId));
+    }
     const toEnable = eligibility.filter((item) => item.eligible && !item.observationEnabled);
-    const toDisable = eligibility.filter((item) => !item.eligible && item.observationEnabled);
+    const toDisable = auto
+      ? []
+      : eligibility.filter((item) => !item.eligible && item.observationEnabled);
     const summary = {
       checked: eligibility.length,
       eligible: eligibility.filter((item) => item.eligible).length,
@@ -48,7 +59,9 @@ export async function runObserveSources(args = process.argv.slice(2)): Promise<v
           {
             changed: false,
             summary,
-            next: "npm run observe:sources -- --confirm",
+            next: auto
+              ? "npm run observe:sources -- --auto --confirm"
+              : "npm run observe:sources -- --confirm",
             sample: toEnable.slice(0, 20).map((item) => item.slug),
           },
           null,

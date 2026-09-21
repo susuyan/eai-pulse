@@ -346,6 +346,7 @@ describe("source audit", () => {
       .select(({ fn }) => fn.countAll<number>().as("count"))
       .executeTakeFirstOrThrow();
     const beforeLifecycle = source?.lifecycle_status;
+    await repository.updateSource(source?.id ?? "missing", { adapter_version: "test-version-2" });
     const items = [
       signal("https://example.com/release", "Frontier model release"),
       signal("https://example.com/release", "Frontier model release"),
@@ -369,6 +370,7 @@ describe("source audit", () => {
       item_count: 3,
       duplicate_count: 1,
       policy_status: "allowed_metadata",
+      adapter_version: "test-version-2",
     });
     const monitor = await generateMonitorReport(db);
     expect(monitor).toMatchObject({

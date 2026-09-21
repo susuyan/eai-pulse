@@ -30,10 +30,27 @@ export interface RateLimitState {
 
 export class RateLimiter {
   private domains = new Map<string, RateLimitState>();
+  private pacedRequests = new Map<string, { at: number; interval: number }>();
   private activeRequests = 0;
   private waitQueue: Array<{ resolve: () => void }> = [];
 
   constructor(private config: RateLimiterConfig) {}
+
+  /** Reserve a non-burst request slot shared by source and domain. */
+  async pace(domain: string, requestsPerMinute: number, sourceId: string): Promise<void> {
+    const keys = [`domain:${domain}`, `source:${sourceId}`];
+    const now = Date.now();
+    const interval = Math.ceil(60_000 / Math.max(1, requestsPerMinute));
+    const slots = keys.map((key) => {
+      const previous = this.pacedRequests.get(key);
+      const spacing = Math.max(interval, previous?.interval ?? 0);
+      return { key, interval: spacing, at: previous ? previous.at + spacing : now };
+    });
+    const at = Math.max(now, ...slots.map((slot) => slot.at));
+    // Reserve synchronously so concurrent sources cannot claim the same slot.
+    for (const slot of slots) this.pacedRequests.set(slot.key, { at, interval: slot.interval });
+    if (at > now) await new Promise((resolve) => setTimeout(resolve, at - now));
+  }
 
   /**
    * Acquire a token for a domain. Returns a promise that resolves

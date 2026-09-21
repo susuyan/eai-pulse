@@ -7,7 +7,7 @@
 - 本次重点队列为 12 个来源，6 CN / 6 GLOBAL；Galbot 仅退出试验队列，保留原 catalog 条目。其官网新闻仅提供外部媒体链接，不作为同站 canonical 证据。
 - HTML 配置从 catalog 经数据库 config_json 传入 SourceDescriptor。通用适配器不识别来源 slug。
 - 复用静态 HTML 解析库的 CSS selector；不执行页面 JavaScript、不加载图片或外部资源。JSON 数据仅允许 JSON.parse 解析指定 script 元素，按明确字段路径读取。
-- records selector 确定条目边界。title、link、date 在同一条目内提取，选择不唯一或缺失时拒绝该条目。嵌入 JSON 的 slug 仅能映射到当前页面真实存在的同站链接。
+- records selector 确定条目边界。title、link、date 必须归属于当前条目，不跨入嵌套的其他条目；普通嵌套字段容器仍可使用。选择不唯一或缺失时拒绝该条目。必需 link 字段在拼接 prefix 前必须非空且唯一，不能把缺失 slug 变成导航 URL。嵌入 JSON 的 slug 仅能映射到当前页面真实存在的同站链接。
 - 显式配置的页面不回退到通用导航链接或页面任意日期。无有效条目视为解析失败。
 
 ## 有界详情采集
@@ -15,7 +15,7 @@
 - 仅显式配置 detail 的来源可以跟随条目链接。每次最多 3 个去重后的同源 HTTPS URL，顺序抓取；保持既有速率、超时、重试和响应体上限。
 - 列表请求及每一跳详情 redirect 均使用现有 safe fetcher 的 SSRF 校验，并额外限制 origin。跨域、HTTP 降级、凭据 URL 在请求前拒绝。不能仅在请求完成后检查最终 URL。
 - 详情失败使本来源失败；既有外层来源隔离继续负责其他来源。详情不继承列表条件请求头，也不更新列表 ETag/Last-Modified。失败不提交增量状态。
-- 审计路径传递相同请求约束且不写采集状态。规则不修改来源生命周期或启用状态。
+- 审计路径传递相同请求约束且不写采集状态。列表、详情、重试、redirect 与代理重试的实际请求共同使用本轮审计的 source/domain 速率预算，按 rate_limit_per_minute 无突发排队；并发来源不能占用同一域的相同请求时隙。等待配额不消耗网络 timeout，既有 Retry-After 与退避仍先满足。规则不修改来源生命周期或启用状态。
 
 ## 日期与语义
 

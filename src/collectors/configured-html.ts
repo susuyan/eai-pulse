@@ -19,7 +19,8 @@ export async function collectConfiguredHtml(
       .filter(Boolean),
   );
   const records: Array<{ node: AnyNode; data?: unknown }> = [];
-  for (const node of $(rules.records).toArray()) {
+  const recordNodes = new Set($(rules.records).toArray());
+  for (const node of recordNodes) {
     if (rules.jsonPath) {
       const payload = JSON.parse($(node).text()) as unknown;
       for (const data of valuesAt(payload, rules.jsonPath)) records.push({ node, data });
@@ -29,16 +30,17 @@ export async function collectConfiguredHtml(
   const seen = new Set<string>();
   let detailRequests = 0;
   for (const record of records.slice(0, 100)) {
-    let title = readField($, record.node, record.data, rules.title);
+    let title = readField($, record.node, record.data, rules.title, recordNodes);
     const link = rules.link
-      ? readField($, record.node, record.data, rules.link)
+      ? readField($, record.node, record.data, rules.link, recordNodes)
       : source.config.url;
+    if (rules.link && !link) continue;
     const url = sameOrigin(`${rules.link?.prefix ?? ""}${link}`, source.config.url);
     if (!title || !url || seen.has(url)) continue;
     if (rules.jsonPath && !pageLinks.has(url)) continue;
     seen.add(url);
     let dateRule = rules.date;
-    let rawDate = dateRule ? readField($, record.node, record.data, dateRule) : "";
+    let rawDate = dateRule ? readField($, record.node, record.data, dateRule, recordNodes) : "";
     let alternate = "";
     if (rules.detail) {
       if (detailRequests >= rules.detail.take) break;
@@ -93,17 +95,38 @@ export async function collectConfiguredHtml(
   return results.slice(0, source.config.take ?? 30);
 }
 
-function readField($: CheerioAPI, node: AnyNode, data: unknown, field: HtmlField): string {
+function readField(
+  $: CheerioAPI,
+  node: AnyNode,
+  data: unknown,
+  field: HtmlField,
+  recordNodes: ReadonlySet<AnyNode> = new Set(),
+): string {
   if (field.path) {
     const values = valuesAt(data, field.path);
     return values.length === 1 && typeof values[0] === "string" ? values[0].trim() : "";
   }
-  const selection = field.selector ? $(node).find(field.selector) : $(node);
+  const selection = (field.selector ? $(node).find(field.selector) : $(node)).filter(
+    (_, candidate) => {
+      let ancestor: AnyNode | null = candidate;
+      while (ancestor && ancestor !== node) {
+        if (recordNodes.has(ancestor)) return false;
+        ancestor = ancestor.parent;
+      }
+      return ancestor === node;
+    },
+  );
   if (selection.length !== 1) return "";
-  const clean = selection.clone();
-  clean.find("script,style").remove();
-  clean.find("br").replaceWith(" ");
-  const value = field.attribute ? selection.attr(field.attribute) : clean.text();
+  const text = (current: AnyNode): string => {
+    if (current !== node && recordNodes.has(current)) return "";
+    if (current.type === "text") return current.data;
+    if ("name" in current && ["script", "style"].includes(current.name)) return "";
+    if ("name" in current && current.name === "br") return " ";
+    return "children" in current ? current.children.map(text).join("") : "";
+  };
+  const value = field.attribute
+    ? selection.attr(field.attribute)
+    : selection.toArray().map(text).join("");
   return (value ?? "").replace(/\s+/g, " ").trim();
 }
 

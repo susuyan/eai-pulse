@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Kysely } from "kysely";
 import { createSafeFetcher, FetchError } from "../collectors/fetcher.js";
 import { getAdapter } from "../collectors/index.js";
+import { createDefaultRateLimiter, RateLimiter } from "../collectors/rate-limiter.js";
 import type { CollectContext, FetchResult } from "../collectors/types.js";
 import type { AppConfig } from "../config/env.js";
 import { Repository } from "../db/repository.js";
@@ -59,6 +60,7 @@ interface AuditOptions {
 interface AuditDependencies {
   fetcher?: ReturnType<typeof createSafeFetcher>;
   adapterFor?: typeof getAdapter;
+  rateLimiter?: RateLimiter;
 }
 
 interface FetchDiagnostics {
@@ -89,6 +91,7 @@ export async function auditSources(
   const runtimeDependencies: AuditDependencies = {
     ...dependencies,
     fetcher: dependencies.fetcher ?? createSafeFetcher(config),
+    rateLimiter: dependencies.rateLimiter ?? createDefaultRateLimiter(),
   };
   let results: SourceCheckResult[] = [];
   try {
@@ -168,12 +171,19 @@ async function auditOneSource(
   }
 
   const safeFetch = dependencies.fetcher ?? createSafeFetcher(config);
+  const rateLimiter = dependencies.rateLimiter ?? createDefaultRateLimiter();
   const fetchText: CollectContext["fetchText"] = async (url, headers = {}, constraints = {}) => {
     const result = await safeFetch(url, headers, {
       timeoutMs: Math.min(source.timeout_ms, 30_000),
       maxRetries: Math.min(source.max_retries, 1),
       baseBackoffMs: source.base_backoff_ms,
       ...constraints,
+      beforeRequest: (requestUrl) =>
+        rateLimiter.pace(
+          RateLimiter.domainFromUrl(requestUrl),
+          source.rate_limit_per_minute,
+          source.id,
+        ),
     });
     recordFetch(diagnostics, result);
     return result;

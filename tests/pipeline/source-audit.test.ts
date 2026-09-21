@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { FetchError } from "../../src/collectors/fetcher.js";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createSafeFetcher, FetchError } from "../../src/collectors/fetcher.js";
 import type { SourceAdapter } from "../../src/collectors/types.js";
 import { loadConfig } from "../../src/config/env.js";
 import { createDatabase } from "../../src/db/database.js";
@@ -12,6 +12,8 @@ import { auditSources } from "../../src/pipeline/source-audit.js";
 
 const databases: ReturnType<typeof createDatabase>[] = [];
 afterEach(async () => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
   while (databases.length) await databases.pop()?.destroy();
 });
 
@@ -25,6 +27,60 @@ async function setup() {
 }
 
 describe("source audit", () => {
+  it("paces concurrent same-domain sources, listings and all details through one rate budget", async () => {
+    const { db, config, repository } = await setup();
+    const rows = (await repository.listSources()).slice(0, 2).map((row, index) => ({
+      ...row,
+      adapter: "web-scraper",
+      acquisition: "html",
+      maintenance_status: "candidate",
+      rate_limit_per_minute: 30,
+      config_json: JSON.stringify({
+        url: `https://example.com/list/${index}`,
+        html: {
+          records: ".record",
+          title: { selector: "a" },
+          link: { selector: "a", attribute: "href" },
+          detail: {
+            take: 3,
+            title: { selector: "h1" },
+            date: { selector: "time", format: "ymd", semantic: "published" },
+          },
+        },
+      }),
+    }));
+    vi.spyOn(Repository.prototype, "listSources").mockResolvedValue(rows);
+    const requests: Array<{ url: string; at: number }> = [];
+    const safeFetch = createSafeFetcher(config, {
+      validateUrl: async () => undefined,
+      fetchImpl: async (input) => {
+        const url = String(input);
+        requests.push({ url, at: Date.now() });
+        const body = url.includes("/list/")
+          ? [1, 2, 3]
+              .map(
+                (id) =>
+                  `<div class="record"><a href="/detail/${id}">Real robot dataset update ${id}</a></div>`,
+              )
+              .join("")
+          : "<h1>Real robot dataset update with collection quality metadata</h1><time>2026-09-17</time>";
+        return new Response(body, { status: 200 });
+      },
+    });
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-21T00:00:00Z"));
+    const start = Date.now();
+    const audit = auditSources(db, config, { concurrency: 2 }, { fetcher: safeFetch });
+    await vi.runAllTimersAsync();
+    const report = await audit;
+    expect(report.results.map((result) => result.itemCount)).toEqual([3, 3]);
+    expect(requests).toHaveLength(8);
+    expect(requests.map((request) => request.at - start)).toEqual([
+      0, 2000, 4000, 6000, 8000, 10000, 12000, 14000,
+    ]);
+    expect(requests.filter((request) => request.url.includes("/list/"))).toHaveLength(2);
+    expect(requests.filter((request) => request.url.includes("/detail/"))).toHaveLength(6);
+  });
   it("persists structured diagnostics without activating or writing signals", async () => {
     const { db, config, repository } = await setup();
     const source = (await repository.listSources()).find((item) => item.slug === "openai");

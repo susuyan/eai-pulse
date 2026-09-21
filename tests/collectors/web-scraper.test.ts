@@ -119,6 +119,49 @@ describe("web-scraper adapter", () => {
       '<nav><a href="/about">About us</a><time>2026-07-03</time></nav><div class="record"><span class="published">2026-07-03</span></div>';
     await expect(adapter.collect(configured(), makeContext(html))).rejects.toThrow();
   });
+  it("does not borrow a nested record's date for an undated outer record", async () => {
+    const html =
+      '<div class="record"><div><a href="/outer"><span class="headline">Outer item</span></a></div><div class="record"><div><span class="published">2026-07-03</span></div></div></div>';
+    await expect(adapter.collect(configured(), makeContext(html))).rejects.toThrow(
+      /no valid dated records/,
+    );
+  });
+  it("excludes nested record text while preserving ordinary nested field wrappers", async () => {
+    const html = record.replace(
+      "A real item",
+      'A real item<div class="record">Unrelated nested text</div>',
+    );
+    expect((await adapter.collect(configured(), makeContext(html)))[0]?.title).toBe("A real item");
+  });
+  it.each(
+    [undefined, "", "  ", ["first", "second"]].map((slug) => ({ slug })),
+  )("rejects missing, blank or non-unique JSON links before prefixing: $slug", async ({ slug }) => {
+    const source = makeSource({
+      config: {
+        url: "https://example.com",
+        html: {
+          records: "script[type='application/json']",
+          jsonPath: "posts.*",
+          title: { path: "title" },
+          link: { path: "slug.*", prefix: "/posts/" },
+          date: { path: "date", format: "iso", semantic: "published" },
+        },
+      },
+    });
+    const payload = {
+      posts: [
+        {
+          title: "Dated item",
+          date: "2026-07-03T08:00:00Z",
+          slug: Array.isArray(slug) ? slug : slug === undefined ? undefined : [slug],
+        },
+      ],
+    };
+    const html = `<nav><a href="/posts/">All posts</a></nav><script type="application/json">${JSON.stringify(payload)}</script>`;
+    await expect(adapter.collect(source, makeContext(html))).rejects.toThrow(
+      /no valid dated records/,
+    );
+  });
   it("rejects configured external canonical links and final response host changes", async () => {
     await expect(
       adapter.collect(

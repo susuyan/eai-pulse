@@ -31,6 +31,7 @@ export class FetchError extends Error {
 
 export interface FetchPolicy {
   allowedOrigin?: string;
+  beforeRequest?: (url: string) => Promise<void>;
   timeoutMs?: number;
   maxRetries?: number;
   baseBackoffMs?: number;
@@ -73,6 +74,7 @@ export function createSafeFetcher(config: AppConfig, dependencies: FetcherDepend
           fetchImpl,
           validateUrl,
           policy.allowedOrigin,
+          policy.beforeRequest,
         );
         return { ...result, attemptCount: attempt, transport: "direct" as const };
       } catch (error) {
@@ -86,6 +88,7 @@ export function createSafeFetcher(config: AppConfig, dependencies: FetcherDepend
               proxyFetchImpl,
               validateUrl,
               policy.allowedOrigin,
+              policy.beforeRequest,
             );
             return { ...result, attemptCount: attempt, transport: "env-proxy" as const };
           } catch (proxyError) {
@@ -132,6 +135,7 @@ async function fetchWithRedirects(
   fetchImpl: typeof fetch,
   validateUrl: (url: string) => Promise<void>,
   allowedOrigin?: string,
+  beforeRequest?: (url: string) => Promise<void>,
 ): Promise<Omit<FetchResult, "attemptCount">> {
   let currentUrl = initialUrl;
   for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
@@ -144,6 +148,7 @@ async function fetchWithRedirects(
         "ORIGIN_MISMATCH",
       );
     }
+    await beforeRequest?.(currentUrl);
     try {
       await validateUrl(currentUrl);
     } catch (error) {

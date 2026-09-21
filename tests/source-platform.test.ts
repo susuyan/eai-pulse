@@ -1,5 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createSafeFetcher, type FetchError } from "../src/collectors/fetcher.js";
+import { createDefaultRateLimiter, RateLimiter } from "../src/collectors/rate-limiter.js";
 import { loadConfig } from "../src/config/env.js";
 import {
   applySourceFailure,
@@ -15,6 +16,38 @@ const config = loadConfig({
 });
 
 describe("resilient fetcher", () => {
+  afterEach(() => vi.useRealTimers());
+  it("paces retries and redirects without replacing Retry-After or consuming the request timeout", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-21T00:00:00Z"));
+    const start = Date.now();
+    const attempts: number[] = [];
+    const limiter = createDefaultRateLimiter();
+    const fetchText = createSafeFetcher(config, {
+      validateUrl: async () => undefined,
+      fetchImpl: async (_url, init) => {
+        expect(init?.signal?.aborted).toBe(false);
+        attempts.push(Date.now() - start);
+        if (attempts.length === 1)
+          return new Response("busy", { status: 429, headers: { "retry-after": "3" } });
+        if (attempts.length === 2)
+          return new Response(null, { status: 302, headers: { location: "/final" } });
+        return new Response("ok");
+      },
+    });
+    const request = fetchText(
+      "https://example.com/list",
+      {},
+      {
+        maxRetries: 1,
+        timeoutMs: 1000,
+        beforeRequest: (url) => limiter.pace(RateLimiter.domainFromUrl(url), 30, "source"),
+      },
+    );
+    await vi.runAllTimersAsync();
+    expect(await request).toMatchObject({ body: "ok", attemptCount: 2 });
+    expect(attempts).toEqual([0, 3000, 5000]);
+  });
   it.each([
     "https://outside.example/detail",
     "http://example.com/detail",

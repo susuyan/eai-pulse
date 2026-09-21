@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { RateLimiter } from "../../src/collectors/rate-limiter.js";
 
 function makeLimiter(
@@ -12,6 +12,21 @@ function makeLimiter(
 }
 
 describe("RateLimiter", () => {
+  afterEach(() => vi.useRealTimers());
+  it("shares paced slots across source domains while leaving unrelated budgets independent", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-21T00:00:00Z"));
+    const start = Date.now();
+    const limiter = makeLimiter();
+    const slots = [
+      limiter.pace("first.example", 30, "a").then(() => Date.now() - start),
+      limiter.pace("other.example", 30, "a").then(() => Date.now() - start),
+      limiter.pace("unrelated.example", 30, "b").then(() => Date.now() - start),
+      limiter.pace("first.example", 60, "c").then(() => Date.now() - start),
+    ];
+    await vi.runAllTimersAsync();
+    expect(await Promise.all(slots)).toEqual([0, 2000, 0, 2000]);
+  });
   it("acquires and releases tokens without blocking under limit", async () => {
     const limiter = makeLimiter({ defaultRpm: 600 }); // Very high limit
     const start = Date.now();

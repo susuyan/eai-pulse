@@ -80,6 +80,41 @@ describe("static-site intelligence consumption model", () => {
     expect(home).not.toMatch(/\/lines\/|六个领域趋势|随机趋势/);
   });
 
+  it("pins the homepage latest Event date to the Shanghai calendar", () => {
+    const model = evolutionModel();
+    const current = model.evolutionPhases.at(-1);
+    if (!current) throw new Error("Missing current phase fixture");
+    const currentEventSlugs = new Set(current.events.map((event) => event.slug));
+    const latestEvent = model.embodiedEvents.find((event) => currentEventSlugs.has(event.slug));
+    if (!latestEvent) throw new Error("Missing current phase Event fixture");
+    for (const event of model.embodiedEvents) {
+      if (currentEventSlugs.has(event.slug)) event.happenedAt = "2026-09-19T15:59:59Z";
+    }
+    latestEvent.happenedAt = "2026-09-19T16:00:00Z";
+
+    const originalTimeZone = process.env.TZ;
+    try {
+      process.env.TZ = "America/Los_Angeles";
+      const losAngeles = renderEmbodiedHome(model, "zh-CN");
+      process.env.TZ = "Pacific/Kiritimati";
+      const kiritimati = renderEmbodiedHome(model, "zh-CN");
+      const phaseSummary = (home: string) =>
+        home.match(/<section[^>]*data-home-evolution[\s\S]*?<\/section>/)?.[0] ?? "";
+
+      expect(phaseSummary(losAngeles)).toBe(phaseSummary(kiritimati));
+      expect(phaseSummary(losAngeles)).toContain(
+        '<time datetime="2026-09-19T16:00:00Z">2026年9月20日</time>',
+      );
+      expect(phaseSummary(losAngeles)).toContain("策展截止 2026-09-20");
+      expect(phaseSummary(renderEmbodiedHome(model, "en"))).toContain(
+        '<time datetime="2026-09-19T16:00:00Z">Sep 20, 2026</time>',
+      );
+    } finally {
+      if (originalTimeZone === undefined) delete process.env.TZ;
+      else process.env.TZ = originalTimeZone;
+    }
+  });
+
   it("escapes homepage editorial fields and separates linked counter-evidence", () => {
     const model = evolutionModel();
     const trend = model.embodiedTrends[0];

@@ -7,6 +7,17 @@ function trendEventLinks(events: PublicEventRelation[]): string {
   return `<ul class="evolution-event-links">${events.map((event) => `<li><a href="__PREFIX__events/${escapeHtml(encodeURIComponent(event.slug))}/">${escapeHtml(event.title)}</a></li>`).join("")}</ul>`;
 }
 
+function formatShanghaiDate(value: string, locale: Locale): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return formatDate(value, locale);
+  return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "zh-CN", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
 function phaseHandoff(model: StaticSiteModel, locale: Locale): string {
   const phases = [...model.evolutionPhases].sort((left, right) =>
     left.start.localeCompare(right.start),
@@ -20,7 +31,7 @@ function phaseHandoff(model: StaticSiteModel, locale: Locale): string {
   const stages = model.pipelineStages.filter(
     (stage) => current.stageImpacts[stage.slug].evidenceState !== "no-public-evidence",
   );
-  return `<section class="section shell home-evolution" data-home-evolution data-no-scroll-reveal>${sectionHeader("02 / EVOLUTION HANDOFF", localize(locale, "发展脉络摘要", "Evolution at a glance"))}<div class="phase-handoff">${previous ? `<div class="phase-handoff-previous"><span class="section-kicker">${escapeHtml(localize(locale, "上一阶段与转折", "Previous phase and turning point"))}</span><h3><a href="__PREFIX__timeline/#phase-${escapeHtml(encodeURIComponent(previous.slug))}">${escapeHtml(previous.title)}</a></h3><p>${escapeHtml(previous.turningPoint)}</p></div>` : ""}<div class="phase-handoff-current"><span class="section-kicker">${escapeHtml(localize(locale, "当前策展阶段", "Latest curated phase"))}</span><h3><a href="__PREFIX__timeline/#phase-${escapeHtml(encodeURIComponent(current.slug))}">${escapeHtml(current.title)}</a></h3><p class="evolution-date"><time datetime="${escapeHtml(current.start)}">${escapeHtml(current.start)}</time> — <time datetime="${escapeHtml(current.end)}">${escapeHtml(current.end)}</time> · ${escapeHtml(localize(locale, "含首尾日期", "inclusive dates"))}</p><p>${escapeHtml(current.thesis)}</p><p class="evolution-date">${escapeHtml(localize(locale, "策展截止", "Curated through"))} ${escapeHtml(current.end)}${latestEvent ? ` · ${escapeHtml(localize(locale, "最新事件日期", "Latest Event date"))} <time datetime="${escapeHtml(latestEvent.happenedAt)}">${escapeHtml(formatDate(latestEvent.happenedAt, locale))}</time>` : ""}</p><ul class="trend-stages" aria-label="${escapeHtml(localize(locale, "有公开证据的影响管线", "Stages with public evidence"))}">${stages.map((stage) => `<li class="pipeline-stage--${escapeHtml(stage.slug)}">${escapeHtml(localize(locale, stage.name, stage.nameEn))}</li>`).join("")}</ul></div></div><a class="home-evolution-link" href="__PREFIX__timeline/">${escapeHtml(localize(locale, "查看完整发展脉络与证据", "Explore the full evolution and evidence"))} <span aria-hidden="true">→</span></a></section>`;
+  return `<section class="section shell home-evolution" data-home-evolution data-no-scroll-reveal>${sectionHeader("02 / EVOLUTION HANDOFF", localize(locale, "发展脉络摘要", "Evolution at a glance"))}<div class="phase-handoff">${previous ? `<div class="phase-handoff-previous"><span class="section-kicker">${escapeHtml(localize(locale, "上一阶段与转折", "Previous phase and turning point"))}</span><h3><a href="__PREFIX__timeline/#phase-${escapeHtml(encodeURIComponent(previous.slug))}">${escapeHtml(previous.title)}</a></h3><p>${escapeHtml(previous.turningPoint)}</p></div>` : ""}<div class="phase-handoff-current"><span class="section-kicker">${escapeHtml(localize(locale, "当前策展阶段", "Latest curated phase"))}</span><h3><a href="__PREFIX__timeline/#phase-${escapeHtml(encodeURIComponent(current.slug))}">${escapeHtml(current.title)}</a></h3><p class="evolution-date"><time datetime="${escapeHtml(current.start)}">${escapeHtml(current.start)}</time> — <time datetime="${escapeHtml(current.end)}">${escapeHtml(current.end)}</time> · ${escapeHtml(localize(locale, "含首尾日期", "inclusive dates"))}</p><p>${escapeHtml(current.thesis)}</p><p class="evolution-date">${escapeHtml(localize(locale, "策展截止", "Curated through"))} ${escapeHtml(current.end)}${latestEvent ? ` · ${escapeHtml(localize(locale, "最新事件日期", "Latest Event date"))} <time datetime="${escapeHtml(latestEvent.happenedAt)}">${escapeHtml(formatShanghaiDate(latestEvent.happenedAt, locale))}</time>` : ""}</p><ul class="trend-stages" aria-label="${escapeHtml(localize(locale, "有公开证据的影响管线", "Stages with public evidence"))}">${stages.map((stage) => `<li class="pipeline-stage--${escapeHtml(stage.slug)}">${escapeHtml(localize(locale, stage.name, stage.nameEn))}</li>`).join("")}</ul></div></div><a class="home-evolution-link" href="__PREFIX__timeline/">${escapeHtml(localize(locale, "查看完整发展脉络与证据", "Explore the full evolution and evidence"))} <span aria-hidden="true">→</span></a></section>`;
 }
 
 function dailyTrends(model: StaticSiteModel, locale: Locale): string {

@@ -99,9 +99,14 @@ export async function auditSources(
     sources = await repository.listSources();
   }
 
+  const auditTargets = {
+    targetSourceIds: sources.map((source) => source.id),
+    expectedSourceCount: sources.length,
+  };
   const jobId = await repository.startJob(
     "source-audit",
     selectedIds && sources.length === 1 ? (sources[0]?.id ?? null) : null,
+    { ...auditTargets, auditComplete: false },
   );
   let results: SourceCheckResult[] = [];
   const fatalErrors: unknown[] = [];
@@ -146,7 +151,7 @@ export async function auditSources(
         created: results.filter((result) => result.status === "healthy").length,
         skipped: results.filter((result) => result.status === "skipped").length,
         errors,
-        details: { auditComplete: fatalErrors.length === 0, expectedSourceCount: sources.length },
+        details: { ...auditTargets, auditComplete: fatalErrors.length === 0 },
       });
     } catch (error) {
       fatalErrors.push(error);

@@ -96,6 +96,13 @@ describe("repository data snapshot", () => {
     );
     await repository.linkActorCapabilityEvidence(capabilityId, profiledEvent.id, "claim");
     const jobId = await repository.startJob("collect", openai?.id ?? null);
+    await sourceDb
+      .updateTable("jobs")
+      .set({
+        details_json: JSON.stringify({ targetSourceIds: ["PRIVATE_TARGET_MEMBER_SENTINEL"] }),
+      })
+      .where("id", "=", jobId)
+      .execute();
     const runId = await repository.startSourceRun(openai?.id ?? "", jobId);
     await repository.finishSourceRun(runId, {
       status: "succeeded",
@@ -211,6 +218,8 @@ describe("repository data snapshot", () => {
     const serialized = await readFile(join(root, "data/snapshot/v1.json"), "utf8");
     expect(serialized).not.toContain("must-not-leak");
     expect(serialized).not.toContain("raw_meta_json");
+    expect(serialized).not.toContain("targetSourceIds");
+    expect(serialized).not.toContain("PRIVATE_TARGET_MEMBER_SENTINEL");
     expect(serialized).not.toMatch(/"(?:rawPayload|raw_payload|privateNote|private_note)"\s*:/i);
     expect(serialized).not.toContain("/Users/");
     expect(serialized).toContain("[local-path]");

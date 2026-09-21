@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { sql } from "kysely";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { runObserveSources } from "../src/cli/observe-sources.js";
+import * as fetcherModule from "../src/collectors/fetcher.js";
 import { loadConfig } from "../src/config/env.js";
 import { createDatabase } from "../src/db/database.js";
 import { migrateToLatest } from "../src/db/migrate.js";
@@ -92,14 +93,19 @@ async function prioritySetup(fileBacked = false) {
   const source = await repository.getSourceByIdOrSlug(fixture.sourceSlug);
   if (!source) throw new Error("Missing test source");
   for (const time of fixture.checks) {
-    const jobId = await repository.startJob("source-audit", source.id);
+    const jobId = await repository.startJob("source-audit");
     await repository.finishJob(jobId, { collected: 1, created: 1, skipped: 0, errors: [] });
     await db
       .updateTable("jobs")
       .set({
         started_at: time.startedAt,
         finished_at: time.finishedAt,
-        details_json: JSON.stringify({ errors: [], auditComplete: true, expectedSourceCount: 1 }),
+        details_json: JSON.stringify({
+          errors: [],
+          auditComplete: true,
+          expectedSourceCount: 1,
+          targetSourceIds: [source.id],
+        }),
       })
       .where("id", "=", jobId)
       .execute();
@@ -144,7 +150,175 @@ async function prioritySetup(fileBacked = false) {
   return { db, repository, source, eligibility };
 }
 
+const deterministicFetcher: NonNullable<
+  NonNullable<Parameters<typeof auditSources>[3]>["fetcher"]
+> = async (url) => ({
+  body: JSON.stringify([
+    {
+      name: "HoloMotion embodied robot motion dataset release",
+      html_url: "https://github.com/HorizonRobotics/HoloMotion/releases/tag/test-only",
+      published_at: "2026-09-20T00:00:00Z",
+      draft: false,
+    },
+  ]),
+  status: 200,
+  headers: new Headers(),
+  attemptCount: 1,
+  responseBytes: 300,
+  finalUrl: url,
+});
+
+async function realPriorityAudits() {
+  const context = await prioritySetup();
+  await context.db.deleteFrom("source_checks").execute();
+  await context.db.deleteFrom("jobs").where("type", "=", "source-audit").execute();
+  const config = loadConfig({ NODE_ENV: "test", DATABASE_URL: "sqlite::memory:" });
+  for (const time of [...fixture.checks].reverse()) {
+    vi.setSystemTime(new Date(time.startedAt));
+    await auditSources(
+      context.db,
+      config,
+      { sourceId: context.source.id },
+      { fetcher: deterministicFetcher },
+    );
+  }
+  vi.setSystemTime(new Date(fixture.now));
+  expect(await context.eligibility()).toMatchObject({ eligible: true });
+  return { ...context, config };
+}
+
 describe("priority draft observation evidence", () => {
+  it.each([
+    false,
+    true,
+  ])("rejects missing target evidence after a real check insert failure (cohort=%s)", async (cohort) => {
+    const { db, config, repository, source, eligibility } = await realPriorityAudits();
+    const other = required(await repository.getSourceByIdOrSlug("internrobotics"));
+    const insert = Repository.prototype.insertSourceCheck;
+    vi.spyOn(Repository.prototype, "insertSourceCheck").mockImplementation(function (
+      this: Repository,
+      check,
+    ) {
+      if (check.source_id === source.id) return Promise.reject(new Error("check write failed"));
+      return insert.call(this, check);
+    });
+    await expect(
+      auditSources(
+        db,
+        config,
+        { sourceIds: cohort ? [source.id, other.id] : [source.id] },
+        { fetcher: deterministicFetcher },
+      ),
+    ).rejects.toThrow("Source audit incomplete");
+    expect(await repository.listSourceChecks(source.id)).toHaveLength(3);
+    if (cohort) expect(await repository.listSourceChecks(other.id)).toHaveLength(1);
+    expect(await eligibility()).toMatchObject({ eligible: false });
+    await expect(setObservationMode(db, source.id, true)).rejects.toThrow("not eligible");
+    expect(await repository.getSource(source.id)).toEqual(source);
+  });
+
+  it("accepts a complete real cohort with a healthy target and another persisted failure", async () => {
+    const { db, config, repository, source, eligibility } = await realPriorityAudits();
+    const other = required(await repository.getSourceByIdOrSlug("internrobotics"));
+    const report = await auditSources(
+      db,
+      config,
+      { sourceIds: [source.id, other.id] },
+      {
+        fetcher: async (url, options) => ({
+          ...(await required(deterministicFetcher)(url, options)),
+          ...(url.includes("InternRobotics") ? { body: "{invalid-json" } : {}),
+        }),
+      },
+    );
+    expect(report).toMatchObject({ total: 2, healthy: 1, failed: 1 });
+    expect(await eligibility()).toMatchObject({ eligible: true });
+  });
+
+  it.each([
+    "succeeded",
+    "partial",
+    "running",
+    "failed",
+  ])("rejects a newer %s job with no target check", async (status) => {
+    const { db, repository, source, eligibility } = await realPriorityAudits();
+    const jobId = await repository.startJob("source-audit");
+    await db
+      .updateTable("jobs")
+      .set({
+        status,
+        finished_at: status === "running" ? null : fixture.now,
+        details_json: JSON.stringify({
+          targetSourceIds: [source.id],
+          expectedSourceCount: 1,
+          auditComplete: status === "succeeded",
+          errors: status === "succeeded" ? [] : ["AUDIT_INCOMPLETE"],
+        }),
+      })
+      .where("id", "=", jobId)
+      .execute();
+    expect(await eligibility()).toMatchObject({ eligible: false });
+  });
+
+  it("rejects legacy check jobs without recorded target membership", async () => {
+    const { db, eligibility } = await prioritySetup();
+    await db
+      .updateTable("jobs")
+      .set({
+        details_json: JSON.stringify({ errors: [], auditComplete: true, expectedSourceCount: 1 }),
+      })
+      .where("type", "=", "source-audit")
+      .execute();
+    expect(await eligibility()).toMatchObject({ eligible: false });
+  });
+
+  it("blocks a real setup failure without a check, then requires a fresh healthy interval", async () => {
+    const { db, config, repository, source, eligibility } = await realPriorityAudits();
+    const setupFailure = vi.spyOn(fetcherModule, "createSafeFetcher").mockImplementation(() => {
+      throw new Error("test setup failure");
+    });
+    await expect(auditSources(db, config, { sourceId: source.id })).rejects.toThrow(
+      "test setup failure",
+    );
+    setupFailure.mockRestore();
+    expect(await eligibility()).toMatchObject({ eligible: false });
+    for (const [index, hour] of ["19", "02", "09"].entries()) {
+      vi.setSystemTime(new Date(`2026-09-${index === 0 ? "21" : "22"}T${hour}:00:00Z`));
+      await auditSources(db, config, { sourceId: source.id }, { fetcher: deterministicFetcher });
+      expect(await eligibility()).toMatchObject({ eligible: index === 2 });
+    }
+    expect(await repository.getSource(source.id)).toEqual(source);
+  });
+
+  it("does not block a target for another source's incomplete audit", async () => {
+    const { db, config, repository, source, eligibility } = await realPriorityAudits();
+    const other = required(await repository.getSourceByIdOrSlug("internrobotics"));
+    vi.spyOn(Repository.prototype, "insertSourceCheck").mockRejectedValue(
+      new Error("test write failure"),
+    );
+    await expect(
+      auditSources(db, config, { sourceId: other.id }, { fetcher: deterministicFetcher }),
+    ).rejects.toThrow("Source audit incomplete");
+    expect(await eligibility()).toMatchObject({ eligible: true });
+    expect(await repository.getSource(source.id)).toEqual(source);
+  });
+
+  it.each([
+    { started_at: "invalid", finished_at: fixture.now },
+    { started_at: fixture.now, finished_at: "" },
+    { started_at: fixture.now, finished_at: "2026-09-22T00:00:00Z" },
+    { started_at: fixture.now, finished_at: "2026-09-21T17:59:59Z" },
+  ])("rejects corrupt no-check job times: %j", async (times) => {
+    const { db, repository, source, eligibility } = await prioritySetup();
+    const jobId = await repository.startJob("source-audit", null, { targetSourceIds: [source.id] });
+    await db
+      .updateTable("jobs")
+      .set({ status: "failed", ...times })
+      .where("id", "=", jobId)
+      .execute();
+    expect(await eligibility()).toMatchObject({ eligible: false, reason: "invalid_job_time" });
+  });
+
   it.each([
     null,
     "a".repeat(64),
@@ -261,6 +435,7 @@ describe("priority draft observation evidence", () => {
           errors: ["internrobotics:PARSER_FAILED"],
           auditComplete: true,
           expectedSourceCount: 2,
+          targetSourceIds: [source.id, other.id],
         }),
       })
       .where("id", "=", jobId)
@@ -518,36 +693,7 @@ describe("priority draft observation evidence", () => {
   });
 
   it("consumes checks produced by the real audit and adapter using deterministic transport", async () => {
-    const { db, repository, source, eligibility } = await prioritySetup();
-    await db.deleteFrom("source_checks").where("source_id", "=", source.id).execute();
-    const config = loadConfig({ NODE_ENV: "test", DATABASE_URL: "sqlite::memory:" });
-    for (const time of [...fixture.checks].reverse()) {
-      vi.setSystemTime(new Date(time.startedAt));
-      await auditSources(
-        db,
-        config,
-        { sourceId: source.id },
-        {
-          fetcher: async (url) => ({
-            body: JSON.stringify([
-              {
-                name: "HoloMotion embodied robot motion dataset release",
-                html_url: "https://github.com/HorizonRobotics/HoloMotion/releases/tag/test-only",
-                published_at: "2026-09-20T00:00:00Z",
-                draft: false,
-                body: "Official embodied robot motion dataset release with verified capture configuration, quality validation, training procedure and documented evaluation results for robotics research.",
-              },
-            ]),
-            status: 200,
-            headers: new Headers(),
-            attemptCount: 1,
-            responseBytes: 300,
-            finalUrl: url,
-          }),
-        },
-      );
-    }
-    vi.setSystemTime(new Date(fixture.now));
+    const { repository, source, eligibility } = await realPriorityAudits();
     expect(await eligibility()).toMatchObject({ eligible: true });
     expect(await repository.getSource(source.id)).toEqual(source);
   });

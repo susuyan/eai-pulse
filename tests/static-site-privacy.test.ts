@@ -29,12 +29,28 @@ describe("static-site privacy boundary", () => {
       .select("id")
       .where("slug", "=", "horizon-holomotion")
       .executeTakeFirstOrThrow();
-    await auditSources(
+    const audit = await auditSources(
       db,
       config,
       { sourceId: prioritySource.id },
       { adapterFor: () => ({ kind: "fixture", collect: async () => [] }) },
     );
+    const auditJob = await db
+      .selectFrom("jobs")
+      .selectAll()
+      .where("id", "=", audit.jobId)
+      .executeTakeFirstOrThrow();
+    expect(JSON.parse(auditJob.details_json).targetSourceIds).toEqual([prioritySource.id]);
+    await db
+      .updateTable("jobs")
+      .set({
+        details_json: JSON.stringify({
+          ...JSON.parse(auditJob.details_json),
+          targetSourceIds: [prioritySource.id, "PRIVATE_TARGET_MEMBER_SENTINEL"],
+        }),
+      })
+      .where("id", "=", audit.jobId)
+      .execute();
     await db
       .updateTable("source_checks")
       .set({ contract_fingerprint: "a".repeat(64) })
@@ -108,6 +124,8 @@ describe("static-site privacy boundary", () => {
       '"config_json"',
       '"contract_fingerprint"',
       '"contractFingerprint"',
+      '"targetSourceIds"',
+      "PRIVATE_TARGET_MEMBER_SENTINEL",
       "a".repeat(64),
       '"readiness_blockers_json"',
       '"manual_override"',

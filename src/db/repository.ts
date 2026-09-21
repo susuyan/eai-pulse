@@ -1801,7 +1801,11 @@ export class Repository {
       .execute();
   }
 
-  async startJob(type: string, sourceId: string | null = null): Promise<string> {
+  async startJob(
+    type: string,
+    sourceId: string | null = null,
+    details: Record<string, unknown> = {},
+  ): Promise<string> {
     const id = randomUUID();
     await this.db
       .insertInto("jobs")
@@ -1817,7 +1821,7 @@ export class Repository {
         skipped_count: 0,
         error_count: 0,
         error_summary: null,
-        details_json: "{}",
+        details_json: json(details),
       })
       .execute();
     return id;

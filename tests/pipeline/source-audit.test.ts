@@ -53,6 +53,48 @@ async function setupCohort() {
 }
 
 describe("source audit", () => {
+  it.each([
+    false,
+    true,
+  ])("records resolved private targets before work starts (all=%s)", async (all) => {
+    const { db, config, repository } = await setupCohort();
+    const targets = all ? ["audit-c", "audit-b", "audit-a"] : ["audit-a", "audit-c"];
+    const startedJobs: { status: string; details: unknown }[] = [];
+    const report = await auditSources(
+      db,
+      config,
+      all ? {} : { sourceIds: ["audit-a", "audit-c", "audit-a"] },
+      {
+        adapterFor: () => ({
+          kind: "fixture",
+          collect: async () => {
+            const job = (await repository.listJobs()).find((row) => row.type === "source-audit");
+            startedJobs.push({
+              status: job?.status ?? "missing",
+              details: JSON.parse(job?.details_json ?? "{}"),
+            });
+            return [];
+          },
+        }),
+      },
+    );
+    expect(startedJobs).toHaveLength(targets.length);
+    for (const job of startedJobs)
+      expect(job).toMatchObject({
+        status: "running",
+        details: {
+          targetSourceIds: targets,
+          expectedSourceCount: targets.length,
+          auditComplete: false,
+        },
+      });
+    const job = (await repository.listJobs()).find((row) => row.id === report.jobId);
+    expect(JSON.parse(job?.details_json ?? "{}")).toMatchObject({
+      targetSourceIds: targets,
+      auditComplete: true,
+    });
+  });
+
   it("audits the selected cohort in request order, isolates parsing failure, and preserves every source state", async () => {
     const { db, config, repository, sources } = await setupCohort();
     const requests: string[] = [];
@@ -163,6 +205,7 @@ describe("source audit", () => {
     expect(JSON.parse(job?.details_json ?? "{}")).toMatchObject({
       auditComplete: false,
       expectedSourceCount: 1,
+      targetSourceIds: ["audit-a"],
     });
   });
 

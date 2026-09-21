@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Kysely } from "kysely";
+import type { Kysely, Selectable } from "kysely";
 import { z } from "zod";
 import {
   embodiedPrioritySources,
@@ -29,7 +29,7 @@ export async function observationEligibility(
   db: Kysely<DatabaseSchema>,
 ): Promise<ObservationEligibility[]> {
   const repository = new Repository(db);
-  const [sources, checks] = await Promise.all([
+  const [sources, checks, auditJobs] = await Promise.all([
     repository.listSources(),
     db
       .selectFrom("source_checks")
@@ -48,9 +48,23 @@ export async function observationEligibility(
         "jobs.skipped_count as jobSkippedCount",
       ])
       .execute(),
+    db.selectFrom("jobs").selectAll().where("type", "=", "source-audit").execute(),
   ]);
   const checksBySource = new Map<string, typeof checks>();
   const checksByJob = new Map<string, typeof checks>();
+  const jobsBySource = new Map<string, typeof auditJobs>();
+  for (const job of auditJobs) {
+    const targets = new Set([
+      job.source_id,
+      ...(auditDetails(job.details_json)?.targetSourceIds ?? []),
+    ]);
+    for (const target of targets) {
+      if (typeof target !== "string") continue;
+      const group = jobsBySource.get(target) ?? [];
+      group.push(job);
+      jobsBySource.set(target, group);
+    }
+  }
   for (const check of checks) {
     const group = checksBySource.get(check.source_id) ?? [];
     group.push(check);
@@ -65,7 +79,8 @@ export async function observationEligibility(
   return sources.map((source) => {
     const history = checksBySource.get(source.id) ?? [];
     const checkIds: string[] = [];
-    const reason = observationRejection(source, history, now, checkIds, checksByJob);
+    const targetedJobs = jobsBySource.get(source.id) ?? [];
+    const reason = observationRejection(source, history, now, checkIds, checksByJob, targetedJobs);
     const check = latestObservedCheck(history);
     return {
       sourceId: source.id,
@@ -206,12 +221,15 @@ type ObservationCheck = SourceCheckRow & {
   jobSkippedCount: number | null;
 };
 
+type AuditJob = Selectable<DatabaseSchema["jobs"]>;
+
 function observationRejection(
   source: SourceRow,
   checks: ObservationCheck[],
   now: number,
   checkIds: string[],
   checksByJob: Map<string, ObservationCheck[]>,
+  targetedJobs: AuditJob[],
 ): string | null {
   const catalog = embodiedSourceCatalog.find((entry) => entry.slug === source.slug);
   if (source.content_scope !== "embodied-data" || !catalog) return "outside_current_scope";
@@ -273,6 +291,7 @@ function observationRejection(
       checkIds,
       checksByJob,
       contract.contractFingerprint,
+      targetedJobs,
     );
   }
   if (checks.some((check) => evidenceTime(check.finished_at) === null)) return "invalid_check_time";
@@ -301,6 +320,7 @@ function priorityWindowRejection(
   checkIds: string[],
   checksByJob: Map<string, ObservationCheck[]>,
   contractFingerprint: string,
+  targetedJobs: AuditJob[],
 ): string | null {
   const times = new Map<string, { start: number; finish: number }>();
   // Validate before sorting: corrupt failures cannot fall behind the candidate window.
@@ -322,6 +342,20 @@ function priorityWindowRejection(
       return "invalid_check_time";
     times.set(check.id, { start, finish });
   }
+  let incompleteThrough = Number.NEGATIVE_INFINITY;
+  // Jobs with no check must still interrupt the evidence window.
+  for (const job of targetedJobs) {
+    const start = evidenceTime(job.started_at);
+    const finish =
+      job.status === "running" && job.finished_at === null ? now : evidenceTime(job.finished_at);
+    if (start === null || finish === null || start > finish || finish > now)
+      return "invalid_job_time";
+    const members = checksByJob.get(job.id) ?? [];
+    const target = members.find((member) => member.source_id === source.id);
+    if (!target || !completedAudit(target, members)) {
+      incompleteThrough = Math.max(incompleteThrough, job.status === "running" ? now : finish);
+    }
+  }
   checks.sort(
     (left, right) =>
       Date.parse(right.finished_at) - Date.parse(left.finished_at) ||
@@ -336,6 +370,7 @@ function priorityWindowRejection(
     const time = times.get(check.id);
     if (!time) return "invalid_check_time";
     const { start, finish } = time;
+    if (start <= incompleteThrough) return "incomplete_audit_window";
     const reason = contentRejection(check);
     if (
       reason ||
@@ -418,14 +453,19 @@ function completedAudit(check: ObservationCheck, members: ObservationCheck[]): b
     })
   )
     return false;
-  let details: { auditComplete?: unknown; expectedSourceCount?: unknown; errors?: unknown };
-  try {
-    details = JSON.parse(check.jobDetails ?? "null");
-  } catch {
-    return false;
-  }
+  const details = auditDetails(check.jobDetails);
+  const targets = details?.targetSourceIds;
   if (
     details?.auditComplete !== true ||
+    !targets ||
+    targets.length !== members.length ||
+    new Set(targets).size !== targets.length ||
+    targets.some((id) => typeof id !== "string" || !id.trim()) ||
+    members.some(
+      (member) =>
+        !targets.includes(member.source_id) ||
+        !["healthy", "degraded", "failed", "skipped"].includes(member.status),
+    ) ||
     !Number.isSafeInteger(details.expectedSourceCount) ||
     details.expectedSourceCount !== members.length ||
     members.length === 0 ||
@@ -447,4 +487,22 @@ function completedAudit(check: ObservationCheck, members: ObservationCheck[]): b
   )
     return false;
   return check.jobStatus === "succeeded" ? failures === 0 : failures > 0 && healthy > 0;
+}
+
+function auditDetails(value: string | null): {
+  auditComplete?: unknown;
+  expectedSourceCount?: unknown;
+  targetSourceIds?: unknown[];
+  errors?: unknown;
+} | null {
+  try {
+    const details = JSON.parse(value ?? "null");
+    if (!details || typeof details !== "object" || Array.isArray(details)) return null;
+    return {
+      ...details,
+      targetSourceIds: Array.isArray(details.targetSourceIds) ? details.targetSourceIds : undefined,
+    };
+  } catch {
+    return null;
+  }
 }

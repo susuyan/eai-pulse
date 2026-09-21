@@ -13,16 +13,87 @@ function makeLimiter(
 
 describe("RateLimiter", () => {
   afterEach(() => vi.useRealTimers());
+  it.each([
+    "validation",
+    "sync-start",
+    "async-response",
+  ])("releases admission locks after %s failure", async (failure) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-21T00:00:00Z"));
+    const start = Date.now();
+    const limiter = makeLimiter();
+    const first = limiter.dispatch(
+      "example.com",
+      30,
+      "source",
+      async () => {
+        if (failure === "validation") throw new Error("Blocked URL");
+      },
+      () => {
+        if (failure === "sync-start") throw new Error("Dispatch failed");
+        return Promise.reject(new Error("Response failed"));
+      },
+    );
+    const second = limiter.dispatch(
+      "example.com",
+      30,
+      "source",
+      async () => undefined,
+      async () => Date.now() - start,
+    );
+    const results = Promise.allSettled([first, second]);
+    await vi.runAllTimersAsync();
+    expect(await results).toMatchObject([
+      { status: "rejected" },
+      { status: "fulfilled", value: failure === "validation" ? 0 : 2000 },
+    ]);
+  });
+  it("does not hold admission locks while a dispatched response is pending", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-21T00:00:00Z"));
+    const start = Date.now();
+    const limiter = makeLimiter();
+    let finish = () => {};
+    const response = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    const first = limiter.dispatch(
+      "example.com",
+      30,
+      "a",
+      async () => undefined,
+      () => response,
+    );
+    const second = limiter.dispatch(
+      "example.com",
+      30,
+      "b",
+      async () => undefined,
+      async () => Date.now() - start,
+    );
+    await vi.runAllTimersAsync();
+    expect(await second).toBe(2000);
+    finish();
+    await first;
+  });
   it("shares paced slots across source domains while leaving unrelated budgets independent", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-09-21T00:00:00Z"));
     const start = Date.now();
     const limiter = makeLimiter();
+    const dispatch = (domain: string, rpm: number, source: string) =>
+      limiter.dispatch(
+        domain,
+        rpm,
+        source,
+        async () => undefined,
+        async () => Date.now() - start,
+      );
     const slots = [
-      limiter.pace("first.example", 30, "a").then(() => Date.now() - start),
-      limiter.pace("other.example", 30, "a").then(() => Date.now() - start),
-      limiter.pace("unrelated.example", 30, "b").then(() => Date.now() - start),
-      limiter.pace("first.example", 60, "c").then(() => Date.now() - start),
+      dispatch("first.example", 30, "a"),
+      dispatch("other.example", 30, "a"),
+      dispatch("unrelated.example", 30, "b"),
+      dispatch("first.example", 60, "c"),
     ];
     await vi.runAllTimersAsync();
     expect(await Promise.all(slots)).toEqual([0, 2000, 0, 2000]);

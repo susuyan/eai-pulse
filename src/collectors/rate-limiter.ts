@@ -30,26 +30,56 @@ export interface RateLimitState {
 
 export class RateLimiter {
   private domains = new Map<string, RateLimitState>();
-  private pacedRequests = new Map<string, { at: number; interval: number }>();
+  private pacedRequests = new Map<string, { at: number | null; interval: number }>();
+  private dispatchQueues = new Map<string, Promise<void>>();
   private activeRequests = 0;
   private waitQueue: Array<{ resolve: () => void }> = [];
 
   constructor(private config: RateLimiterConfig) {}
 
-  /** Reserve a non-burst request slot shared by source and domain. */
-  async pace(domain: string, requestsPerMinute: number, sourceId: string): Promise<void> {
+  /** Validate and dispatch under source/domain admission locks, without holding the response. */
+  async dispatch<T>(
+    domain: string,
+    requestsPerMinute: number,
+    sourceId: string,
+    validate: () => Promise<void>,
+    start: () => Promise<T>,
+  ): Promise<T> {
     const keys = [`domain:${domain}`, `source:${sourceId}`];
-    const now = Date.now();
     const interval = Math.ceil(60_000 / Math.max(1, requestsPerMinute));
-    const slots = keys.map((key) => {
-      const previous = this.pacedRequests.get(key);
-      const spacing = Math.max(interval, previous?.interval ?? 0);
-      return { key, interval: spacing, at: previous ? previous.at + spacing : now };
+    const budgets = keys.map((key) => {
+      const budget = this.pacedRequests.get(key) ?? { at: null, interval };
+      budget.interval = Math.max(interval, budget.interval);
+      this.pacedRequests.set(key, budget);
+      return budget;
     });
-    const at = Math.max(now, ...slots.map((slot) => slot.at));
-    // Reserve synchronously so concurrent sources cannot claim the same slot.
-    for (const slot of slots) this.pacedRequests.set(slot.key, { at, interval: slot.interval });
-    if (at > now) await new Promise((resolve) => setTimeout(resolve, at - now));
+    const predecessors = keys.map((key) => this.dispatchQueues.get(key));
+    let release = () => {};
+    const admission = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    for (const key of keys) this.dispatchQueues.set(key, admission);
+    await Promise.all(predecessors);
+    try {
+      while (true) {
+        const waitMs = Math.max(
+          ...budgets.map((budget) =>
+            budget.at === null ? 0 : budget.at + budget.interval - Date.now(),
+          ),
+        );
+        if (waitMs <= 0) break;
+        await new Promise((resolve) => setTimeout(resolve, waitMs));
+      }
+      // Keep ownership through DNS validation, then timestamp and invoke fetch atomically.
+      await validate();
+      for (const budget of budgets) budget.at = Date.now();
+      return start();
+    } finally {
+      release();
+      for (const key of keys) {
+        if (this.dispatchQueues.get(key) === admission) this.dispatchQueues.delete(key);
+      }
+    }
   }
 
   /**

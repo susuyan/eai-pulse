@@ -178,11 +178,13 @@ async function auditOneSource(
       maxRetries: Math.min(source.max_retries, 1),
       baseBackoffMs: source.base_backoff_ms,
       ...constraints,
-      beforeRequest: (requestUrl) =>
-        rateLimiter.pace(
+      dispatchRequest: (requestUrl, validate, start) =>
+        rateLimiter.dispatch(
           RateLimiter.domainFromUrl(requestUrl),
           source.rate_limit_per_minute,
           source.id,
+          validate,
+          start,
         ),
     });
     recordFetch(diagnostics, result);

@@ -31,7 +31,11 @@ export class FetchError extends Error {
 
 export interface FetchPolicy {
   allowedOrigin?: string;
-  beforeRequest?: (url: string) => Promise<void>;
+  dispatchRequest?: (
+    url: string,
+    validate: () => Promise<void>,
+    start: () => Promise<Response>,
+  ) => Promise<Response>;
   timeoutMs?: number;
   maxRetries?: number;
   baseBackoffMs?: number;
@@ -74,7 +78,7 @@ export function createSafeFetcher(config: AppConfig, dependencies: FetcherDepend
           fetchImpl,
           validateUrl,
           policy.allowedOrigin,
-          policy.beforeRequest,
+          policy.dispatchRequest,
         );
         return { ...result, attemptCount: attempt, transport: "direct" as const };
       } catch (error) {
@@ -88,7 +92,7 @@ export function createSafeFetcher(config: AppConfig, dependencies: FetcherDepend
               proxyFetchImpl,
               validateUrl,
               policy.allowedOrigin,
-              policy.beforeRequest,
+              policy.dispatchRequest,
             );
             return { ...result, attemptCount: attempt, transport: "env-proxy" as const };
           } catch (proxyError) {
@@ -135,7 +139,7 @@ async function fetchWithRedirects(
   fetchImpl: typeof fetch,
   validateUrl: (url: string) => Promise<void>,
   allowedOrigin?: string,
-  beforeRequest?: (url: string) => Promise<void>,
+  dispatchRequest?: FetchPolicy["dispatchRequest"],
 ): Promise<Omit<FetchResult, "attemptCount">> {
   let currentUrl = initialUrl;
   for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
@@ -148,25 +152,35 @@ async function fetchWithRedirects(
         "ORIGIN_MISMATCH",
       );
     }
-    await beforeRequest?.(currentUrl);
+    const validate = async () => {
+      try {
+        await validateUrl(currentUrl);
+      } catch (error) {
+        throw new FetchError(message(error), "security", false, null, "URL_BLOCKED");
+      }
+    };
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     try {
-      await validateUrl(currentUrl);
-    } catch (error) {
-      throw new FetchError(message(error), "security", false, null, "URL_BLOCKED");
-    }
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      const response = await fetchImpl(currentUrl, {
-        headers: {
-          accept:
-            "application/json, application/rss+xml, application/atom+xml, text/html;q=0.9, */*;q=0.5",
-          "user-agent": headers["user-agent"] ?? headers["User-Agent"] ?? "agent-pulse",
-          ...headers,
-        },
-        redirect: "manual",
-        signal: controller.signal,
-      });
+      const start = () => {
+        const controller = new AbortController();
+        timeout = setTimeout(() => controller.abort(), timeoutMs);
+        return fetchImpl(currentUrl, {
+          headers: {
+            accept:
+              "application/json, application/rss+xml, application/atom+xml, text/html;q=0.9, */*;q=0.5",
+            "user-agent": headers["user-agent"] ?? headers["User-Agent"] ?? "agent-pulse",
+            ...headers,
+          },
+          redirect: "manual",
+          signal: controller.signal,
+        });
+      };
+      let response: Response;
+      if (dispatchRequest) response = await dispatchRequest(currentUrl, validate, start);
+      else {
+        await validate();
+        response = await start();
+      }
       if (isRedirect(response.status)) {
         const location = response.headers.get("location");
         if (!location) throw new FetchError("Redirect is missing Location", "upstream", true);

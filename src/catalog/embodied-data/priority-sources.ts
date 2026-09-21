@@ -3,8 +3,26 @@ import {
   type EmbodiedPipelineStage,
   EmbodiedPipelineStageSchema,
 } from "../../domain/embodied-data.js";
+import { sourceContractFingerprint } from "../../domain/source-contract.js";
 import type { Acquisition } from "../sources.js";
-import { embodiedSourceCatalog } from "./sources.js";
+import { type EmbodiedCatalogSource, embodiedSourceCatalog } from "./sources.js";
+
+export function priorityCatalogFingerprint(source: EmbodiedCatalogSource): string {
+  return sourceContractFingerprint({
+    adapter: source.adapter,
+    adapterVersion: source.adapterVersion,
+    acquisition: source.acquisition,
+    language: source.language,
+    homepageUrl: source.homepageUrl,
+    config: {
+      url: source.endpoint,
+      take: source.tier === 1 ? 50 : 30,
+      ...(source.identityHosts ? { identityHosts: source.identityHosts } : {}),
+      ...(source.socialHandles ? { socialHandles: source.socialHandles } : {}),
+      ...(source.html ? { html: source.html } : {}),
+    },
+  });
+}
 
 export interface EmbodiedPrioritySource {
   slug: string;
@@ -161,6 +179,7 @@ export interface PrioritySourceContract {
   slug: string;
   adapter: string;
   adapterVersion: string;
+  contractFingerprint: string;
   status: "passed" | "failed";
   policy: {
     status: "pending" | "restricted" | "allowed_metadata";
@@ -174,23 +193,84 @@ export interface PrioritySourceContract {
 // The fixture suite verifies these records. No automation policy has been approved.
 export const prioritySourceContracts: readonly PrioritySourceContract[] = (
   [
-    ["samr-standards", "web-scraper", "1"],
-    ["beijing-humanoid-center", "web-scraper", "1"],
-    ["internrobotics", "json-api", "1"],
-    ["horizon-holomotion", "json-api", "1"],
-    ["opendrivelab", "web-scraper", "1"],
-    ["pnp-robotics", "web-scraper", "1"],
-    ["nvidia-isaac-groot", "json-api", "1"],
-    ["figure-ai", "web-scraper", "1"],
-    ["one-x", "web-scraper", "1"],
-    ["robocasa", "json-api", "1"],
-    ["nist-physical-ai", "web-scraper", "1"],
-    ["itu-robot-data-factory", "web-scraper", "1"],
+    [
+      "samr-standards",
+      "web-scraper",
+      "1",
+      "b39e1f2eebc829e87c3b7b3893f0848e19980df6f94c4af89859c727420d70ab",
+    ],
+    [
+      "beijing-humanoid-center",
+      "web-scraper",
+      "1",
+      "17959412e3ac704a68f284a11be4a58ea758f885f83e6a3e087c2e9a22a94f89",
+    ],
+    [
+      "internrobotics",
+      "json-api",
+      "1",
+      "a253a2a8911de68333176fddf50c09c114e39889204aa9cb240fec370d9527b9",
+    ],
+    [
+      "horizon-holomotion",
+      "json-api",
+      "1",
+      "53b2bd337ea7bacd0fa1835f9bc8b72c5f8caae5b867cdefaf17e1950fe3793a",
+    ],
+    [
+      "opendrivelab",
+      "web-scraper",
+      "1",
+      "ad00974e5f7a69d59776747607c591eef198e1bc8dd7c0773ed95c399138f7de",
+    ],
+    [
+      "pnp-robotics",
+      "web-scraper",
+      "1",
+      "5399c94b28e183576ca99057c95997c82120c325bed44a6329239cec6423bfa4",
+    ],
+    [
+      "nvidia-isaac-groot",
+      "json-api",
+      "1",
+      "36ba40e0296ae2e595c4d60c8a40812111326cf9959bcfe2fd065518804f6a08",
+    ],
+    [
+      "figure-ai",
+      "web-scraper",
+      "1",
+      "1bd880e6447ba7fdacf14c09740205dc19154fca99096725b660cc9418390184",
+    ],
+    [
+      "one-x",
+      "web-scraper",
+      "1",
+      "422b7408c59aac81337b1a087b1ccdba98cf5db02a030c9a81c4b741a09e82b0",
+    ],
+    [
+      "robocasa",
+      "json-api",
+      "1",
+      "56e9ff107f7f73138acbfcf4d3e0288afd31c500451d70ab4ff7a7e05550bb94",
+    ],
+    [
+      "nist-physical-ai",
+      "web-scraper",
+      "1",
+      "3ac42c3eee0437533a9668649219f5c370168999ed8a6f4d050f82efc8ef986a",
+    ],
+    [
+      "itu-robot-data-factory",
+      "web-scraper",
+      "1",
+      "55b74427a7c4257d939dd3d82114af5a34d7aa30fe907250b50665d9c1c27990",
+    ],
   ] as const
-).map(([slug, adapter, adapterVersion]) => ({
+).map(([slug, adapter, adapterVersion, contractFingerprint]) => ({
   slug,
   adapter,
   adapterVersion,
+  contractFingerprint,
   status: "passed",
   policy: { status: "pending", reviewedAt: null, reviewer: null, reason: null },
 }));

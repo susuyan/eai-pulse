@@ -126,6 +126,7 @@ describe("repository data snapshot", () => {
       status: "healthy",
       adapter: "rss",
       adapter_version: "1",
+      contract_fingerprint: "a".repeat(64),
       access_status: "reachable",
       fetch_status: "succeeded",
       parse_status: "succeeded",
@@ -607,13 +608,14 @@ describe("repository data snapshot", () => {
     expect(
       await targetDb
         .selectFrom("source_checks")
-        .select(["status", "final_url", "sample_json"])
+        .select(["status", "final_url", "sample_json", "contract_fingerprint"])
         .where("id", "=", "snapshot-source-check")
         .executeTakeFirst(),
     ).toEqual({
       status: "healthy",
       final_url: "https://openai.com/feed.xml",
       sample_json: "{}",
+      contract_fingerprint: "a".repeat(64),
     });
     expect(
       await targetDb

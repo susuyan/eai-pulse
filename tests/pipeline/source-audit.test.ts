@@ -160,6 +160,10 @@ describe("source audit", () => {
       error_count: 1,
     });
     expect(await repository.listSourceChecks()).toEqual([]);
+    expect(JSON.parse(job?.details_json ?? "{}")).toMatchObject({
+      auditComplete: false,
+      expectedSourceCount: 1,
+    });
   });
 
   it("drains other workers and records partial counts before rejecting a check persistence failure", async () => {

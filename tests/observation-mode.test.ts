@@ -28,6 +28,7 @@ const { contracts } = vi.hoisted(() => ({
       slug: "horizon-holomotion",
       adapter: "json-api",
       adapterVersion: "1",
+      contractFingerprint: "53b2bd337ea7bacd0fa1835f9bc8b72c5f8caae5b867cdefaf17e1950fe3793a",
       status: "passed",
       policy: {
         status: "allowed_metadata",
@@ -93,6 +94,15 @@ async function prioritySetup(fileBacked = false) {
   for (const time of fixture.checks) {
     const jobId = await repository.startJob("source-audit", source.id);
     await repository.finishJob(jobId, { collected: 1, created: 1, skipped: 0, errors: [] });
+    await db
+      .updateTable("jobs")
+      .set({
+        started_at: time.startedAt,
+        finished_at: time.finishedAt,
+        details_json: JSON.stringify({ errors: [], auditComplete: true, expectedSourceCount: 1 }),
+      })
+      .where("id", "=", jobId)
+      .execute();
     await repository.insertSourceCheck({
       id: randomUUID(),
       source_id: source.id,
@@ -100,6 +110,7 @@ async function prioritySetup(fileBacked = false) {
       status: "healthy",
       adapter: "json-api",
       adapter_version: "1",
+      contract_fingerprint: "53b2bd337ea7bacd0fa1835f9bc8b72c5f8caae5b867cdefaf17e1950fe3793a",
       access_status: "reachable",
       fetch_status: "succeeded",
       parse_status: "succeeded",
@@ -134,6 +145,170 @@ async function prioritySetup(fileBacked = false) {
 }
 
 describe("priority draft observation evidence", () => {
+  it.each([
+    null,
+    "a".repeat(64),
+  ])("rejects legacy or changed check fingerprints: %s", async (fingerprint) => {
+    const { db, source, eligibility } = await prioritySetup();
+    expect(await eligibility()).toMatchObject({ eligible: true });
+    await db
+      .updateTable("source_checks")
+      .set({ contract_fingerprint: fingerprint })
+      .where("source_id", "=", source.id)
+      .execute();
+    expect(await eligibility()).toMatchObject({ eligible: false });
+  });
+
+  it("rejects unchanged-version JSON take changes and evidence from an earlier config", async () => {
+    const { db, repository, source, eligibility } = await prioritySetup();
+    expect(await eligibility()).toMatchObject({ eligible: true });
+    await repository.updateSource(source.id, {
+      config_json: JSON.stringify({ ...JSON.parse(source.config_json), take: 1 }),
+    });
+    expect(await eligibility()).toMatchObject({ eligible: false });
+    await repository.updateSource(source.id, { config_json: source.config_json });
+    await db
+      .updateTable("source_checks")
+      .set({ contract_fingerprint: "b".repeat(64) })
+      .where("source_id", "=", source.id)
+      .execute();
+    expect(await eligibility()).toMatchObject({ eligible: false });
+  });
+  it.each([
+    { finished_at: "2026-09-22T00:00:00Z" },
+    { finished_at: "not-a-date" },
+    { finished_at: "2026-09-21T16:59:59Z" },
+    { started_at: "2026-09-21T17:00:01Z" },
+    { started_at: "2026-02-30T00:00:00Z" },
+    {
+      status: "partial",
+      error_count: 1,
+      error_summary: "AUDIT_INCOMPLETE",
+      details_json: JSON.stringify({
+        errors: ["AUDIT_INCOMPLETE"],
+        auditComplete: false,
+        expectedSourceCount: 2,
+      }),
+    },
+  ])("rejects invalid or incomplete job evidence %j", async (patch) => {
+    const { db, repository, source, eligibility } = await prioritySetup();
+    expect(await eligibility()).toMatchObject({ eligible: true });
+    const check = required((await repository.listSourceChecks(source.id))[0]);
+    await db
+      .updateTable("jobs")
+      .set(patch)
+      .where("id", "=", required(check.job_id ?? undefined))
+      .execute();
+    expect(await eligibility()).toMatchObject({ eligible: false });
+  });
+
+  it("does not hide an intervening failed check with an empty finish timestamp", async () => {
+    const { db, repository, source, eligibility } = await prioritySetup();
+    const {
+      source_name: _name,
+      source_slug: _slug,
+      ...check
+    } = required((await repository.listSourceChecks(source.id))[0]);
+    expect(await eligibility()).toMatchObject({ eligible: true });
+    const jobId = await repository.startJob("source-audit", source.id);
+    await repository.finishJob(jobId, {
+      collected: 1,
+      created: 0,
+      skipped: 0,
+      errors: ["fixture:PARSE_ERROR"],
+      details: { auditComplete: true, expectedSourceCount: 1 },
+    });
+    await db
+      .updateTable("jobs")
+      .set({ started_at: "2026-09-21T13:00:00Z", finished_at: "2026-09-21T13:00:01Z" })
+      .where("id", "=", jobId)
+      .execute();
+    await repository.insertSourceCheck({
+      ...check,
+      id: randomUUID(),
+      job_id: jobId,
+      status: "failed",
+      started_at: "2026-09-21T13:00:00Z",
+      finished_at: "",
+    });
+    expect(await eligibility()).toMatchObject({ eligible: false });
+  });
+
+  it("permits a completed partial job only when the other source failure is persisted", async () => {
+    const { db, repository, source, eligibility } = await prioritySetup();
+    const other = required(await repository.getSourceByIdOrSlug("internrobotics"));
+    const {
+      source_name: _name,
+      source_slug: _slug,
+      ...check
+    } = required((await repository.listSourceChecks(source.id))[0]);
+    await repository.insertSourceCheck({
+      ...check,
+      id: randomUUID(),
+      source_id: other.id,
+      status: "failed",
+      error_code: "PARSER_FAILED",
+    });
+    const jobId = required(check.job_id ?? undefined);
+    await db
+      .updateTable("jobs")
+      .set({
+        status: "partial",
+        collected_count: 2,
+        error_count: 1,
+        error_summary: "internrobotics:PARSER_FAILED",
+        details_json: JSON.stringify({
+          errors: ["internrobotics:PARSER_FAILED"],
+          auditComplete: true,
+          expectedSourceCount: 2,
+        }),
+      })
+      .where("id", "=", jobId)
+      .execute();
+    expect(await eligibility()).toMatchObject({ eligible: true });
+    await db
+      .updateTable("source_checks")
+      .set({ finished_at: "2026-09-22T00:00:00Z" })
+      .where("job_id", "=", jobId)
+      .where("source_id", "=", other.id)
+      .execute();
+    expect(await eligibility()).toMatchObject({ eligible: false });
+    await db
+      .updateTable("source_checks")
+      .set({ finished_at: check.finished_at })
+      .where("job_id", "=", jobId)
+      .where("source_id", "=", other.id)
+      .execute();
+    await db
+      .deleteFrom("source_checks")
+      .where("job_id", "=", jobId)
+      .where("source_id", "=", other.id)
+      .execute();
+    expect(await eligibility()).toMatchObject({ eligible: false });
+  });
+
+  it("never verifies a source changed to draft after the automatic snapshot", async () => {
+    const { db, repository, source } = await prioritySetup();
+    await repository.updateSource(source.id, { lifecycle_status: "shadow" });
+    const original = Repository.prototype.listSources;
+    vi.spyOn(Repository.prototype, "listSources").mockImplementationOnce(async function (
+      this: Repository,
+    ) {
+      const sources = await original.call(this);
+      await db
+        .updateTable("sources")
+        .set({ lifecycle_status: "draft" })
+        .where("id", "=", source.id)
+        .execute();
+      return sources;
+    });
+    await expect(autoEnableObservation(db)).rejects.toThrow(/shadow/);
+    expect(await repository.getSource(source.id)).toMatchObject({
+      lifecycle_status: "draft",
+      observation_enabled: 0,
+      enabled: 0,
+    });
+  });
   it("accepts three separated healthy audits and exposes draft observe readiness", async () => {
     const { db, source, eligibility } = await prioritySetup();
     expect(await eligibility()).toMatchObject({ eligible: true, reason: null });
@@ -211,6 +386,26 @@ describe("priority draft observation evidence", () => {
     expect(await eligibility()).toMatchObject({ eligible: false, reason: `policy_${status}` });
   });
 
+  it("reports the latest valid check even when policy rejects before window selection", async () => {
+    const { db, repository, source, eligibility } = await prioritySetup();
+    const last = required((await repository.listSourceChecks(source.id)).at(-1));
+    await db
+      .updateTable("source_checks")
+      .set({
+        started_at: "2026-09-21T17:30:00Z",
+        finished_at: "2026-09-21T17:30:01Z",
+        status: "failed",
+      })
+      .where("id", "=", last.id)
+      .execute();
+    required(contracts[0]).policy.status = "pending";
+    expect(await eligibility()).toMatchObject({
+      eligible: false,
+      reason: "policy_pending",
+      latestStatus: "failed",
+    });
+  });
+
   it("rejects missing policy review and failed or mismatched fixture contracts", async () => {
     const { eligibility } = await prioritySetup();
     expect(await eligibility()).toMatchObject({ eligible: true });
@@ -242,6 +437,17 @@ describe("priority draft observation evidence", () => {
       .set({ started_at: "2026-09-21T12:00:00Z", finished_at: "2026-09-21T12:00:01Z" })
       .where("source_id", "=", source.id)
       .where("started_at", "=", required(fixture.checks[1]).startedAt)
+      .execute();
+    const moved = await db
+      .selectFrom("source_checks")
+      .selectAll()
+      .where("source_id", "=", source.id)
+      .where("started_at", "=", "2026-09-21T12:00:00Z")
+      .executeTakeFirstOrThrow();
+    await db
+      .updateTable("jobs")
+      .set({ started_at: moved.started_at, finished_at: moved.finished_at })
+      .where("id", "=", required(moved.job_id ?? undefined))
       .execute();
     expect(await eligibility()).toMatchObject({
       eligible: false,
@@ -298,6 +504,13 @@ describe("priority draft observation evidence", () => {
       .set({ started_at: "2026-09-21T04:59:58.000Z", finished_at: "2026-09-21T04:59:59.000Z" })
       .where("id", "=", third.id)
       .execute();
+    for (const check of await repository.listSourceChecks(source.id)) {
+      await db
+        .updateTable("jobs")
+        .set({ started_at: check.started_at, finished_at: check.finished_at })
+        .where("id", "=", required(check.job_id ?? undefined))
+        .execute();
+    }
     vi.setSystemTime(new Date("2026-09-22T17:00:01.000Z"));
     expect(await eligibility()).toMatchObject({ eligible: true });
     vi.setSystemTime(new Date("2026-09-22T17:00:01.001Z"));

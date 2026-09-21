@@ -1825,7 +1825,13 @@ export class Repository {
 
   async finishJob(
     id: string,
-    result: { collected: number; created: number; skipped: number; errors: string[] },
+    result: {
+      collected: number;
+      created: number;
+      skipped: number;
+      errors: string[];
+      details?: Record<string, unknown>;
+    },
   ): Promise<void> {
     await this.db
       .updateTable("jobs")
@@ -1837,7 +1843,7 @@ export class Repository {
         skipped_count: result.skipped,
         error_count: result.errors.length,
         error_summary: result.errors.slice(0, 5).join(" | ").slice(0, 4_000) || null,
-        details_json: json({ errors: result.errors.slice(0, 20) }),
+        details_json: json({ ...result.details, errors: result.errors.slice(0, 20) }),
       })
       .where("id", "=", id)
       .execute();

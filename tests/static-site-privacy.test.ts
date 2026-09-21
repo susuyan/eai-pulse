@@ -7,6 +7,7 @@ import { createDatabase } from "../src/db/database.js";
 import { migrateToLatest } from "../src/db/migrate.js";
 import { seedDatabase } from "../src/db/seed.js";
 import { exportStaticSite } from "../src/pipeline/export.js";
+import { auditSources } from "../src/pipeline/source-audit.js";
 
 const databases: ReturnType<typeof createDatabase>[] = [];
 
@@ -23,6 +24,22 @@ describe("static-site privacy boundary", () => {
     databases.push(db);
     await migrateToLatest(db, config);
     await seedDatabase(db);
+    const prioritySource = await db
+      .selectFrom("sources")
+      .select("id")
+      .where("slug", "=", "horizon-holomotion")
+      .executeTakeFirstOrThrow();
+    await auditSources(
+      db,
+      config,
+      { sourceId: prioritySource.id },
+      { adapterFor: () => ({ kind: "fixture", collect: async () => [] }) },
+    );
+    await db
+      .updateTable("source_checks")
+      .set({ contract_fingerprint: "a".repeat(64) })
+      .where("source_id", "=", prioritySource.id)
+      .execute();
 
     const legacyEvent = await db
       .selectFrom("events")
@@ -89,6 +106,9 @@ describe("static-site privacy boundary", () => {
       '"profile_json"',
       '"raw_meta_json"',
       '"config_json"',
+      '"contract_fingerprint"',
+      '"contractFingerprint"',
+      "a".repeat(64),
       '"readiness_blockers_json"',
       '"manual_override"',
     ]) {

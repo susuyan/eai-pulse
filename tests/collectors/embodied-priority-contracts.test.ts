@@ -12,6 +12,7 @@ import { createDatabase } from "../../src/db/database.js";
 import { migrateToLatest } from "../../src/db/migrate.js";
 import { Repository } from "../../src/db/repository.js";
 import { seedDatabase } from "../../src/db/seed.js";
+import { sourceRowContractFingerprint } from "../../src/domain/source-contract.js";
 import type { SourceDescriptor } from "../../src/domain/types.js";
 
 interface Fixture {
@@ -139,6 +140,10 @@ describe("embodied priority fixture contracts", () => {
         const row = await repository.getSourceByIdOrSlug(fixture.slug);
         if (!row) throw new Error(`Missing seeded source ${fixture.slug}`);
         const source = repository.toSourceDescriptor(row);
+        expect(sourceRowContractFingerprint(row)).toBe(
+          prioritySourceContracts.find((record) => record.slug === fixture.slug)
+            ?.contractFingerprint,
+        );
         expect(source.config.html).toEqual(fixture.html);
         expect(source.config.url).toBe(fixture.endpoint);
         expect(source.adapter).toBe(fixture.adapter);

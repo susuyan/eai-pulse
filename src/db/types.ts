@@ -85,6 +85,7 @@ export interface SourceCheckTable {
   status: string;
   adapter: string;
   adapter_version: string;
+  contract_fingerprint: Generated<string | null>;
   access_status: string;
   fetch_status: string;
   parse_status: string;

@@ -7,6 +7,7 @@ import type { CollectContext, FetchResult } from "../collectors/types.js";
 import type { AppConfig } from "../config/env.js";
 import { Repository } from "../db/repository.js";
 import type { DatabaseSchema, NewSourceCheckRow, SourceRow } from "../db/types.js";
+import { sourceRowContractFingerprint } from "../domain/source-contract.js";
 import type { CollectedSignal, SourceDescriptor } from "../domain/types.js";
 import { canonicalizeUrl } from "../domain/url.js";
 import { concurrentMap } from "./collect.js";
@@ -145,6 +146,7 @@ export async function auditSources(
         created: results.filter((result) => result.status === "healthy").length,
         skipped: results.filter((result) => result.status === "skipped").length,
         errors,
+        details: { auditComplete: fatalErrors.length === 0, expectedSourceCount: sources.length },
       });
     } catch (error) {
       fatalErrors.push(error);
@@ -367,6 +369,12 @@ async function persistCheck(
   const finishedAt = new Date().toISOString();
   const duplicate = duplicateStats(draft.items);
   const latestItemAt = latestDate(draft.items);
+  let contractFingerprint: string | null = null;
+  try {
+    contractFingerprint = sourceRowContractFingerprint(source);
+  } catch {
+    // Invalid configuration must still produce a failed check, without a reusable identity.
+  }
   const freshnessHours = latestItemAt
     ? Math.max(0, Math.round((Date.now() - new Date(latestItemAt).getTime()) / 3_600_000))
     : null;
@@ -377,6 +385,7 @@ async function persistCheck(
     status: draft.status,
     adapter: source.adapter,
     adapter_version: source.adapter_version,
+    contract_fingerprint: contractFingerprint,
     access_status: draft.accessStatus,
     fetch_status: draft.fetchStatus,
     parse_status: draft.parseStatus,

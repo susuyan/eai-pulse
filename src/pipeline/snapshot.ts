@@ -351,6 +351,9 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
         status: check.status,
         adapter: check.adapter,
         adapterVersion: check.adapter_version,
+        ...(/^[a-f0-9]{64}$/.test(check.contract_fingerprint ?? "")
+          ? { contractFingerprint: check.contract_fingerprint }
+          : {}),
         accessStatus: check.access_status,
         fetchStatus: check.fetch_status,
         parseStatus: check.parse_status,
@@ -810,6 +813,11 @@ async function restoreSnapshot(
       status: requiredString(value, "status"),
       adapter: requiredString(value, "adapter"),
       adapter_version: requiredString(value, "adapterVersion"),
+      contract_fingerprint:
+        typeof value.contractFingerprint === "string" &&
+        /^[a-f0-9]{64}$/.test(value.contractFingerprint)
+          ? value.contractFingerprint
+          : null,
       access_status: requiredString(value, "accessStatus"),
       fetch_status: requiredString(value, "fetchStatus"),
       parse_status: requiredString(value, "parseStatus"),

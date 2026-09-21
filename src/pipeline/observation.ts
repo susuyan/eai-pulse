@@ -1,15 +1,16 @@
 import { randomUUID } from "node:crypto";
-import { isDeepStrictEqual } from "node:util";
 import type { Kysely } from "kysely";
+import { z } from "zod";
 import {
   embodiedPrioritySources,
+  priorityCatalogFingerprint,
   prioritySourceContracts,
 } from "../catalog/embodied-data/priority-sources.js";
 import { embodiedSourceCatalog } from "../catalog/embodied-data/sources.js";
 import { Repository } from "../db/repository.js";
 import type { DatabaseSchema, SourceCheckRow, SourceRow } from "../db/types.js";
+import { sourceRowContractFingerprint } from "../domain/source-contract.js";
 import { transitionSource } from "../domain/source-lifecycle.js";
-import { SourceConfigSchema } from "../domain/types.js";
 
 export interface ObservationEligibility {
   sourceId: string;
@@ -38,23 +39,34 @@ export async function observationEligibility(
         "jobs.type as jobType",
         "jobs.status as jobStatus",
         "jobs.finished_at as jobFinishedAt",
+        "jobs.started_at as jobStartedAt",
+        "jobs.details_json as jobDetails",
+        "jobs.error_summary as jobErrorSummary",
+        "jobs.error_count as jobErrorCount",
+        "jobs.collected_count as jobCollectedCount",
+        "jobs.created_count as jobCreatedCount",
+        "jobs.skipped_count as jobSkippedCount",
       ])
-      .orderBy("source_checks.finished_at", "desc")
-      .orderBy("source_checks.started_at", "desc")
       .execute(),
   ]);
   const checksBySource = new Map<string, typeof checks>();
+  const checksByJob = new Map<string, typeof checks>();
   for (const check of checks) {
     const group = checksBySource.get(check.source_id) ?? [];
     group.push(check);
     checksBySource.set(check.source_id, group);
+    if (check.job_id) {
+      const jobChecks = checksByJob.get(check.job_id) ?? [];
+      jobChecks.push(check);
+      checksByJob.set(check.job_id, jobChecks);
+    }
   }
   const now = Date.now();
   return sources.map((source) => {
     const history = checksBySource.get(source.id) ?? [];
-    const check = history[0];
     const checkIds: string[] = [];
-    const reason = observationRejection(source, history, now, checkIds);
+    const reason = observationRejection(source, history, now, checkIds, checksByJob);
+    const check = latestObservedCheck(history);
     return {
       sourceId: source.id,
       slug: source.slug,
@@ -74,10 +86,14 @@ export async function setObservationMode(
   db: Kysely<DatabaseSchema>,
   sourceId: string,
   enabled: boolean,
+  options: { allowDraft?: boolean } = {},
 ): Promise<ObservationEligibility> {
   return db.transaction().execute(async (transaction) => {
     const repository = new Repository(transaction);
     const source = await repository.getSource(sourceId);
+    if (enabled && options.allowDraft === false && source?.lifecycle_status !== "shadow") {
+      throw new Error("Automatic observation requires current shadow lifecycle");
+    }
     const eligibility = (await observationEligibility(transaction)).find(
       (item) => item.sourceId === sourceId,
     );
@@ -171,7 +187,7 @@ export async function autoEnableObservation(
     (item) => shadowIds.has(item.sourceId) && item.eligible && !item.observationEnabled,
   );
   for (const row of rows) {
-    await setObservationMode(db, row.sourceId, true);
+    await setObservationMode(db, row.sourceId, true, { allowDraft: false });
   }
 
   return { enabled: rows.length, slugs: rows.map((row) => row.slug) };
@@ -181,6 +197,13 @@ type ObservationCheck = SourceCheckRow & {
   jobType: string | null;
   jobStatus: string | null;
   jobFinishedAt: string | null;
+  jobStartedAt: string | null;
+  jobDetails: string | null;
+  jobErrorSummary: string | null;
+  jobErrorCount: number | null;
+  jobCollectedCount: number | null;
+  jobCreatedCount: number | null;
+  jobSkippedCount: number | null;
 };
 
 function observationRejection(
@@ -188,6 +211,7 @@ function observationRejection(
   checks: ObservationCheck[],
   now: number,
   checkIds: string[],
+  checksByJob: Map<string, ObservationCheck[]>,
 ): string | null {
   const catalog = embodiedSourceCatalog.find((entry) => entry.slug === source.slug);
   if (source.content_scope !== "embodied-data" || !catalog) return "outside_current_scope";
@@ -224,11 +248,10 @@ function observationRejection(
     )
       return "adapter_contract_mismatch";
     try {
-      const config = SourceConfigSchema.parse(JSON.parse(source.config_json));
       if (
-        config.url !== priority.endpoint ||
         catalog.endpoint !== priority.endpoint ||
-        !isDeepStrictEqual(config.html, catalog.html)
+        sourceRowContractFingerprint(source) !== contract.contractFingerprint ||
+        priorityCatalogFingerprint(catalog) !== contract.contractFingerprint
       )
         return "adapter_config_mismatch";
     } catch {
@@ -243,8 +266,17 @@ function observationRejection(
       !contract.policy.reason?.trim()
     )
       return "policy_review_missing";
-    return priorityWindowRejection(source, checks, now, checkIds);
+    return priorityWindowRejection(
+      source,
+      checks,
+      now,
+      checkIds,
+      checksByJob,
+      contract.contractFingerprint,
+    );
   }
+  if (checks.some((check) => evidenceTime(check.finished_at) === null)) return "invalid_check_time";
+  checks.sort((left, right) => Date.parse(right.finished_at) - Date.parse(left.finished_at));
   const check = checks[0];
   const reason = contentRejection(check);
   if (!reason && check) checkIds.push(check.id);
@@ -267,22 +299,47 @@ function priorityWindowRejection(
   checks: ObservationCheck[],
   now: number,
   checkIds: string[],
+  checksByJob: Map<string, ObservationCheck[]>,
+  contractFingerprint: string,
 ): string | null {
+  const times = new Map<string, { start: number; finish: number }>();
+  // Validate before sorting: corrupt failures cannot fall behind the candidate window.
+  for (const check of checks) {
+    const start = evidenceTime(check.started_at);
+    const finish = evidenceTime(check.finished_at);
+    const jobStart = evidenceTime(check.jobStartedAt);
+    const jobFinish = evidenceTime(check.jobFinishedAt);
+    if (
+      start === null ||
+      finish === null ||
+      jobStart === null ||
+      jobFinish === null ||
+      jobStart > start ||
+      start > finish ||
+      finish > jobFinish ||
+      jobFinish > now
+    )
+      return "invalid_check_time";
+    times.set(check.id, { start, finish });
+  }
+  checks.sort(
+    (left, right) =>
+      Date.parse(right.finished_at) - Date.parse(left.finished_at) ||
+      Date.parse(right.started_at) - Date.parse(left.started_at),
+  );
   const latest = checks[0];
   if (!latest) return "missing_check";
   if (now - Date.parse(latest.finished_at) > 24 * 3_600_000) return "latest_check_stale";
   let newerStart: number | undefined;
   const jobs = new Set<string>();
   for (const check of checks) {
-    const start = Date.parse(check.started_at);
-    const finish = Date.parse(check.finished_at);
+    const time = times.get(check.id);
+    if (!time) return "invalid_check_time";
+    const { start, finish } = time;
     const reason = contentRejection(check);
     if (
       reason ||
-      !Number.isFinite(start) ||
-      !Number.isFinite(finish) ||
-      finish < start ||
-      finish > now ||
+      check.contract_fingerprint !== contractFingerprint ||
       check.adapter !== source.adapter ||
       check.adapter_version !== source.adapter_version ||
       check.http_status === null ||
@@ -298,9 +355,7 @@ function priorityWindowRejection(
       check.error_code ||
       check.error_summary ||
       !check.job_id ||
-      check.jobType !== "source-audit" ||
-      !["succeeded", "partial"].includes(check.jobStatus ?? "") ||
-      !check.jobFinishedAt
+      !completedAudit(check, checksByJob.get(check.job_id ?? "") ?? [])
     ) {
       return checkIds.length === 0
         ? (reason ?? "invalid_live_check")
@@ -314,4 +369,82 @@ function priorityWindowRejection(
     if (checkIds.length === 3) return null;
   }
   return "healthy_window_below_3_checks";
+}
+
+const evidenceTimestamp = z.string().datetime({ offset: true });
+
+function evidenceTime(value: string | null): number | null {
+  if (!evidenceTimestamp.safeParse(value).success) return null;
+  const time = Date.parse(value ?? "");
+  return Number.isFinite(time) ? time : null;
+}
+
+function latestObservedCheck(checks: ObservationCheck[]): ObservationCheck | undefined {
+  let latest: ObservationCheck | undefined;
+  let latestTime = Number.NEGATIVE_INFINITY;
+  for (const check of checks) {
+    const time = evidenceTime(check.finished_at);
+    if (time === null) return undefined;
+    if (time > latestTime) {
+      latest = check;
+      latestTime = time;
+    }
+  }
+  return latest;
+}
+
+function completedAudit(check: ObservationCheck, members: ObservationCheck[]): boolean {
+  if (
+    !check.job_id ||
+    check.jobType !== "source-audit" ||
+    !["succeeded", "partial"].includes(check.jobStatus ?? "")
+  )
+    return false;
+  const jobStart = evidenceTime(check.jobStartedAt);
+  const jobFinish = evidenceTime(check.jobFinishedAt);
+  if (
+    jobStart === null ||
+    jobFinish === null ||
+    members.some((member) => {
+      const start = evidenceTime(member.started_at);
+      const finish = evidenceTime(member.finished_at);
+      return (
+        start === null ||
+        finish === null ||
+        jobStart > start ||
+        start > finish ||
+        finish > jobFinish
+      );
+    })
+  )
+    return false;
+  let details: { auditComplete?: unknown; expectedSourceCount?: unknown; errors?: unknown };
+  try {
+    details = JSON.parse(check.jobDetails ?? "null");
+  } catch {
+    return false;
+  }
+  if (
+    details?.auditComplete !== true ||
+    !Number.isSafeInteger(details.expectedSourceCount) ||
+    details.expectedSourceCount !== members.length ||
+    members.length === 0 ||
+    new Set(members.map((member) => member.source_id)).size !== members.length ||
+    !Array.isArray(details.errors) ||
+    details.errors.some((error) => typeof error !== "string") ||
+    /AUDIT[_\s-]INCOMPLETE/i.test(
+      `${check.jobErrorSummary ?? ""} ${JSON.stringify(details.errors)}`,
+    )
+  )
+    return false;
+  const failures = members.filter((member) => member.status === "failed").length;
+  const healthy = members.filter((member) => member.status === "healthy").length;
+  if (
+    check.jobCollectedCount !== members.length ||
+    check.jobCreatedCount !== healthy ||
+    check.jobErrorCount !== failures ||
+    check.jobSkippedCount !== members.filter((member) => member.status === "skipped").length
+  )
+    return false;
+  return check.jobStatus === "succeeded" ? failures === 0 : failures > 0 && healthy > 0;
 }

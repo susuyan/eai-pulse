@@ -8,14 +8,14 @@ import { seedDatabase } from "../db/seed.js";
 import { auditSources } from "../pipeline/source-audit.js";
 
 export interface AuditCliOptions {
-  sourceSlug?: string;
+  sourceSlugs: string[];
   concurrency?: number;
   reportPath?: string;
   help: boolean;
 }
 
 export function parseAuditArgs(args: string[]): AuditCliOptions {
-  const options: AuditCliOptions = { help: false };
+  const options: AuditCliOptions = { sourceSlugs: [], help: false };
   for (let index = 0; index < args.length; index++) {
     const argument = args[index];
     if (!argument) continue;
@@ -33,7 +33,8 @@ export function parseAuditArgs(args: string[]): AuditCliOptions {
     const value = inlineValue ?? args[++index];
     if (!value || value.startsWith("--")) throw new Error(`${flag} requires a value`);
 
-    if (flag === "--source") options.sourceSlug = value;
+    if (flag === "--source" && !options.sourceSlugs.includes(value))
+      options.sourceSlugs.push(value);
     if (flag === "--report" || flag === "--output") options.reportPath = value;
     if (flag === "--concurrency") {
       const concurrency = Number(value);
@@ -51,7 +52,7 @@ export async function runAuditCli(args = process.argv.slice(2)): Promise<void> {
   if (options.help) {
     console.log(`Usage: npm run sources:audit -- [options]
 
-  --source <slug>       Audit one configured source
+  --source <slug>       Audit a configured source; repeat to select a cohort
   --concurrency <1-32>  Override bounded audit concurrency
   --report <path>       Write a privacy-safe report below data/reports
   --output <path>       Alias for --report
@@ -69,19 +70,23 @@ export async function runAuditCli(args = process.argv.slice(2)): Promise<void> {
       .executeTakeFirstOrThrow();
     if (Number(sourceCount.count) === 0) await seedDatabase(db);
 
-    const sourceId = options.sourceSlug
-      ? (
-          await db
-            .selectFrom("sources")
-            .select("id")
-            .where("slug", "=", options.sourceSlug)
-            .executeTakeFirst()
-        )?.id
-      : undefined;
-    if (options.sourceSlug && !sourceId) throw new Error(`Source not found: ${options.sourceSlug}`);
+    let sourceIds: string[] | undefined;
+    if (options.sourceSlugs.length) {
+      const sources = await db
+        .selectFrom("sources")
+        .select(["id", "slug"])
+        .where("slug", "in", options.sourceSlugs)
+        .execute();
+      const idsBySlug = new Map(sources.map((source) => [source.slug, source.id]));
+      sourceIds = options.sourceSlugs.map((slug) => {
+        const id = idsBySlug.get(slug);
+        if (!id) throw new Error(`Source not found: ${slug}`);
+        return id;
+      });
+    }
 
     const report = await auditSources(db, config, {
-      ...(sourceId ? { sourceId } : {}),
+      ...(sourceIds ? { sourceIds } : {}),
       ...(options.concurrency ? { concurrency: options.concurrency } : {}),
     });
     if (options.reportPath) await writePublicReport(config.rootDir, options.reportPath, report);

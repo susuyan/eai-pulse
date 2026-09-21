@@ -54,6 +54,7 @@ export interface SourceAuditReport {
 
 interface AuditOptions {
   sourceId?: string;
+  sourceIds?: string[];
   concurrency?: number;
 }
 
@@ -80,36 +81,79 @@ export async function auditSources(
 ): Promise<SourceAuditReport> {
   const repository = new Repository(db);
   const startedAt = new Date().toISOString();
-  const sources = options.sourceId
-    ? [await repository.getSource(options.sourceId)].filter((source): source is SourceRow =>
-        Boolean(source),
-      )
-    : await repository.listSources();
-  if (options.sourceId && sources.length === 0) throw new Error("Source not found");
+  const selectedIds = options.sourceIds ?? (options.sourceId ? [options.sourceId] : undefined);
+  let sources: SourceRow[];
+  if (selectedIds) {
+    const ids = [...new Set(selectedIds)];
+    const rows = ids.length
+      ? await db.selectFrom("sources").selectAll().where("id", "in", ids).execute()
+      : [];
+    const sourcesById = new Map(rows.map((source) => [source.id, source]));
+    sources = ids.map((id) => {
+      const source = sourcesById.get(id);
+      if (!source) throw new Error(`Source not found: ${id}`);
+      return source;
+    });
+  } else {
+    sources = await repository.listSources();
+  }
 
-  const jobId = await repository.startJob("source-audit", options.sourceId ?? null);
-  const runtimeDependencies: AuditDependencies = {
-    ...dependencies,
-    fetcher: dependencies.fetcher ?? createSafeFetcher(config),
-    rateLimiter: dependencies.rateLimiter ?? createDefaultRateLimiter(),
-  };
+  const jobId = await repository.startJob(
+    "source-audit",
+    selectedIds && sources.length === 1 ? (sources[0]?.id ?? null) : null,
+  );
   let results: SourceCheckResult[] = [];
+  const fatalErrors: unknown[] = [];
   try {
-    results = await concurrentMap(
+    const runtimeDependencies: AuditDependencies = {
+      ...dependencies,
+      fetcher: dependencies.fetcher ?? createSafeFetcher(config),
+      rateLimiter: dependencies.rateLimiter ?? createDefaultRateLimiter(),
+    };
+    const outcomes = await concurrentMap(
       sources,
       Math.min(options.concurrency ?? config.COLLECTOR_CONCURRENCY, 8),
-      (source) => auditOneSource(repository, config, source, jobId, runtimeDependencies),
+      async (source) => {
+        try {
+          return {
+            result: await auditOneSource(repository, config, source, jobId, runtimeDependencies),
+          };
+        } catch (error) {
+          // Drain the cohort before finalizing a job with incomplete persisted evidence.
+          return { error };
+        }
+      },
     );
+    results = outcomes.flatMap((outcome) => (outcome.result ? [outcome.result] : []));
+    const failures = outcomes.filter((outcome) => "error" in outcome);
+    if (failures.length) {
+      throw new AggregateError(
+        failures.map((outcome) => outcome.error),
+        "Source audit incomplete",
+      );
+    }
+  } catch (error) {
+    fatalErrors.push(error);
   } finally {
     const errors = results
       .filter((result) => result.status === "failed")
       .map((result) => `${result.slug}:${result.errorCode ?? result.errorType ?? "failed"}`);
-    await repository.finishJob(jobId, {
-      collected: results.length,
-      created: results.filter((result) => result.status === "healthy").length,
-      skipped: results.filter((result) => result.status === "skipped").length,
-      errors,
-    });
+    if (fatalErrors.length) errors.push("AUDIT_INCOMPLETE");
+    try {
+      await repository.finishJob(jobId, {
+        collected: results.length,
+        created: results.filter((result) => result.status === "healthy").length,
+        skipped: results.filter((result) => result.status === "skipped").length,
+        errors,
+      });
+    } catch (error) {
+      fatalErrors.push(error);
+    }
+  }
+
+  if (fatalErrors.length === 1) throw fatalErrors[0];
+  if (fatalErrors.length > 1) {
+    throw new AggregateError(fatalErrors, "Source audit and finalization failed");
   }
 
   return summarizeAudit(jobId, startedAt, results);

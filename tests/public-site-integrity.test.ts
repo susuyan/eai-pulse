@@ -299,4 +299,64 @@ describe("embodied public-site integrity", () => {
       expect.objectContaining({ code: "legacy_public_leak", path: "llms.txt" }),
     );
   }, 15_000);
+
+  it("rejects an arbitrary private field nested in an evolution relation", async () => {
+    const root = await mkdtemp(join(tmpdir(), "agent-pulse-evolution-private-note-"));
+    directories.push(root);
+    const base = loadConfig({ NODE_ENV: "test", DATABASE_URL: "sqlite::memory:" });
+    const config = { ...base, distDir: join(root, "dist") };
+    const db = createDatabase(config);
+    databases.push(db);
+    await bootstrapRepositoryDatabase(db, config);
+    await exportStaticSite(db, config);
+
+    const evolutionPath = join(config.distDir, "data/evolution.json");
+    const evolution = JSON.parse(await readFile(evolutionPath, "utf8")) as {
+      phases: Array<{
+        stageImpacts: Record<string, { events: Array<Record<string, unknown>> }>;
+      }>;
+    };
+    const relation = evolution.phases[0]?.stageImpacts["demand-definition"]?.events[0];
+    if (!relation) throw new Error("Evolution fixture is missing a demand-definition relation");
+    relation.privateNote = "private editorial review";
+    await writeFile(evolutionPath, `${JSON.stringify(evolution)}\n`, "utf8");
+
+    const report = await validatePublicSite(config.distDir, "2026-09-20T00:00:00.000Z");
+    expect(report.ok).toBe(false);
+    expect(report.issues).toContainEqual(
+      expect.objectContaining({
+        code: "private_evolution_field",
+        path: "data/evolution.json",
+      }),
+    );
+  }, 15_000);
+
+  it("rejects an independent evidence endpoint in evolution JSON", async () => {
+    const root = await mkdtemp(join(tmpdir(), "agent-pulse-evolution-evidence-endpoint-"));
+    directories.push(root);
+    const base = loadConfig({ NODE_ENV: "test", DATABASE_URL: "sqlite::memory:" });
+    const config = { ...base, distDir: join(root, "dist") };
+    const db = createDatabase(config);
+    databases.push(db);
+    await bootstrapRepositoryDatabase(db, config);
+    await exportStaticSite(db, config);
+
+    const evolutionPath = join(config.distDir, "data/evolution.json");
+    const evolution = JSON.parse(await readFile(evolutionPath, "utf8")) as {
+      trends: Array<{ events: Array<Record<string, unknown>> }>;
+    };
+    const relation = evolution.trends[0]?.events[0];
+    if (!relation) throw new Error("Evolution fixture is missing a trend relation");
+    relation.sourceEndpoint = "https://private.example.test/evidence";
+    await writeFile(evolutionPath, `${JSON.stringify(evolution)}\n`, "utf8");
+
+    const report = await validatePublicSite(config.distDir, "2026-09-20T00:00:00.000Z");
+    expect(report.ok).toBe(false);
+    expect(report.issues).toContainEqual(
+      expect.objectContaining({
+        code: "private_evolution_field",
+        path: "data/evolution.json",
+      }),
+    );
+  }, 15_000);
 });

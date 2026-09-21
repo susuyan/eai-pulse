@@ -49,6 +49,33 @@ const PIPELINE_STAGES = [
   "quality-training-feedback",
 ] as const;
 
+const EVOLUTION_ROOT_KEYS = ["schemaVersion", "generatedAt", "phases", "trends"] as const;
+const EVOLUTION_PHASE_KEYS = [
+  "slug",
+  "start",
+  "end",
+  "title",
+  "thesis",
+  "turningPoint",
+  "events",
+  "stageImpacts",
+  "counterEvents",
+  "nextSignals",
+] as const;
+const EVOLUTION_STAGE_IMPACT_KEYS = ["summary", "events", "evidenceState"] as const;
+const EVOLUTION_TREND_KEYS = [
+  "slug",
+  "title",
+  "thesis",
+  "whyNow",
+  "pipelineStages",
+  "events",
+  "counterEvents",
+  "nextWatch",
+] as const;
+const EVOLUTION_RELATION_KEYS = ["slug", "title", "role"] as const;
+const EVOLUTION_EVIDENCE_STATES = new Set(["supported", "limited", "no-public-evidence"]);
+
 const DATA_PATHS = {
   events: "data/events.json",
   pipeline: "data/pipeline.json",
@@ -222,7 +249,7 @@ export async function validatePublicSite(
     }
     validateNoLegacyLeak(DATA_PATHS[name as keyof typeof DATA_PATHS], text, add, true);
   }
-  if (containsForbiddenEvolutionField(evolutionPayload)) {
+  if (!hasAllowlistedEvolutionShape(evolutionPayload)) {
     add(
       "private_evolution_field",
       DATA_PATHS.evolution,
@@ -590,27 +617,91 @@ function collectEvolutionRelations(
   relations.push(...value);
 }
 
-function containsForbiddenEvolutionField(value: unknown): boolean {
-  const forbidden = new Set([
-    "id",
-    "url",
-    "sourceUrl",
-    "evidence",
-    "evidenceUrl",
-    "rawPayload",
-    "privateState",
-    "sourceId",
-    "config",
-  ]);
-  if (Array.isArray(value)) return value.some(containsForbiddenEvolutionField);
-  if (!isRecord(value)) return false;
-  return Object.entries(value).some(
-    ([key, nested]) =>
-      forbidden.has(key) ||
-      key.endsWith("Id") ||
-      key.endsWith("_id") ||
-      containsForbiddenEvolutionField(nested),
+function hasAllowlistedEvolutionShape(value: unknown): boolean {
+  if (!hasExactKeys(value, EVOLUTION_ROOT_KEYS)) return false;
+  return (
+    typeof value.schemaVersion === "number" &&
+    typeof value.generatedAt === "string" &&
+    Array.isArray(value.phases) &&
+    value.phases.every(hasAllowlistedEvolutionPhaseShape) &&
+    Array.isArray(value.trends) &&
+    value.trends.every(hasAllowlistedEvolutionTrendShape)
   );
+}
+
+function hasAllowlistedEvolutionPhaseShape(value: unknown): boolean {
+  if (!hasExactKeys(value, EVOLUTION_PHASE_KEYS)) return false;
+  return (
+    typeof value.slug === "string" &&
+    typeof value.start === "string" &&
+    typeof value.end === "string" &&
+    typeof value.title === "string" &&
+    typeof value.thesis === "string" &&
+    typeof value.turningPoint === "string" &&
+    hasAllowlistedRelations(value.events) &&
+    hasAllowlistedStageImpacts(value.stageImpacts) &&
+    hasAllowlistedRelations(value.counterEvents) &&
+    isStringArray(value.nextSignals)
+  );
+}
+
+function hasAllowlistedStageImpacts(value: unknown): boolean {
+  return (
+    hasExactKeys(value, PIPELINE_STAGES) &&
+    PIPELINE_STAGES.every((stage) => hasAllowlistedStageImpactShape(value[stage]))
+  );
+}
+
+function hasAllowlistedStageImpactShape(value: unknown): boolean {
+  return (
+    hasExactKeys(value, EVOLUTION_STAGE_IMPACT_KEYS) &&
+    typeof value.summary === "string" &&
+    hasAllowlistedRelations(value.events) &&
+    typeof value.evidenceState === "string" &&
+    EVOLUTION_EVIDENCE_STATES.has(value.evidenceState)
+  );
+}
+
+function hasAllowlistedEvolutionTrendShape(value: unknown): boolean {
+  if (!hasExactKeys(value, EVOLUTION_TREND_KEYS)) return false;
+  return (
+    typeof value.slug === "string" &&
+    typeof value.title === "string" &&
+    typeof value.thesis === "string" &&
+    typeof value.whyNow === "string" &&
+    isStringArray(value.pipelineStages) &&
+    hasAllowlistedRelations(value.events) &&
+    hasAllowlistedRelations(value.counterEvents) &&
+    isStringArray(value.nextWatch)
+  );
+}
+
+function hasAllowlistedRelations(value: unknown): boolean {
+  return Array.isArray(value) && value.every(hasAllowlistedRelationShape);
+}
+
+function hasAllowlistedRelationShape(value: unknown): boolean {
+  return (
+    hasExactKeys(value, EVOLUTION_RELATION_KEYS) &&
+    typeof value.slug === "string" &&
+    typeof value.title === "string" &&
+    typeof value.role === "string"
+  );
+}
+
+function hasExactKeys(
+  value: unknown,
+  expectedKeys: readonly string[],
+): value is Record<string, unknown> {
+  return (
+    isRecord(value) &&
+    Object.keys(value).length === expectedKeys.length &&
+    Object.keys(value).every((key) => expectedKeys.includes(key))
+  );
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((entry) => typeof entry === "string");
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

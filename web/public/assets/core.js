@@ -25,6 +25,12 @@ if (embodiedEvolution) {
     setupEmbodiedEvolutionTimeline(embodiedEvolution),
   );
 }
+const embodiedTrends = document.querySelector("[data-embodied-trends]");
+if (embodiedTrends) {
+  import("./embodied-trends.js").then(({ setupDailyEmbodiedTrends }) =>
+    setupDailyEmbodiedTrends(embodiedTrends),
+  );
+}
 setupCardFilters();
 setupSourceFilters();
 setupMobileListPagination();
@@ -112,32 +118,6 @@ function setupBackToTop() {
 }
 
 function setupHomeDynamics() {
-  const trendItems = [...document.querySelectorAll("[data-random-trend]")];
-  if (trendItems.length) {
-    let selectedIndex = -1;
-    const showRandomTrend = () => {
-      if (trendItems.length === 1) selectedIndex = 0;
-      else {
-        const offset = 1 + Math.floor(Math.random() * (trendItems.length - 1));
-        selectedIndex = (Math.max(0, selectedIndex) + offset) % trendItems.length;
-      }
-      trendItems.forEach((item, index) => {
-        item.hidden = index !== selectedIndex;
-      });
-      const selected = trendItems[selectedIndex];
-      selected?.classList.remove("trend-refresh-in");
-      if (selected) void selected.offsetWidth;
-      selected?.classList.add("trend-refresh-in");
-    };
-    trendItems.forEach((item) => {
-      item.querySelector("[data-random-trend-next]")?.addEventListener("click", showRandomTrend);
-    });
-    selectedIndex = Math.floor(Math.random() * trendItems.length);
-    trendItems.forEach((item, index) => {
-      item.hidden = index !== selectedIndex;
-    });
-  }
-
   revealRandomItems("[data-random-recent-list]", "[data-random-recent]");
 
   document.querySelectorAll("[data-industry-carousel]").forEach(setupIndustryCarousel);

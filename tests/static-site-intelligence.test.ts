@@ -32,9 +32,79 @@ import {
   summarizeSourcePortfolio,
   timelineEventsForPresentation,
 } from "../src/pipeline/static-site/intelligence.js";
+import { renderEmbodiedHome } from "../src/pipeline/static-site/pages/home.js";
 import { renderStaticPages, renderTimeline } from "../src/pipeline/static-site/pages.js";
 
 describe("static-site intelligence consumption model", () => {
+  it("server-renders the phase handoff and all eight trends in curated order", () => {
+    const model = evolutionModel();
+    model.generatedAt = "2027-01-01T00:00:00Z";
+    const home = renderEmbodiedHome(model, "zh-CN");
+    const handoff = home.match(/<section[^>]*data-home-evolution[\s\S]*?<\/section>/)?.[0] ?? "";
+    const previous = model.evolutionPhases[4];
+    const current = model.evolutionPhases[5];
+    if (!previous || !current) throw new Error("Missing phase fixture");
+    expect(handoff.indexOf(previous.title)).toBeGreaterThan(-1);
+    expect(handoff.indexOf(current.title)).toBeGreaterThan(handoff.indexOf(previous.title));
+    expect(handoff).toContain(previous.turningPoint);
+    expect(handoff).toContain(current.thesis);
+    expect(handoff).toContain(current.start);
+    expect(handoff).toContain(current.end);
+    expect(handoff).toContain("策展截止");
+    expect(handoff).toContain("最新事件日期");
+    expect(handoff).not.toContain("2027-01-01");
+    expect(handoff).toContain('href="__PREFIX__timeline/"');
+    expect(home).toContain("data-embodied-trends");
+    const cards = [
+      ...home.matchAll(/<article[^>]*data-embodied-trend="([^"]+)"[\s\S]*?<\/article>/g),
+    ];
+    expect(cards.map((card) => card[1])).toEqual(model.embodiedTrends.map((trend) => trend.slug));
+    expect(cards).toHaveLength(8);
+    for (const [index, card] of cards.entries()) {
+      const trend = model.embodiedTrends[index];
+      if (!trend) throw new Error("Missing trend fixture");
+      expect(card[0]).toContain(trend.title);
+      expect(card[0]).toContain(trend.thesis);
+      expect(card[0]).toContain(trend.whyNow);
+      expect(card[0]).toContain("反证与未知");
+      expect(card[0]).toContain("尚未收录独立反证");
+      for (const next of trend.nextWatch) expect(card[0]).toContain(next);
+      for (const event of trend.events) {
+        expect(card[0]).toContain(`href="__PREFIX__events/${event.slug}/"`);
+      }
+      for (const stage of trend.pipelineStages) {
+        expect(card[0]).toContain(model.pipelineStages.find((item) => item.slug === stage)?.name);
+      }
+      expect(card[0]).not.toMatch(/\bhidden\b|<template|https?:\/\//);
+    }
+    expect(home).not.toMatch(/\/lines\/|六个领域趋势|随机趋势/);
+  });
+
+  it("escapes homepage editorial fields and separates linked counter-evidence", () => {
+    const model = evolutionModel();
+    const trend = model.embodiedTrends[0];
+    const current = model.evolutionPhases.at(-1);
+    if (!trend || !current) throw new Error("Missing narrative fixture");
+    current.title = '<img src=x onerror="alert(1)">';
+    current.thesis = "<script>unsafe</script>";
+    trend.title = '<svg onload="alert(1)">';
+    trend.thesis = "<em>Thesis</em>";
+    trend.whyNow = "A & B";
+    trend.nextWatch = ["<iframe>Watch</iframe>"];
+    trend.counterEvents = [
+      { slug: 'counter" onclick="alert(1)', title: "<b>Counter</b>", role: "counter-evidence" },
+    ];
+    for (const locale of ["zh-CN", "en"] as const) {
+      const home = renderEmbodiedHome(model, locale);
+      expect(home).not.toMatch(/<img|<script|<svg|<em>|<iframe|<b>|onclick="alert/);
+      expect(home).toContain("&lt;img");
+      expect(home).toContain("&lt;em&gt;Thesis&lt;/em&gt;");
+      expect(home).toContain("A &amp; B");
+      expect(home).toContain("&lt;b&gt;Counter&lt;/b&gt;");
+      expect(home).toContain('href="__PREFIX__events/counter%22%20onclick%3D%22alert(1)/"');
+    }
+  });
+
   it("renders chronological phases, six evidence-bound impacts, and every Event in reverse order", () => {
     const model = evolutionModel();
     const page = renderTimeline(model, "zh-CN");
@@ -692,11 +762,13 @@ function evolutionModel(): StaticSiteModel {
     dataProfile: event.dataProfile,
     pipelineStages: event.dataProfile.pipelineStages,
   }));
-  model.evolutionPhases = buildPublicEmbodiedNarrative(
+  const narrative = buildPublicEmbodiedNarrative(
     model.embodiedEvents,
     evolutionPhases,
     embodiedTrends,
-  ).phases;
+  );
+  model.evolutionPhases = narrative.phases;
+  model.embodiedTrends = narrative.trends;
   return model;
 }
 

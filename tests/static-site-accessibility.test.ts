@@ -2,6 +2,9 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
+import { embodiedLaunchEvents } from "../src/catalog/embodied-data/events.js";
+import { embodiedTrends, evolutionPhases } from "../src/catalog/embodied-data/evolution.js";
+import { buildPublicEmbodiedNarrative } from "../src/pipeline/static-site/embodied-narrative.js";
 import { renderStaticPages } from "../src/pipeline/static-site/pages.js";
 import { embodiedSiteModel } from "./fixtures/embodied-site-model.js";
 
@@ -29,6 +32,44 @@ describe("embodied public-site accessibility", () => {
       expect(pipeline).toContain(`id="${stage.slug}"`);
       expect(pipeline).toContain(`data-pipeline-stage="${stage.slug}"`);
       expect(pipeline).toContain(stage.description);
+    }
+  });
+
+  it("keeps all trend articles readable with labeled headings and a polite daily status", () => {
+    const model = embodiedSiteModel();
+    const template = model.embodiedEvents[0];
+    if (!template) throw new Error("Missing Event fixture");
+    model.embodiedEvents = embodiedLaunchEvents.map((event) => ({
+      ...template,
+      slug: event.slug,
+      title: event.title,
+      happenedAt: event.date,
+      publishedAt: event.date,
+      dataProfile: event.dataProfile,
+      pipelineStages: event.dataProfile.pipelineStages,
+    }));
+    const narrative = buildPublicEmbodiedNarrative(
+      model.embodiedEvents,
+      evolutionPhases,
+      embodiedTrends,
+    );
+    model.evolutionPhases = narrative.phases;
+    model.embodiedTrends = narrative.trends;
+    const home = renderStaticPages(model).find((item) => item.path === "index.html")?.content ?? "";
+    expect(home).toContain('aria-labelledby="home-trends-title"');
+    expect(home).toContain('<h2 id="home-trends-title">');
+    expect(home).toMatch(/<p[^>]*data-trend-status[^>]*role="status"[^>]*aria-live="polite"/);
+    expect(home).toContain("策展目录顺序");
+    const cards = [
+      ...home.matchAll(/<article[^>]*data-embodied-trend="([^"]+)"[\s\S]*?<\/article>/g),
+    ];
+    expect(cards).toHaveLength(8);
+    expect(cards[0]?.[1]).toBe("teleoperation-and-human-demonstrations");
+    for (const [index, card] of cards.entries()) {
+      expect(card[0]).toContain(`aria-labelledby="trend-${index}-title"`);
+      expect(card[0]).toContain(`<h3 id="trend-${index}-title">`);
+      expect(card[0]).toContain("<h4>");
+      expect(card[0]).not.toMatch(/\bhidden\b|aria-hidden="true"|<template|<details/);
     }
   });
 

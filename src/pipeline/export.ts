@@ -611,10 +611,12 @@ async function optimizeStaticAssets(distDir: string): Promise<void> {
   const cssPath = join(distDir, "assets/app.css");
   const scriptPath = join(distDir, "assets/core.js");
   const timelineScriptPath = join(distDir, "assets/timeline.js");
-  const [css, script, timelineScript] = await Promise.all([
+  const trendsScriptPath = join(distDir, "assets/embodied-trends.js");
+  const [css, script, timelineScript, trendsScript] = await Promise.all([
     readFile(cssPath, "utf8"),
     readFile(scriptPath, "utf8"),
     readFile(timelineScriptPath, "utf8"),
+    readFile(trendsScriptPath, "utf8"),
   ]);
   const scriptOptions = {
     loader: "js" as const,
@@ -624,14 +626,17 @@ async function optimizeStaticAssets(distDir: string): Promise<void> {
     legalComments: "none" as const,
     target: "es2022",
   };
-  const [optimizedCss, optimizedScript, optimizedTimelineScript] = await Promise.all([
-    transform(css, { loader: "css", minify: true, legalComments: "none" }),
-    transform(script, scriptOptions),
-    transform(timelineScript, scriptOptions),
-  ]);
+  const [optimizedCss, optimizedScript, optimizedTimelineScript, optimizedTrendsScript] =
+    await Promise.all([
+      transform(css, { loader: "css", minify: true, legalComments: "none" }),
+      transform(script, scriptOptions),
+      transform(timelineScript, scriptOptions),
+      transform(trendsScript, scriptOptions),
+    ]);
   await Promise.all([
     writeFile(cssPath, optimizedCss.code, "utf8"),
     writeFile(scriptPath, optimizedScript.code, "utf8"),
     writeFile(timelineScriptPath, optimizedTimelineScript.code, "utf8"),
+    writeFile(trendsScriptPath, optimizedTrendsScript.code, "utf8"),
   ]);
 }

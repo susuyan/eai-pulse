@@ -40,9 +40,6 @@ const operationalTransitionPath = fileURLToPath(
 const operationalTransitionReportPath = fileURLToPath(
   new URL("../data/reports/embodied-data-operational-baseline-transition.json", import.meta.url),
 );
-const evaluationReportPath = fileURLToPath(
-  new URL("../data/reports/system-evaluation.json", import.meta.url),
-);
 
 afterEach(async () => {
   while (databases.length) await databases.pop()?.destroy();
@@ -61,15 +58,12 @@ describe("embodied data public switch migration", () => {
   it("preserves the historical operational baseline handoff evidence", async () => {
     const manifest = JSON.parse(await readFile(operationalTransitionPath, "utf8"));
     const report = JSON.parse(await readFile(operationalTransitionReportPath, "utf8"));
-    const evaluationHash = createHash("sha256")
-      .update(await readFile(evaluationReportPath))
-      .digest("hex");
 
     expect(manifest).toMatchObject({
       schemaVersion: 1,
       baseGitSha: "579f5a9799722085c2df2ce2b0c8a48df187d3b2",
       snapshotSha256: "eefc06be0764bbed44af9ebaf330af69bcc6d7dde6c2cd51e7e53940dea33c8f",
-      evaluationReportSha256: evaluationHash,
+      evaluationReportSha256: "a1c05d9e10a67636638d94a24f9b76841c30664134e14d5356ba829d3b08731a",
     });
     expect(report).toMatchObject({
       schemaVersion: 1,

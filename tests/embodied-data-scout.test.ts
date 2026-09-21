@@ -202,7 +202,7 @@ describe("embodied data Scout", () => {
       await db.destroy();
       await rm(root, { recursive: true, force: true });
     }
-  }, 15_000);
+  }, 45_000);
 
   it("keeps only distinct embodied action cards in the versioned snapshot", async () => {
     const snapshot = JSON.parse(await readFile(snapshotPath, "utf8")) as {

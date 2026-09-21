@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "policyVersion": "2026-07-14.v2",
-  "generatedAt": "2026-09-20T04:20:54.896Z",
+  "generatedAt": "2026-09-20T12:49:58.860Z",
   "source": {
     "name": "OpenAlex",
     "url": "https://developers.openalex.org/",
@@ -10115,6 +10115,32 @@
       ]
     },
     {
+      "eventSlug": "bridgedata-v2-reusable-demonstrations",
+      "arxivId": "2308.12952",
+      "paperTitle": "BridgeData V2: A Dataset for Robot Learning at Scale",
+      "openAlexId": "https://openalex.org/W4386185624",
+      "citedByCount": 12,
+      "recentCitations": 3,
+      "titleMatchScore": 1,
+      "topicRelevant": false,
+      "publicationDate": "2023-08-24",
+      "publicationDateDeltaDays": 0,
+      "qualified": false,
+      "route": "rejected",
+      "reasons": [
+        "title_match=1",
+        "citations=12",
+        "recent_citations=3",
+        "age_days=1123",
+        "publication_date_delta_days=0",
+        "outside_core_ai_research_scope"
+      ],
+      "evidenceUrls": [
+        "https://arxiv.org/abs/2308.12952",
+        "https://openalex.org/W4386185624"
+      ]
+    },
+    {
       "eventSlug": "bridgevla-a-data-efficient-generalizable-and-memory-augmented-vision-language-action-frame-2026-08-06",
       "arxivId": "2608.05042",
       "paperTitle": "BridgeVLA++: A Data-Efficient, Generalizable, and Memory-Augmented Vision-Language-Action Framework for 3D Manipulation",
@@ -12526,26 +12552,20 @@
       "eventSlug": "class-balanced-softmax-a-bayes-theory-based-method-for-long-tailed-recognition-2026-07-27",
       "arxivId": "2607.22258",
       "paperTitle": "Class-Balanced Softmax: A Bayes Theory-Based Method for Long-Tailed Recognition",
-      "openAlexId": "https://openalex.org/W7171466912",
+      "openAlexId": null,
       "citedByCount": 0,
       "recentCitations": 0,
-      "titleMatchScore": 1,
+      "titleMatchScore": 0,
       "topicRelevant": true,
       "publicationDate": "2026-07-24",
-      "publicationDateDeltaDays": 0,
+      "publicationDateDeltaDays": null,
       "qualified": false,
-      "route": "watch",
+      "route": "rejected",
       "reasons": [
-        "title_match=1",
-        "citations=0",
-        "recent_citations=0",
-        "age_days=58",
-        "publication_date_delta_days=0",
-        "impact_threshold_not_met"
+        "openalex_work_missing"
       ],
       "evidenceUrls": [
-        "https://arxiv.org/abs/2607.22258",
-        "https://openalex.org/W7171466912"
+        "https://arxiv.org/abs/2607.22258"
       ]
     },
     {
@@ -20506,6 +20526,32 @@
       "evidenceUrls": [
         "https://arxiv.org/abs/2607.08490",
         "https://openalex.org/W7167923651"
+      ]
+    },
+    {
+      "eventSlug": "droid-distributed-collection",
+      "arxivId": "2403.12945",
+      "paperTitle": "DROID: A Large-Scale In-The-Wild Robot Manipulation Dataset",
+      "openAlexId": "https://openalex.org/W4393027744",
+      "citedByCount": 3,
+      "recentCitations": 2,
+      "titleMatchScore": 1,
+      "topicRelevant": false,
+      "publicationDate": "2024-03-19",
+      "publicationDateDeltaDays": 0,
+      "qualified": false,
+      "route": "rejected",
+      "reasons": [
+        "title_match=1",
+        "citations=3",
+        "recent_citations=2",
+        "age_days=915",
+        "publication_date_delta_days=0",
+        "outside_core_ai_research_scope"
+      ],
+      "evidenceUrls": [
+        "https://arxiv.org/abs/2403.12945",
+        "https://openalex.org/W4393027744"
       ]
     },
     {
@@ -46958,6 +47004,32 @@
       ]
     },
     {
+      "eventSlug": "open-x-standardized-datasets",
+      "arxivId": "2310.08864",
+      "paperTitle": "Open X-Embodiment: Robotic Learning Datasets and RT-X Models",
+      "openAlexId": "https://openalex.org/W4387764390",
+      "citedByCount": 103,
+      "recentCitations": 37,
+      "titleMatchScore": 1,
+      "topicRelevant": true,
+      "publicationDate": "2023-10-13",
+      "publicationDateDeltaDays": 0,
+      "qualified": false,
+      "route": "watch",
+      "reasons": [
+        "title_match=1",
+        "citations=103",
+        "recent_citations=37",
+        "age_days=1073",
+        "publication_date_delta_days=0",
+        "impact_threshold_not_met"
+      ],
+      "evidenceUrls": [
+        "https://arxiv.org/abs/2310.08864",
+        "https://openalex.org/W4387764390"
+      ]
+    },
+    {
       "eventSlug": "openai-039-s-gpt-5-6-sol-ultra-reportedly-solves-a-50-year-old-math-problem-in-under-an-ho-2026-07-12",
       "arxivId": "",
       "paperTitle": "OpenAI&#039;s GPT-5.6 Sol Ultra reportedly solves a 50-year-old math problem in under an hour",
@@ -49698,6 +49770,24 @@
         "https://arxiv.org/abs/2608.24574",
         "https://openalex.org/W7204267973"
       ]
+    },
+    {
+      "eventSlug": "pi0-data-mixture-policy",
+      "arxivId": "",
+      "paperTitle": "π0 把异构机器人数据混合作为基础模型前提",
+      "openAlexId": null,
+      "citedByCount": 0,
+      "recentCitations": 0,
+      "titleMatchScore": 0,
+      "topicRelevant": true,
+      "publicationDate": "2024-10-31",
+      "publicationDateDeltaDays": null,
+      "qualified": false,
+      "route": "rejected",
+      "reasons": [
+        "paper_identity_missing"
+      ],
+      "evidenceUrls": []
     },
     {
       "eventSlug": "pi0-vision-language-action-flow-model",
@@ -56052,6 +56142,32 @@
       ]
     },
     {
+      "eventSlug": "robomind-unified-teleoperation",
+      "arxivId": "2412.13877",
+      "paperTitle": "RoboMIND: Benchmark on Multi-embodiment Intelligence Normative Data for Robot Manipulation",
+      "openAlexId": "https://openalex.org/W4405626805",
+      "citedByCount": 2,
+      "recentCitations": 2,
+      "titleMatchScore": 1,
+      "topicRelevant": false,
+      "publicationDate": "2024-12-18",
+      "publicationDateDeltaDays": 0,
+      "qualified": false,
+      "route": "rejected",
+      "reasons": [
+        "title_match=1",
+        "citations=2",
+        "recent_citations=2",
+        "age_days=641",
+        "publication_date_delta_days=0",
+        "outside_core_ai_research_scope"
+      ],
+      "evidenceUrls": [
+        "https://arxiv.org/abs/2412.13877",
+        "https://openalex.org/W4405626805"
+      ]
+    },
+    {
       "eventSlug": "roboreact-agentic-skill-distillation-from-generated-egocentric-videos-for-generalizable-wh-2026-08-05",
       "arxivId": "2608.03387",
       "paperTitle": "RoboReact: Agentic Skill Distillation from Generated Egocentric Videos for Generalizable Whole-Body Manipulation",
@@ -56919,6 +57035,32 @@
       "evidenceUrls": [
         "https://arxiv.org/abs/2608.12099",
         "https://openalex.org/W7202358016"
+      ]
+    },
+    {
+      "eventSlug": "rt1-data-driven-robotics",
+      "arxivId": "2212.06817",
+      "paperTitle": "RT-1: Robotics Transformer for Real-World Control at Scale",
+      "openAlexId": "https://openalex.org/W4311559655",
+      "citedByCount": 40,
+      "recentCitations": 19,
+      "titleMatchScore": 1,
+      "topicRelevant": true,
+      "publicationDate": "2022-12-13",
+      "publicationDateDeltaDays": 0,
+      "qualified": false,
+      "route": "watch",
+      "reasons": [
+        "title_match=1",
+        "citations=40",
+        "recent_citations=19",
+        "age_days=1377",
+        "publication_date_delta_days=0",
+        "impact_threshold_not_met"
+      ],
+      "evidenceUrls": [
+        "https://arxiv.org/abs/2212.06817",
+        "https://openalex.org/W4311559655"
       ]
     },
     {

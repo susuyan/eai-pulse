@@ -134,14 +134,14 @@ export const embodiedPrioritySources: readonly EmbodiedPrioritySource[] = [
       "Official AI page contains dated research metadata. Robots returned 404; policy review remains required before shadow observation.",
   },
   {
-    slug: "robotwin",
-    endpoint: "https://robotwin-platform.github.io/",
-    adapter: "web-scraper",
-    acquisition: "html",
+    slug: "robocasa",
+    endpoint: "https://api.github.com/repos/robocasa/robocasa/releases?per_page=3",
+    adapter: "json-api",
+    acquisition: "api",
     adapterVersion: "1",
     reviewedOn: "2026-09-21",
     reviewNote:
-      "Official project page contains a dated release notice. Robots returned 404; Task 2 must bind real dates to project announcements.",
+      "Official release API returns v1.0 and v0.2 with explicit published_at dates and public release links. Task 2 must prove generic release-field normalization.",
   },
   {
     slug: "nist-physical-ai",

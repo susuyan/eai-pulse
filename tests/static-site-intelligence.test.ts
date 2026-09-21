@@ -33,9 +33,48 @@ import {
   timelineEventsForPresentation,
 } from "../src/pipeline/static-site/intelligence.js";
 import { renderEmbodiedHome } from "../src/pipeline/static-site/pages/home.js";
+import { renderScoutPage } from "../src/pipeline/static-site/pages/scout.js";
 import { renderStaticPages, renderTimeline } from "../src/pipeline/static-site/pages.js";
 
 describe("static-site intelligence consumption model", () => {
+  it("shows the proposed artifact and trigger fact on every action card", () => {
+    const model = embodiedSiteModel();
+    model.scout = [
+      {
+        slug: "collection-route-example",
+        kind: "collection-route",
+        title: "验证采集路线",
+        observation: "触发事实",
+        hypothesis: "验证假设",
+        whyNow: "验证时机",
+        targetAudience: "采集运营负责人",
+        suggestedAction: "执行一个小规模验证",
+        artifactIdea: "路线对比记录与继续或停止决策",
+        counterSignals: "无法复现时停止",
+        horizon: "7-30d",
+        confidenceScore: 90,
+        evidenceScore: 90,
+        noveltyScore: 80,
+        leverageScore: 85,
+        totalScore: 86,
+        publishedAt: "2026-09-20T00:00:00.000Z",
+        evidence: [
+          {
+            slug: "embodied-event",
+            title: "Embodied event",
+            factSummary: "Verified collection workflow with a reproducible audit trail.",
+          },
+        ],
+      },
+    ];
+
+    const page = renderScoutPage(model, "zh-CN");
+    expect(page).toContain("建议产物");
+    expect(page).toContain("路线对比记录与继续或停止决策");
+    expect(page).toContain("依据事实");
+    expect(page).toContain("Verified collection workflow with a reproducible audit trail.");
+  });
+
   it("server-renders the phase handoff and all eight trends in curated order", () => {
     const model = evolutionModel();
     model.generatedAt = "2027-01-01T00:00:00Z";

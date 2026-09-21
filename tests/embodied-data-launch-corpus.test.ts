@@ -21,6 +21,7 @@ import { evaluateEventReadiness } from "../src/pipeline/readiness.js";
 const manifestPath = fileURLToPath(
   new URL("fixtures/embodied-data/launch/event-source-manifest.json", import.meta.url),
 );
+const snapshotPath = fileURLToPath(new URL("../data/snapshot/v1.json", import.meta.url));
 const stages = EmbodiedPipelineStageSchema.options;
 const negativeGoldenSet = [/GPT-[\d.]+/i, /通用大模型/, /AI Act/i, /Codex/i];
 const evidenceBySlug = new Map(embodiedEventEvidence.map((row) => [row.slug, row]));
@@ -78,6 +79,20 @@ describe("embodied data launch corpus", () => {
       ])
         expect(field.trim().length, event.slug).toBeGreaterThan(20);
     }
+  });
+
+  it("keeps every curated launch Event in the versioned public snapshot", async () => {
+    const snapshot = JSON.parse(await readFile(snapshotPath, "utf8")) as {
+      events: Array<{ slug: string; contentScope?: string; status: string; happenedAt: string }>;
+    };
+    const published = snapshot.events.filter(
+      (event) => event.contentScope === "embodied-data" && event.status === "published",
+    );
+    const publishedSlugs = new Set(published.map((event) => event.slug));
+
+    for (const event of embodiedLaunchEvents)
+      expect(publishedSlugs.has(event.slug), event.slug).toBe(true);
+    expect(published.some((event) => event.happenedAt.startsWith("2026-"))).toBe(true);
   });
 
   it("preserves publication readiness and publisher independence when backfill is seeded", async () => {

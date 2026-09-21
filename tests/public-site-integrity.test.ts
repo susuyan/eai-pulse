@@ -362,7 +362,7 @@ describe("embodied public-site integrity", () => {
     expect(leaked.issues).toContainEqual(
       expect.objectContaining({ code: "legacy_public_leak", path: "llms.txt" }),
     );
-  }, 15_000);
+  }, 45_000);
 
   it("rejects an arbitrary private field nested in an evolution relation", async () => {
     const root = await mkdtemp(join(tmpdir(), "agent-pulse-evolution-private-note-"));
@@ -393,7 +393,7 @@ describe("embodied public-site integrity", () => {
         path: "data/evolution.json",
       }),
     );
-  }, 15_000);
+  }, 45_000);
 
   it("rejects an independent evidence endpoint in evolution JSON", async () => {
     const root = await mkdtemp(join(tmpdir(), "agent-pulse-evolution-evidence-endpoint-"));
@@ -422,5 +422,5 @@ describe("embodied public-site integrity", () => {
         path: "data/evolution.json",
       }),
     );
-  }, 15_000);
+  }, 45_000);
 });

@@ -20,6 +20,7 @@ import {
   StandardEventRoleSchema,
   StandardProfileSchema,
 } from "../domain/embodied-data-objects.js";
+import { isEmbodiedScoutKind } from "../domain/embodied-scout.js";
 import {
   canonicalizeUrl,
   isSensitiveObjectKey,
@@ -1669,6 +1670,8 @@ async function restoreSnapshot(
   const scoutIdBySlug = new Map<string, string>();
   for (const value of snapshot.scoutInsights ?? []) {
     const slug = requiredString(value, "slug");
+    const kind = requiredString(value, "kind");
+    const isPublicKind = isEmbodiedScoutKind(kind);
     const existing = await db
       .selectFrom("scout_insights")
       .select("id")
@@ -1677,8 +1680,8 @@ async function restoreSnapshot(
     const id = existing?.id ?? requiredString(value, "id");
     const row = {
       slug,
-      kind: requiredString(value, "kind"),
-      status: "published",
+      kind,
+      status: isPublicKind ? "published" : "archived",
       title: requiredString(value, "title"),
       observation: requiredString(value, "observation"),
       hypothesis: requiredString(value, "hypothesis"),
@@ -1696,7 +1699,7 @@ async function restoreSnapshot(
       cooldown_key: `snapshot:${slug}`,
       generated_at: requiredString(value, "generatedAt"),
       expires_at: optionalString(value.expiresAt),
-      published_at: optionalString(value.publishedAt),
+      published_at: isPublicKind ? optionalString(value.publishedAt) : null,
       created_at: requiredString(value, "createdAt"),
       updated_at: requiredString(value, "createdAt"),
     };

@@ -25,6 +25,7 @@ import {
   type StandardProfile,
   StandardProfileSchema,
 } from "../domain/embodied-data-objects.js";
+import { embodiedScoutKinds } from "../domain/embodied-scout.js";
 import {
   type CollectedSignal,
   type OriginReference,
@@ -443,7 +444,9 @@ export class Repository {
           .innerJoin("events", "events.id", "scout_evidence.event_id")
           .select("scout_insights.id")
           .where("scout_insights.status", "=", "published")
+          .where("scout_insights.kind", "in", [...embodiedScoutKinds])
           .where("events.content_scope", "=", "embodied-data")
+          .where("events.status", "=", "published")
           .groupBy("scout_insights.id")
           .execute()
       ).map((row) => row.id),
@@ -475,6 +478,7 @@ export class Repository {
           .select(["events.slug", "events.title", "events.fact_summary as factSummary"])
           .where("scout_evidence.insight_id", "=", insight.id)
           .where("events.content_scope", "=", "embodied-data")
+          .where("events.status", "=", "published")
           .execute();
         return {
           slug: insight.slug,

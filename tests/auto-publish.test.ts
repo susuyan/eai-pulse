@@ -102,7 +102,11 @@ describe("autonomous publication", () => {
 
   it("publishes or archives old Scout inbox items without a human queue", async () => {
     const db = await database();
-    const insight = await db.selectFrom("scout_insights").select("id").executeTakeFirstOrThrow();
+    const insight = await db
+      .selectFrom("scout_insights")
+      .select("id")
+      .where("slug", "=", "scout-collection-route")
+      .executeTakeFirstOrThrow();
     await db
       .updateTable("scout_insights")
       .set({ status: "inbox", published_at: null })

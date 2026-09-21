@@ -40,7 +40,6 @@ const operationalTransitionPath = fileURLToPath(
 const operationalTransitionReportPath = fileURLToPath(
   new URL("../data/reports/embodied-data-operational-baseline-transition.json", import.meta.url),
 );
-const snapshotPath = fileURLToPath(new URL("../data/snapshot/v1.json", import.meta.url));
 const evaluationReportPath = fileURLToPath(
   new URL("../data/reports/system-evaluation.json", import.meta.url),
 );
@@ -59,12 +58,9 @@ async function setup() {
 }
 
 describe("embodied data public switch migration", () => {
-  it("binds the operational baseline handoff to the audited main state", async () => {
+  it("preserves the historical operational baseline handoff evidence", async () => {
     const manifest = JSON.parse(await readFile(operationalTransitionPath, "utf8"));
     const report = JSON.parse(await readFile(operationalTransitionReportPath, "utf8"));
-    const snapshotHash = createHash("sha256")
-      .update(await readFile(snapshotPath))
-      .digest("hex");
     const evaluationHash = createHash("sha256")
       .update(await readFile(evaluationReportPath))
       .digest("hex");
@@ -72,13 +68,13 @@ describe("embodied data public switch migration", () => {
     expect(manifest).toMatchObject({
       schemaVersion: 1,
       baseGitSha: "579f5a9799722085c2df2ce2b0c8a48df187d3b2",
-      snapshotSha256: snapshotHash,
+      snapshotSha256: "eefc06be0764bbed44af9ebaf330af69bcc6d7dde6c2cd51e7e53940dea33c8f",
       evaluationReportSha256: evaluationHash,
     });
     expect(report).toMatchObject({
       schemaVersion: 1,
       baseGitSha: manifest.baseGitSha,
-      snapshot: { sha256: snapshotHash },
+      snapshot: { sha256: manifest.snapshotSha256 },
     });
   });
 

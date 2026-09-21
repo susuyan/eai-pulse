@@ -82,7 +82,7 @@ const reportSchema = z
       (report.completedAt !== null && Date.parse(report.completedAt) > generated) ||
       report.results.some(
         (row) =>
-          (row.evidenceWindow.eligible &&
+          ((row.evidenceWindow.eligible || row.shadowTransition !== null) &&
             (row.policy !== "allowed_metadata" ||
               row.status !== "healthy" ||
               row.itemCount === 0 ||
@@ -90,7 +90,8 @@ const reportSchema = z
               row.evidenceWindow.qualifyingChecks !== 3 ||
               report.window.status !== "complete")) ||
           (row.shadowTransition !== null &&
-            (row.lifecycle !== "shadow" ||
+            (!row.evidenceWindow.eligible ||
+              row.lifecycle !== "shadow" ||
               report.completedAt === null ||
               report.window.status !== "complete" ||
               Date.parse(row.shadowTransition.at) < Date.parse(report.completedAt ?? "") ||
@@ -171,10 +172,19 @@ export async function buildPrioritySourceHealthReport(db: Kysely<DatabaseSchema>
     const check = checks.find((row) => row.source_id === source.id);
     const observation = eligibility.find((row) => row.sourceId === source.id);
     const transition =
-      completedAt && completedSpacedRuns === 3 && source.lifecycle_status === "shadow"
+      completedAt &&
+      completedSpacedRuns === 3 &&
+      source.lifecycle_status === "shadow" &&
+      observation?.eligible &&
+      observation.checkIds.length === 3
         ? transitions.find((job) => {
             if (
               job.source_id !== source.id ||
+              job.error_count !== 0 ||
+              job.error_summary !== null ||
+              job.collected_count !== 0 ||
+              job.created_count !== 0 ||
+              job.skipped_count !== 0 ||
               !job.finished_at ||
               Date.parse(job.started_at) < Date.parse(completedAt) ||
               Date.parse(job.finished_at) < Date.parse(job.started_at) ||
@@ -193,38 +203,12 @@ export async function buildPrioritySourceHealthReport(db: Kysely<DatabaseSchema>
                 new Set(details.checkIds).size !== 3
               )
                 return false;
-              const evidence = checks
-                .filter((row) => row.source_id === source.id && details.checkIds.includes(row.id))
-                .sort((a, b) => Date.parse(a.started_at) - Date.parse(b.started_at));
+              // The observation gate owns the full live contract; never reconstruct a weaker window.
               return (
-                evidence.length === 3 &&
-                evidence.every(
-                  (row, index) =>
-                    row.status === "healthy" &&
-                    row.policy_status === "allowed_metadata" &&
-                    row.contract_fingerprint !== null &&
-                    row.item_count > 0 &&
-                    row.quality_score >= 60 &&
-                    row.freshness_hours !== null &&
-                    row.freshness_hours <= 2160 &&
-                    Date.parse(row.finished_at) <= Date.parse(job.started_at) &&
-                    (index === 0 ||
-                      Date.parse(row.started_at) -
-                        Date.parse(evidence[index - 1]?.finished_at ?? "") >=
-                        6 * 3_600_000) &&
-                    auditEvidence.records.some(
-                      (record) =>
-                        record.auditComplete &&
-                        !record.incomplete &&
-                        record.checks.some(
-                          (member) =>
-                            member.sourceSlug === slug &&
-                            member.startedAt === row.started_at &&
-                            member.finishedAt === row.finished_at &&
-                            member.contractFingerprint === row.contract_fingerprint,
-                        ),
-                    ),
-                )
+                observation.checkIds.every((id) => details.checkIds.includes(id)) &&
+                checks
+                  .filter((row) => observation.checkIds.includes(row.id))
+                  .every((row) => Date.parse(row.finished_at) <= Date.parse(job.started_at))
               );
             } catch {
               return false;

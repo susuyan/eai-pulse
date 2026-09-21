@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { afterEach, describe, expect, it } from "vitest";
 import { embodiedPrioritySourceSlugs } from "../src/catalog/embodied-data/priority-sources.js";
 import { loadConfig } from "../src/config/env.js";
@@ -26,6 +27,23 @@ async function setup() {
 }
 
 describe("priority source audit boundaries", () => {
+  it("rejects a forged transition on the first report's pending pre-existing RoboCasa shadow", async () => {
+    const report = JSON.parse(
+      await readFile("data/reports/embodied-priority-source-health.json", "utf8"),
+    );
+    report.newlyShadow = 1;
+    report.window = { ...report.window, status: "complete", completedSpacedRuns: 3 };
+    const row = report.results.find((entry: { slug: string }) => entry.slug === "robocasa");
+    row.shadowTransition = {
+      from: "draft",
+      to: "shadow",
+      at: report.generatedAt,
+      qualifyingChecks: 3,
+    };
+    expect(row.evidenceWindow.eligible).toBe(false);
+    expect(() => validatePrioritySourceHealthReport(report)).toThrow();
+    expect(priorityReportFreshness(report)).toBe("invalid");
+  });
   it("enforces reviewed policy for direct callers even when an override requests access", async () => {
     const { db, config } = await setup();
     const source = await db

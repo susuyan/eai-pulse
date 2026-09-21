@@ -201,6 +201,55 @@ async function realPriorityAudits(cohort = false) {
 }
 
 describe("priority draft observation evidence", () => {
+  it("rejects a report when real verified audit evidence is relabeled failed", async () => {
+    const { db, source } = await realPriorityAudits(true);
+    await setObservationMode(db, source.id, true);
+    expect((await buildPrioritySourceHealthReport(db)).newlyShadow).toBe(1);
+    await db
+      .updateTable("jobs")
+      .set({ status: "failed" })
+      .where("type", "=", "source-audit")
+      .execute();
+    await expect(buildPrioritySourceHealthReport(db)).rejects.toThrow();
+  });
+
+  it("requires the verify job's selected checks to equal the current valid window", async () => {
+    const { db, source, config } = await realPriorityAudits(true);
+    await setObservationMode(db, source.id, true);
+    vi.setSystemTime(new Date(Date.parse(fixture.now) + 1000));
+    await auditSources(db, config, { sourceId: source.id }, { fetcher: deterministicFetcher });
+    const report = await buildPrioritySourceHealthReport(db);
+    expect(report.results.find((row) => row.slug === source.slug)?.evidenceWindow.eligible).toBe(
+      true,
+    );
+    expect(report.newlyShadow).toBe(0);
+  });
+
+  it("does not credit a verify job with contradictory success counters", async () => {
+    const { db, source } = await realPriorityAudits(true);
+    await setObservationMode(db, source.id, true);
+    await db
+      .updateTable("jobs")
+      .set({ error_count: 1 })
+      .where("type", "=", "observation_mode")
+      .execute();
+    expect((await buildPrioritySourceHealthReport(db)).newlyShadow).toBe(0);
+  });
+
+  it.each([
+    { schema_status: "invalid" },
+    { duplicate_ratio_bps: 8000 },
+    { contract_fingerprint: "0".repeat(64) },
+    { item_count: 0 },
+    { policy_status: "pending" },
+  ])("withdraws transition credit when the current window is invalid: %j", async (patch) => {
+    const { db, source } = await realPriorityAudits(true);
+    await setObservationMode(db, source.id, true);
+    await db.updateTable("source_checks").set(patch).where("source_id", "=", source.id).execute();
+    const report = await buildPrioritySourceHealthReport(db);
+    expect(report.newlyShadow).toBe(0);
+    expect(report.results.find((row) => row.slug === source.slug)?.shadowTransition).toBeNull();
+  });
   it("counts only evidenced verify transitions after the latest complete cohort audit", async () => {
     const { db, source, config } = await realPriorityAudits(true);
     expect((await buildPrioritySourceHealthReport(db)).newlyShadow).toBe(0);

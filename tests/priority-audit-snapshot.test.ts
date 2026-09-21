@@ -95,6 +95,8 @@ describe("governed priority audit snapshot", () => {
     "hash",
     "target-order",
     "check-order",
+    "failed-status",
+    "partial-status",
   ])("rejects %s evidence before restoring any jobs", async (mode) => {
     const { directory, file, snapshot } = await artifact();
     const evidence = snapshot.priorityAuditEvidence[0];
@@ -104,7 +106,11 @@ describe("governed priority audit snapshot", () => {
     if (mode === "hash") evidence.contentHash = "0".repeat(64);
     if (mode === "target-order") evidence.targetSlugs.reverse();
     if (mode === "check-order") evidence.checks.reverse();
-    if (["duplicate", "target-order", "check-order"].includes(mode)) {
+    if (mode === "failed-status") evidence.status = "failed";
+    if (mode === "partial-status") evidence.status = "partial";
+    if (
+      ["duplicate", "target-order", "check-order", "failed-status", "partial-status"].includes(mode)
+    ) {
       const { contentHash: _previous, ...payload } = evidence;
       evidence.contentHash = sha256(JSON.stringify(payload));
     }
@@ -208,5 +214,48 @@ describe("governed priority audit snapshot", () => {
         .where("job_id", "=", restored.id)
         .execute(),
     ).toHaveLength(11);
+  });
+
+  it.each([
+    { status: "failed", incomplete: false, healthy: false },
+    { status: "partial", incomplete: false, healthy: true },
+    { status: "failed", incomplete: true, healthy: false },
+    { status: "partial", incomplete: true, healthy: true },
+  ] as const)("preserves producer-consistent terminal evidence: %j", async ({
+    status,
+    incomplete,
+    healthy,
+  }) => {
+    const { db, directory, file, snapshot } = await artifact();
+    const record = snapshot.priorityAuditEvidence[0];
+    record.status = status;
+    record.auditComplete = !incomplete;
+    record.incomplete = incomplete;
+    if (incomplete) record.checks.pop();
+    record.checks[0].status = "failed";
+    if (healthy) record.checks[1].status = "healthy";
+    record.collectedCount = incomplete ? 11 : 12;
+    record.healthyCount = Number(healthy);
+    record.skippedCount = record.collectedCount - 1 - Number(healthy);
+    record.errorCount = incomplete ? 2 : 1;
+    const { contentHash: _previous, ...payload } = record;
+    record.contentHash = sha256(JSON.stringify(payload));
+    await writeFile(file, JSON.stringify(snapshot));
+    const target = await setup();
+    await restoreRepositorySnapshot(target.db, directory, file);
+    await writeRepositorySnapshot(target.db, directory, join(directory, "terminal-roundtrip.json"));
+    expect(
+      JSON.parse(await readFile(join(directory, "terminal-roundtrip.json"), "utf8"))
+        .priorityAuditEvidence,
+    ).toEqual([record]);
+    expect(
+      (
+        await db
+          .selectFrom("jobs")
+          .select("status")
+          .where("type", "=", "source-audit")
+          .executeTakeFirstOrThrow()
+      ).status,
+    ).toBe("succeeded");
   });
 });

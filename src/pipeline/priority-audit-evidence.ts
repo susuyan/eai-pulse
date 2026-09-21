@@ -92,6 +92,14 @@ export function validatePriorityAuditEvidence(value: unknown): PriorityAuditEvid
     const memberOrder = [...members].sort((a, b) => a.localeCompare(b));
     const start = Date.parse(record.startedAt);
     const finish = record.finishedAt === null ? null : Date.parse(record.finishedAt);
+    const failures = record.checks.filter((check) => check.status === "failed").length;
+    const healthy = record.checks.filter((check) => check.status === "healthy").length;
+    const skipped = record.checks.filter((check) => check.status === "skipped").length;
+    const terminalStatus = record.errorCount
+      ? record.healthyCount
+        ? "partial"
+        : "failed"
+      : "succeeded";
     if (
       seen.has(record.runHash) ||
       record.runHash !== runHash(record.startedAt, record.targetSlugs) ||
@@ -109,8 +117,21 @@ export function validatePriorityAuditEvidence(value: unknown): PriorityAuditEvid
       (finish !== null && finish > Date.now()) ||
       record.checks.some((check) => !targets.has(check.sourceSlug)) ||
       (record.status === "running"
-        ? finish !== null || record.auditComplete
-        : finish === null || finish < start) ||
+        ? finish !== null ||
+          record.auditComplete ||
+          record.incomplete ||
+          record.collectedCount !== 0 ||
+          record.healthyCount !== 0 ||
+          record.skippedCount !== 0 ||
+          record.errorCount !== 0
+        : finish === null ||
+          finish < start ||
+          record.status !== terminalStatus ||
+          record.auditComplete === record.incomplete ||
+          record.collectedCount !== members.size ||
+          record.healthyCount !== healthy ||
+          record.skippedCount !== skipped ||
+          record.errorCount !== failures + Number(record.incomplete)) ||
       record.checks.some(
         (check) =>
           Date.parse(check.startedAt) < start ||
@@ -118,15 +139,7 @@ export function validatePriorityAuditEvidence(value: unknown): PriorityAuditEvid
           Date.parse(check.startedAt) > Date.parse(check.finishedAt) ||
           (finish !== null && Date.parse(check.finishedAt) > finish),
       ) ||
-      (record.auditComplete &&
-        (record.incomplete ||
-          members.size !== targets.size ||
-          record.collectedCount !== members.size ||
-          record.healthyCount !==
-            record.checks.filter((check) => check.status === "healthy").length ||
-          record.skippedCount !==
-            record.checks.filter((check) => check.status === "skipped").length ||
-          record.errorCount !== record.checks.filter((check) => check.status === "failed").length))
+      (record.auditComplete && (record.incomplete || members.size !== targets.size))
     ) {
       throw new Error("Invalid or conflicting priority audit evidence");
     }

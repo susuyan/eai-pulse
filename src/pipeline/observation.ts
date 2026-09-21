@@ -286,7 +286,7 @@ function observationRejection(
       return "policy_review_missing";
     return priorityWindowRejection(
       source,
-      checks,
+      checks.filter((check) => check.job_id !== null || check.contract_fingerprint !== null),
       now,
       checkIds,
       checksByJob,

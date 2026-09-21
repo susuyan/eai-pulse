@@ -12,11 +12,13 @@ import { migrateToLatest } from "../src/db/migrate.js";
 import { Repository } from "../src/db/repository.js";
 import { seedDatabase } from "../src/db/seed.js";
 import type { SourceCheckRow, SourceRow } from "../src/db/types.js";
+import { sourceRowContractFingerprint } from "../src/domain/source-contract.js";
 import {
   autoEnableObservation,
   observationEligibility,
   setObservationMode,
 } from "../src/pipeline/observation.js";
+import { restoreRepositorySnapshot, writeRepositorySnapshot } from "../src/pipeline/snapshot.js";
 import { auditSources } from "../src/pipeline/source-audit.js";
 import { sourceOperationReadiness } from "../src/pipeline/source-operations.js";
 import fixture from "./fixtures/embodied-data/priority-source-observation.json" with {
@@ -54,6 +56,7 @@ function required<T>(value: T | undefined): T {
 }
 
 afterEach(async () => {
+  contracts.splice(1);
   vi.restoreAllMocks();
   vi.useRealTimers();
   vi.unstubAllEnvs();
@@ -189,6 +192,46 @@ async function realPriorityAudits() {
 
 describe("priority draft observation evidence", () => {
   it.each([
+    null,
+    "53b2bd337ea7bacd0fa1835f9bc8b72c5f8caae5b867cdefaf17e1950fe3793a",
+  ])("treats only legacy fingerprint-free orphans as non-evidence (%s)", async (fingerprint) => {
+    const { db, source, eligibility } = await prioritySetup();
+    const check = await db
+      .selectFrom("source_checks")
+      .selectAll()
+      .where("source_id", "=", source.id)
+      .executeTakeFirstOrThrow();
+    await db
+      .insertInto("source_checks")
+      .values({ ...check, id: "legacy-orphan", job_id: null, contract_fingerprint: fingerprint })
+      .execute();
+    expect(await eligibility()).toMatchObject(
+      fingerprint ? { eligible: false, reason: "invalid_check_time" } : { eligible: true },
+    );
+  });
+
+  it("retains the same three-check gate after governed snapshot restore", async () => {
+    const { db, source } = await prioritySetup();
+    const directory = await mkdtemp(join(tmpdir(), "priority-window-snapshot-"));
+    directories.push(directory);
+    await writeRepositorySnapshot(db, directory);
+    const config = loadConfig({ NODE_ENV: "test", DATABASE_URL: "sqlite::memory:" });
+    const restored = createDatabase(config);
+    databases.push(restored);
+    await migrateToLatest(restored, config);
+    await seedDatabase(restored);
+    await restoreRepositorySnapshot(restored, directory);
+    expect(
+      (await observationEligibility(restored)).find((row) => row.slug === source.slug),
+    ).toMatchObject({ eligible: true });
+    const jobs = await restored
+      .selectFrom("jobs")
+      .selectAll()
+      .where("type", "=", "source-audit")
+      .execute();
+    expect(jobs).toHaveLength(3);
+  });
+  it.each([
     false,
     true,
   ])("rejects missing target evidence after a real check insert failure (cohort=%s)", async (cohort) => {
@@ -220,6 +263,11 @@ describe("priority draft observation evidence", () => {
   it("accepts a complete real cohort with a healthy target and another persisted failure", async () => {
     const { db, config, repository, source, eligibility } = await realPriorityAudits();
     const other = required(await repository.getSourceByIdOrSlug("internrobotics"));
+    contracts.push({
+      ...required(contracts[0]),
+      slug: other.slug,
+      contractFingerprint: sourceRowContractFingerprint(other),
+    });
     const report = await auditSources(
       db,
       config,

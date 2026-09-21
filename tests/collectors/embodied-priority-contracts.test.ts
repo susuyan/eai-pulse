@@ -62,7 +62,7 @@ const context = (
 });
 
 describe("embodied priority fixture contracts", () => {
-  it("has exactly the approved 12-source cohort and keeps policy pending", () => {
+  it("has exactly the approved 12-source cohort and does not use fixture evidence as policy approval", () => {
     expect(
       fixtures()
         .map((fixture) => fixture.slug)
@@ -84,7 +84,6 @@ describe("embodied priority fixture contracts", () => {
         adapter: fixture.adapter,
         adapterVersion: source?.adapterVersion,
         status: "passed",
-        policy: { status: fixture.policyStatus, reviewer: null, reviewedAt: null },
       });
       expect(source?.enabled).toBe(false);
       expect(source?.lifecycleStatus).not.toBe("active");

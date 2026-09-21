@@ -34,6 +34,42 @@ async function setupCli() {
 }
 
 describe("source audit CLI", () => {
+  it("resolves the exact priority cohort and rejects mixed or oversized execution", async () => {
+    expect(parseAuditArgs(["--cohort=embodied-priority", "--concurrency=4"])).toMatchObject({
+      cohort: "embodied-priority",
+      concurrency: 4,
+    });
+    expect(() => parseAuditArgs(["--cohort=embodied-priority", "--source=openai"])).toThrow();
+    expect(() => parseAuditArgs(["--cohort=embodied-priority", "--concurrency=5"])).toThrow();
+    const { db } = await setupCli();
+    await db.updateTable("sources").set({ maintenance_status: "restricted" }).execute();
+    const output = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    await runAuditCli(["--cohort=embodied-priority", "--concurrency=4"]);
+    const report = JSON.parse(String(output.mock.calls.at(-1)?.[0]));
+    expect(report.total).toBe(12);
+    expect(report.results.every((row: { policy: string }) => row.policy === "restricted")).toBe(
+      true,
+    );
+    expect(report.results.map((row: { slug: string }) => row.slug)).toEqual([
+      "samr-standards",
+      "beijing-humanoid-center",
+      "internrobotics",
+      "horizon-holomotion",
+      "opendrivelab",
+      "pnp-robotics",
+      "nvidia-isaac-groot",
+      "figure-ai",
+      "one-x",
+      "robocasa",
+      "nist-physical-ai",
+      "itu-robot-data-factory",
+    ]);
+    expect(JSON.stringify(report)).not.toContain("sourceId");
+    expect(JSON.stringify(report)).not.toContain("jobId");
+    const before = await db.selectFrom("jobs").selectAll().execute();
+    await runAuditCli(["--cohort=embodied-priority", "--report-only"]);
+    expect(await db.selectFrom("jobs").selectAll().execute()).toEqual(before);
+  });
   it("accepts separated and inline values plus the output alias", () => {
     expect(
       parseAuditArgs([

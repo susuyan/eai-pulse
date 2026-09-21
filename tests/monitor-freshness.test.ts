@@ -3,8 +3,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { checkFreshness } from "../src/cli/monitor-check.js";
+import { loadConfig } from "../src/config/env.js";
+import { createDatabase } from "../src/db/database.js";
+import { migrateToLatest } from "../src/db/migrate.js";
+import { seedDatabase } from "../src/db/seed.js";
 import { evaluateVersionedFreshness } from "../src/pipeline/evaluation-policy.js";
 import { buildSystemEvaluationReport } from "../src/pipeline/evaluation-progress.js";
+import { generateMonitorReport, isCritical } from "../src/pipeline/monitor.js";
 
 const directories: string[] = [];
 afterEach(async () => {
@@ -14,6 +19,43 @@ afterEach(async () => {
 });
 
 describe("versioned evaluation freshness", () => {
+  it("does not let unhealthy draft and shadow scores create a production incident", async () => {
+    const config = loadConfig({ NODE_ENV: "test", DATABASE_URL: "sqlite::memory:" });
+    const db = createDatabase(config);
+    try {
+      await migrateToLatest(db, config);
+      await seedDatabase(db);
+      await db
+        .updateTable("sources")
+        .set({
+          lifecycle_status: "draft",
+          health_score: 0,
+          last_success_at: new Date().toISOString(),
+        })
+        .execute();
+      await db
+        .updateTable("sources")
+        .set({ lifecycle_status: "active", health_score: 80 })
+        .where("slug", "=", "openai")
+        .execute();
+      await db
+        .updateTable("sources")
+        .set({ lifecycle_status: "shadow" })
+        .where("slug", "=", "robocasa")
+        .execute();
+      const report = await generateMonitorReport(db);
+      expect(report.avgHealthScore).toBe(80);
+      expect(isCritical(report)).toBe(false);
+      await db
+        .updateTable("sources")
+        .set({ health_score: 10 })
+        .where("slug", "=", "openai")
+        .execute();
+      expect(isCritical(await generateMonitorReport(db))).toBe(true);
+    } finally {
+      await db.destroy();
+    }
+  });
   it.each([
     "operational",
     "change",

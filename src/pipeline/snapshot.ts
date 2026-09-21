@@ -27,6 +27,12 @@ import {
   sha256,
 } from "../domain/url.js";
 import { type EvaluationGateMode, parseEvaluationInstant } from "./evaluation-context.js";
+import {
+  exportPriorityAuditEvidence,
+  type PriorityAuditEvidence,
+  restorePriorityAuditEvidence,
+  validatePriorityAuditEvidence,
+} from "./priority-audit-evidence.js";
 
 export const SNAPSHOT_SCHEMA_VERSION = 1;
 export const DEFAULT_SNAPSHOT_PATH = join("data", "snapshot", "v1.json");
@@ -35,6 +41,7 @@ interface RepositorySnapshot {
   schemaVersion: number;
   sources: Array<Record<string, unknown>>;
   sourceChecks?: Array<Record<string, unknown>>;
+  priorityAuditEvidence?: PriorityAuditEvidence[];
   sourceRuns?: Array<Record<string, unknown>>;
   signals: Array<Record<string, unknown>>;
   signalObservations?: Array<Record<string, unknown>>;
@@ -144,6 +151,7 @@ export async function restoreRepositorySnapshot(
 }
 
 async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<RepositorySnapshot> {
+  const priorityEvidence = await exportPriorityAuditEvidence(db);
   const [
     sourceRows,
     sourceCheckRows,
@@ -345,6 +353,7 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
       }))
       .sort(byString("slug")),
     sourceChecks: sourceCheckRows
+      .filter((check) => !priorityEvidence.checkIds.has(check.id))
       .map((check) => ({
         id: check.id,
         sourceSlug: check.sourceSlug,
@@ -386,6 +395,7 @@ async function buildRepositorySnapshot(db: Kysely<DatabaseSchema>): Promise<Repo
           `${right.sourceSlug}:${right.finishedAt}:${right.id}`,
         ),
       ),
+    priorityAuditEvidence: priorityEvidence.records,
     sourceRuns: sourceRunRows
       .map((run) => ({
         id: run.id,
@@ -797,6 +807,9 @@ async function restoreSnapshot(
       .where("id", "=", sourceId)
       .execute();
   }
+
+  if (snapshot.priorityAuditEvidence)
+    await restorePriorityAuditEvidence(db, snapshot.priorityAuditEvidence);
 
   for (const value of snapshot.sourceChecks ?? []) {
     const sourceId = sourceIdBySlug.get(requiredString(value, "sourceSlug"));
@@ -1849,6 +1862,8 @@ function validateSnapshot(value: RepositorySnapshot): void {
   if (!value || value.schemaVersion !== SNAPSHOT_SCHEMA_VERSION) {
     throw new Error(`Unsupported repository snapshot schema: ${value?.schemaVersion ?? "missing"}`);
   }
+  if (value.priorityAuditEvidence !== undefined)
+    validatePriorityAuditEvidence(value.priorityAuditEvidence);
   for (const key of ["sources", "signals", "discoveries", "events", "eventSignals"] as const) {
     if (!Array.isArray(value[key])) throw new Error(`Invalid repository snapshot field: ${key}`);
   }

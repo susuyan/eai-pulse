@@ -8,7 +8,7 @@ import { observationEligibility, setObservationMode } from "../src/pipeline/obse
 import { activationQualification } from "../src/pipeline/source-operations.js";
 
 describe("source operation readiness", () => {
-  it("keeps the actual twelve pending policies ineligible without mutating sources", async () => {
+  it("keeps all twelve sources ineligible before live evidence without mutating sources", async () => {
     const config = loadConfig({ NODE_ENV: "test", DATABASE_URL: "sqlite::memory:" });
     const db = createDatabase(config);
     try {
@@ -24,12 +24,18 @@ describe("source operation readiness", () => {
       );
       expect(eligibility).toHaveLength(12);
       for (const row of eligibility) {
+        const reason =
+          row.slug === "figure-ai"
+            ? "policy_restricted"
+            : row.slug === "nist-physical-ai"
+              ? "missing_check"
+              : "policy_pending";
         expect(row).toMatchObject({
           eligible: false,
-          reason: "policy_pending",
+          reason,
           observationEnabled: false,
         });
-        await expect(setObservationMode(db, row.sourceId, true)).rejects.toThrow("policy_pending");
+        await expect(setObservationMode(db, row.sourceId, true)).rejects.toThrow(reason);
       }
       expect(
         await db

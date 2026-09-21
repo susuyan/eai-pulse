@@ -9,6 +9,9 @@ import { collectSources } from "../../src/pipeline/collect.js";
 import { auditSources } from "../../src/pipeline/source-audit.js";
 
 const fetcher = vi.hoisted(() => vi.fn());
+vi.mock("../../src/domain/source-audit-policy.js", () => ({
+  sourceAuditPolicy: () => "allowed_metadata",
+}));
 vi.mock("../../src/collectors/fetcher.js", async (original) => ({
   ...(await original<typeof import("../../src/collectors/fetcher.js")>()),
   createSafeFetcher: () => fetcher,

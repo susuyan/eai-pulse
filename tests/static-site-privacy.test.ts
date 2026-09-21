@@ -7,6 +7,10 @@ import { createDatabase } from "../src/db/database.js";
 import { migrateToLatest } from "../src/db/migrate.js";
 import { seedDatabase } from "../src/db/seed.js";
 import { exportStaticSite } from "../src/pipeline/export.js";
+import {
+  buildPrioritySourceHealthReport,
+  validatePrioritySourceHealthReport,
+} from "../src/pipeline/priority-source-health.js";
 import { auditSources } from "../src/pipeline/source-audit.js";
 
 const databases: ReturnType<typeof createDatabase>[] = [];
@@ -41,6 +45,32 @@ describe("static-site privacy boundary", () => {
       .where("id", "=", audit.jobId)
       .executeTakeFirstOrThrow();
     expect(JSON.parse(auditJob.details_json).targetSourceIds).toEqual([prioritySource.id]);
+    await db
+      .updateTable("source_checks")
+      .set({
+        sample_json: '{"raw":"PRIVATE_AUDIT_SAMPLE"}',
+        error_summary: "/Users/private/PRIVATE_AUDIT_ERROR",
+      })
+      .where("source_id", "=", prioritySource.id)
+      .execute();
+    const cohortReport = await buildPrioritySourceHealthReport(db);
+    const serializedCohort = JSON.stringify(cohortReport);
+    for (const sentinel of [
+      "PRIVATE_AUDIT_SAMPLE",
+      "PRIVATE_AUDIT_ERROR",
+      prioritySource.id,
+      audit.jobId,
+      "targetSourceIds",
+      "sample_json",
+      "/Users/",
+    ])
+      expect(serializedCohort).not.toContain(sentinel);
+    expect(() =>
+      validatePrioritySourceHealthReport({
+        ...cohortReport,
+        results: cohortReport.results.map((row) => ({ ...row, raw: "PRIVATE_AUDIT_SAMPLE" })),
+      }),
+    ).toThrow();
     await db
       .updateTable("jobs")
       .set({

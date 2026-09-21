@@ -83,10 +83,7 @@ export async function reconcileSourcePortfolio(
       continue;
     }
 
-    if (
-      leadingFailures >= 5 &&
-      ["shadow", "active", "degraded"].includes(source.lifecycle_status)
-    ) {
+    if (leadingFailures >= 5 && ["active", "degraded"].includes(source.lifecycle_status)) {
       await db
         .updateTable("sources")
         .set({

@@ -7,6 +7,7 @@ import type { CollectContext, FetchResult } from "../collectors/types.js";
 import type { AppConfig } from "../config/env.js";
 import { Repository } from "../db/repository.js";
 import type { DatabaseSchema, NewSourceCheckRow, SourceRow } from "../db/types.js";
+import { sourceAuditPolicy } from "../domain/source-audit-policy.js";
 import { sourceRowContractFingerprint } from "../domain/source-contract.js";
 import type { CollectedSignal, SourceDescriptor } from "../domain/types.js";
 import { canonicalizeUrl } from "../domain/url.js";
@@ -57,6 +58,7 @@ interface AuditOptions {
   sourceId?: string;
   sourceIds?: string[];
   concurrency?: number;
+  policies?: Record<string, "pending" | "restricted" | "allowed_metadata">;
 }
 
 interface AuditDependencies {
@@ -122,7 +124,14 @@ export async function auditSources(
       async (source) => {
         try {
           return {
-            result: await auditOneSource(repository, config, source, jobId, runtimeDependencies),
+            result: await auditOneSource(
+              repository,
+              config,
+              source,
+              jobId,
+              runtimeDependencies,
+              options.policies?.[source.id],
+            ),
           };
         } catch (error) {
           // Drain the cohort before finalizing a job with incomplete persisted evidence.
@@ -172,6 +181,7 @@ async function auditOneSource(
   source: SourceRow,
   jobId: string,
   dependencies: AuditDependencies,
+  reviewedPolicy?: "pending" | "restricted" | "allowed_metadata",
 ): Promise<SourceCheckResult> {
   const startedAt = new Date().toISOString();
   const startedMs = Date.now();
@@ -184,14 +194,20 @@ async function auditOneSource(
     proxyUsed: false,
   };
 
-  if (source.acquisition === "social" || source.maintenance_status === "restricted") {
+  reviewedPolicy = sourceAuditPolicy(source, reviewedPolicy);
+  if (
+    reviewedPolicy === "pending" ||
+    reviewedPolicy === "restricted" ||
+    source.acquisition === "social" ||
+    source.maintenance_status === "restricted"
+  ) {
     return persistCheck(repository, source, jobId, startedAt, startedMs, diagnostics, {
       status: "skipped",
       accessStatus: "not_checked",
       fetchStatus: "policy_skipped",
       parseStatus: "not_applicable",
       schemaStatus: "not_applicable",
-      policyStatus: "restricted",
+      policyStatus: reviewedPolicy === "pending" ? "pending" : "restricted",
       items: [],
       qualityScore: 0,
       errorType: "policy",

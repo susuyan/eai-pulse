@@ -32,6 +32,7 @@
     "preview:embodied": "tsx src/cli/preview-embodied-data.ts",
     "collect": "tsx src/cli/collect.ts",
     "sources:audit": "tsx src/cli/audit-sources.ts",
+    "sources:priority:check": "tsx src/cli/check-priority-source-health.ts",
     "sources:proposal:validate": "tsx src/cli/validate-source-proposal.ts",
     "sources:proposal:import": "tsx src/cli/import-source-proposal.ts",
     "sources:health:issue": "tsx src/cli/render-source-health-issue.ts",

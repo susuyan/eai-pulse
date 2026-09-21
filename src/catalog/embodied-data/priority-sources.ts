@@ -5,6 +5,7 @@ import {
 } from "../../domain/embodied-data.js";
 import { sourceContractFingerprint } from "../../domain/source-contract.js";
 import type { Acquisition } from "../sources.js";
+import { prioritySourcePolicies } from "./priority-source-policy.js";
 import { type EmbodiedCatalogSource, embodiedSourceCatalog } from "./sources.js";
 
 export function priorityCatalogFingerprint(source: EmbodiedCatalogSource): string {
@@ -186,11 +187,12 @@ export interface PrioritySourceContract {
     reviewedAt: string | null;
     reviewer: string | null;
     reason: string | null;
+    evidenceUrls?: string[];
   };
 }
 
 // Pinned independently of the cohort: a version edit must not inherit a passing contract.
-// The fixture suite verifies these records. No automation policy has been approved.
+// The fixture suite verifies these records. Policy review is a separate input.
 export const prioritySourceContracts: readonly PrioritySourceContract[] = (
   [
     [
@@ -272,7 +274,12 @@ export const prioritySourceContracts: readonly PrioritySourceContract[] = (
   adapterVersion,
   contractFingerprint,
   status: "passed",
-  policy: { status: "pending", reviewedAt: null, reviewer: null, reason: null },
+  policy: prioritySourcePolicies[slug] ?? {
+    status: "pending",
+    reviewedAt: null,
+    reviewer: null,
+    reason: null,
+  },
 }));
 
 const acquisitionByAdapter: Readonly<Record<string, Acquisition>> = {

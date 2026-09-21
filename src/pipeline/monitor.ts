@@ -105,7 +105,9 @@ export async function generateMonitorReport(db: Kysely<DatabaseSchema>): Promise
   const draft = byLifecycle.get("draft") ?? [];
 
   const observedSources = sources.filter(
-    (source) => source.last_success_at || checksBySource.has(source.id),
+    (source) =>
+      !["draft", "shadow"].includes(source.lifecycle_status) &&
+      (source.last_success_at || checksBySource.has(source.id)),
   );
   const avgHealth = observedSources.length
     ? Math.round(

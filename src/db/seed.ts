@@ -742,6 +742,7 @@ export async function seedDatabase(db: Kysely<DatabaseSchema>): Promise<void> {
         acquisition: source.acquisition,
         ...(source.identityHosts ? { identityHosts: source.identityHosts } : {}),
         ...(source.socialHandles ? { socialHandles: source.socialHandles } : {}),
+        ...(source.html ? { html: source.html } : {}),
       }),
       state_json: "{}",
       last_collected_at: null,

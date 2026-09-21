@@ -198,8 +198,10 @@ async function collectOneSource(
     const source = repository.toSourceDescriptor(row);
     const items = await getAdapter(source.adapter).collect(source, {
       config,
-      fetchText: async (url, headers = {}) => {
-        const cached = cache.get(url);
+      fetchText: async (url, headers = {}, constraints = {}) => {
+        const primaryRequest = url === source.config.url;
+        // Origin-constrained requests must revalidate redirects, including cache hits.
+        const cached = constraints.allowedOrigin ? null : cache.get(url);
         if (cached) {
           return {
             body: cached.body,
@@ -225,14 +227,15 @@ async function collectOneSource(
           fetched = await safeFetch(
             url,
             {
-              ...(etag ? { "if-none-match": etag } : {}),
-              ...(lastModified ? { "if-modified-since": lastModified } : {}),
+              ...(primaryRequest && etag ? { "if-none-match": etag } : {}),
+              ...(primaryRequest && lastModified ? { "if-modified-since": lastModified } : {}),
               ...headers,
             },
             {
               timeoutMs: row.timeout_ms,
               maxRetries: row.max_retries,
               baseBackoffMs: row.base_backoff_ms,
+              ...constraints,
             },
           );
           rateLimiter.reportSuccess(domain);
@@ -247,9 +250,11 @@ async function collectOneSource(
         attemptCount += fetched.attemptCount;
         responseBytes += fetched.responseBytes;
         httpStatus = fetched.status;
-        notModified ||= fetched.status === 304;
-        etag = fetched.headers.get("etag") ?? etag;
-        lastModified = fetched.headers.get("last-modified") ?? lastModified;
+        if (primaryRequest) {
+          notModified ||= fetched.status === 304;
+          etag = fetched.headers.get("etag") ?? etag;
+          lastModified = fetched.headers.get("last-modified") ?? lastModified;
+        }
         if (fetched.status === 200) {
           cache.set(
             url,

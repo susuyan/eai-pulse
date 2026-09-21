@@ -289,7 +289,11 @@ describe("collection scope", () => {
     );
     expect(manualSources.length).toBeGreaterThan(0);
     expect(planSourceCollection(manualSources, "all", true).sources).toEqual([]);
-    expect(plan.summary.skippedByReason["lifecycle:draft"]).toBe(manualSources.length);
+    expect(plan.summary.skippedByReason["lifecycle:draft"]).toBe(
+      sources.filter(
+        (source) => isCurrentEmbodiedSource(source) && source.lifecycle_status === "draft",
+      ).length,
+    );
   });
 
   it("never collects legacy or retired sources even in diagnostic scope", async () => {

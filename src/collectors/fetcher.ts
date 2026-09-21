@@ -30,6 +30,7 @@ export class FetchError extends Error {
 }
 
 export interface FetchPolicy {
+  allowedOrigin?: string;
   timeoutMs?: number;
   maxRetries?: number;
   baseBackoffMs?: number;
@@ -71,6 +72,7 @@ export function createSafeFetcher(config: AppConfig, dependencies: FetcherDepend
           timeoutMs,
           fetchImpl,
           validateUrl,
+          policy.allowedOrigin,
         );
         return { ...result, attemptCount: attempt, transport: "direct" as const };
       } catch (error) {
@@ -83,6 +85,7 @@ export function createSafeFetcher(config: AppConfig, dependencies: FetcherDepend
               timeoutMs,
               proxyFetchImpl,
               validateUrl,
+              policy.allowedOrigin,
             );
             return { ...result, attemptCount: attempt, transport: "env-proxy" as const };
           } catch (proxyError) {
@@ -128,9 +131,19 @@ async function fetchWithRedirects(
   timeoutMs: number,
   fetchImpl: typeof fetch,
   validateUrl: (url: string) => Promise<void>,
+  allowedOrigin?: string,
 ): Promise<Omit<FetchResult, "attemptCount">> {
   let currentUrl = initialUrl;
   for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
+    if (allowedOrigin && !isAllowedOrigin(currentUrl, allowedOrigin)) {
+      throw new FetchError(
+        "Source response origin mismatch",
+        "security",
+        false,
+        null,
+        "ORIGIN_MISMATCH",
+      );
+    }
     try {
       await validateUrl(currentUrl);
     } catch (error) {
@@ -201,6 +214,20 @@ async function fetchWithRedirects(
     }
   }
   throw new FetchError("Too many redirects", "permanent_http", false);
+}
+
+function isAllowedOrigin(value: string, origin: string): boolean {
+  try {
+    const target = new URL(value);
+    return (
+      target.origin === origin &&
+      target.protocol === "https:" &&
+      !target.username &&
+      !target.password
+    );
+  } catch {
+    return false;
+  }
 }
 
 async function readLimitedBody(

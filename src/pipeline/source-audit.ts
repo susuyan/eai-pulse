@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Kysely } from "kysely";
 import { createSafeFetcher, FetchError } from "../collectors/fetcher.js";
 import { getAdapter } from "../collectors/index.js";
-import type { FetchResult } from "../collectors/types.js";
+import type { CollectContext, FetchResult } from "../collectors/types.js";
 import type { AppConfig } from "../config/env.js";
 import { Repository } from "../db/repository.js";
 import type { DatabaseSchema, NewSourceCheckRow, SourceRow } from "../db/types.js";
@@ -168,11 +168,12 @@ async function auditOneSource(
   }
 
   const safeFetch = dependencies.fetcher ?? createSafeFetcher(config);
-  const fetchText = async (url: string, headers: Record<string, string> = {}) => {
+  const fetchText: CollectContext["fetchText"] = async (url, headers = {}, constraints = {}) => {
     const result = await safeFetch(url, headers, {
       timeoutMs: Math.min(source.timeout_ms, 30_000),
       maxRetries: Math.min(source.max_retries, 1),
       baseBackoffMs: source.base_backoff_ms,
+      ...constraints,
     });
     recordFetch(diagnostics, result);
     return result;

@@ -15,6 +15,25 @@ const config = loadConfig({
 });
 
 describe("resilient fetcher", () => {
+  it.each([
+    "https://outside.example/detail",
+    "http://example.com/detail",
+    "https://user:secret@example.com/detail",
+  ])("blocks constrained redirect before fetching %s", async (location) => {
+    const fetchImpl = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location } }))
+      .mockResolvedValue(new Response("outside"));
+    const fetchText = createSafeFetcher(config, { fetchImpl, validateUrl: async () => undefined });
+    await expect(
+      fetchText(
+        "https://example.com/list",
+        {},
+        { allowedOrigin: "https://example.com", maxRetries: 0 },
+      ),
+    ).rejects.toMatchObject({ type: "security", code: "ORIGIN_MISMATCH" });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
   it("retries recoverable upstream failures and records attempts", async () => {
     const fetchImpl = vi
       .fn<typeof fetch>()

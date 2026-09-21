@@ -34,7 +34,10 @@ describe("embodied source governance schema", () => {
     ["unknown substitute reference", { substituteFor: ["missing-source"] }],
     ["self substitute reference", { substituteFor: ["samr-standards"] }],
     ["blank restriction note", { mapStatus: "restricted", restrictionNote: "  " }],
-    ["integrated manual source", { mapStatus: "integrated" }],
+    [
+      "integrated manual source",
+      { mapStatus: "integrated", adapter: "manual", acquisition: "manual" },
+    ],
   ])("rejects %s before persisting catalog rows", async (_name, invalid) => {
     const db = await setup();
     const source = embodiedSourceCatalog.find((candidate) => candidate.slug === "samr-standards");
@@ -273,7 +276,7 @@ describe("embodied source governance schema", () => {
       map_status: "substitute",
       substitute_for_json: JSON.stringify(["cesi-embodied-standards"]),
       lifecycle_status: "draft",
-      adapter: "manual",
+      adapter: "web-scraper",
       enabled: 0,
       observation_enabled: 0,
     });

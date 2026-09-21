@@ -1,3 +1,4 @@
+import type { HtmlExtraction } from "../domain/html-extraction.js";
 import {
   type SourceProposalCatalogEntry,
   SourceProposalCatalogSchema,
@@ -59,6 +60,7 @@ export interface CatalogSource {
   adapterVersion?: string;
   identityHosts?: string[];
   socialHandles?: string[];
+  html?: HtmlExtraction;
   proposalIssueNumber?: number;
   proposalEvidenceUrls?: string[];
 }

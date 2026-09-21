@@ -92,7 +92,7 @@
   {
     "slug": "robocasa",
     "category": "dataset-benchmark",
-    "adapter": "github-releases",
+    "adapter": "json-api",
     "region": "GLOBAL",
     "lifecycleStatus": "shadow",
     "mapStatus": "pending",
@@ -367,7 +367,7 @@
   {
     "slug": "samr-standards",
     "category": "standard-policy",
-    "adapter": "manual",
+    "adapter": "web-scraper",
     "region": "CN",
     "lifecycleStatus": "draft",
     "mapStatus": "substitute",
@@ -397,7 +397,7 @@
   {
     "slug": "beijing-humanoid-center",
     "category": "robot-team",
-    "adapter": "manual",
+    "adapter": "web-scraper",
     "region": "CN",
     "lifecycleStatus": "draft",
     "mapStatus": "pending",
@@ -531,7 +531,7 @@
   {
     "slug": "internrobotics",
     "category": "robot-team",
-    "adapter": "manual",
+    "adapter": "json-api",
     "region": "CN",
     "lifecycleStatus": "draft",
     "mapStatus": "pending",
@@ -545,7 +545,7 @@
   {
     "slug": "horizon-holomotion",
     "category": "robot-team",
-    "adapter": "manual",
+    "adapter": "json-api",
     "region": "CN",
     "lifecycleStatus": "draft",
     "mapStatus": "pending",
@@ -570,7 +570,7 @@
   {
     "slug": "opendrivelab",
     "category": "robot-team",
-    "adapter": "manual",
+    "adapter": "web-scraper",
     "region": "CN",
     "lifecycleStatus": "draft",
     "mapStatus": "pending",
@@ -606,7 +606,7 @@
   {
     "slug": "pnp-robotics",
     "category": "data-service",
-    "adapter": "manual",
+    "adapter": "web-scraper",
     "region": "CN",
     "lifecycleStatus": "draft",
     "mapStatus": "pending",
@@ -736,7 +736,7 @@
   {
     "slug": "figure-ai",
     "category": "robot-team",
-    "adapter": "manual",
+    "adapter": "web-scraper",
     "region": "GLOBAL",
     "lifecycleStatus": "draft",
     "mapStatus": "pending",
@@ -746,7 +746,7 @@
   {
     "slug": "one-x",
     "category": "robot-team",
-    "adapter": "manual",
+    "adapter": "web-scraper",
     "region": "GLOBAL",
     "lifecycleStatus": "draft",
     "mapStatus": "pending",
@@ -796,7 +796,7 @@
   {
     "slug": "nvidia-isaac-groot",
     "category": "robot-team",
-    "adapter": "manual",
+    "adapter": "json-api",
     "region": "GLOBAL",
     "lifecycleStatus": "draft",
     "mapStatus": "pending",
@@ -810,7 +810,7 @@
   {
     "slug": "nist-physical-ai",
     "category": "standard-policy",
-    "adapter": "manual",
+    "adapter": "web-scraper",
     "region": "GLOBAL",
     "lifecycleStatus": "draft",
     "mapStatus": "pending",
@@ -838,7 +838,7 @@
   {
     "slug": "itu-robot-data-factory",
     "category": "standard-policy",
-    "adapter": "manual",
+    "adapter": "web-scraper",
     "region": "GLOBAL",
     "lifecycleStatus": "draft",
     "mapStatus": "pending",

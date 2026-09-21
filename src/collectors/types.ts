@@ -3,7 +3,11 @@ import type { CollectedSignal, SourceDescriptor } from "../domain/types.js";
 
 export interface CollectContext {
   config: AppConfig;
-  fetchText: (url: string, headers?: Record<string, string>) => Promise<FetchResult>;
+  fetchText: (
+    url: string,
+    headers?: Record<string, string>,
+    constraints?: { allowedOrigin?: string },
+  ) => Promise<FetchResult>;
 }
 
 export interface FetchResult {

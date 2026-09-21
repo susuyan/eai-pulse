@@ -31,7 +31,7 @@ interface PriorityCatalogSource {
 }
 
 // These are reviewed trial configurations, not evidence of parser or policy readiness.
-// Task 2 must prove each contract before changing the governed source catalog.
+// Offline fixture evidence does not approve automation or shadow observation.
 export const embodiedPrioritySources: readonly EmbodiedPrioritySource[] = [
   {
     slug: "samr-standards",
@@ -41,7 +41,7 @@ export const embodiedPrioritySources: readonly EmbodiedPrioritySource[] = [
     adapterVersion: "1",
     reviewedOn: "2026-09-21",
     reviewNote:
-      "Official standards listing with dated notices. Robots returned 404; policy review remains required before shadow observation.",
+      "Listing MM-DD agrees with the same-host detail's visible publication label. Conflicting PubDate is retained, not selected. Robots returned 404; policy review remains required.",
   },
   {
     slug: "beijing-humanoid-center",
@@ -51,17 +51,7 @@ export const embodiedPrioritySources: readonly EmbodiedPrioritySource[] = [
     adapterVersion: "1",
     reviewedOn: "2026-09-21",
     reviewNote:
-      "Official news page linked by the catalog homepage; robots allows public paths. Validate dated news cards before catalog changes.",
-  },
-  {
-    slug: "galbot",
-    endpoint: "https://www.galbot.com/",
-    adapter: "web-scraper",
-    acquisition: "html",
-    adapterVersion: "1",
-    reviewedOn: "2026-09-21",
-    reviewNote:
-      "Official homepage contains dated news. Robots allows this path and blocks admin and API paths; use public news metadata only.",
+      "Official news page linked by the catalog homepage; dated cards have fixture coverage. Robots allows public paths; automation policy review remains pending.",
   },
   {
     slug: "internrobotics",
@@ -71,7 +61,7 @@ export const embodiedPrioritySources: readonly EmbodiedPrioritySource[] = [
     adapterVersion: "1",
     reviewedOn: "2026-09-21",
     reviewNote:
-      "Public release API for the catalog GitHub organization. Atom paths are robots-disallowed; Task 2 must prove generic release-field normalization.",
+      "Public release API for the catalog GitHub organization. Release aliases have fixture coverage; Atom paths are robots-disallowed and automation policy review remains pending.",
   },
   {
     slug: "horizon-holomotion",
@@ -81,7 +71,7 @@ export const embodiedPrioritySources: readonly EmbodiedPrioritySource[] = [
     adapterVersion: "1",
     reviewedOn: "2026-09-21",
     reviewNote:
-      "Public release API for the catalog repository. Atom paths are robots-disallowed; Task 2 must prove generic release-field normalization.",
+      "Public release API for the catalog repository. Release aliases have fixture coverage; Atom paths are robots-disallowed and automation policy review remains pending.",
   },
   {
     slug: "opendrivelab",
@@ -101,7 +91,7 @@ export const embodiedPrioritySources: readonly EmbodiedPrioritySource[] = [
     adapterVersion: "1",
     reviewedOn: "2026-09-21",
     reviewNote:
-      "Official page contains dated company updates. Robots returned 404; policy review and dated-item fixtures remain required.",
+      "Official listing links to same-host details with explicit publication labels. Robots returned 404; automation policy review remains pending.",
   },
   {
     slug: "nvidia-isaac-groot",
@@ -111,7 +101,7 @@ export const embodiedPrioritySources: readonly EmbodiedPrioritySource[] = [
     adapterVersion: "1",
     reviewedOn: "2026-09-21",
     reviewNote:
-      "Public release API for the catalog repository. Atom paths are robots-disallowed; Task 2 must prove generic release-field normalization.",
+      "Public release API for the catalog repository. Release aliases have fixture coverage; Atom paths are robots-disallowed and automation policy review remains pending.",
   },
   {
     slug: "figure-ai",
@@ -141,7 +131,7 @@ export const embodiedPrioritySources: readonly EmbodiedPrioritySource[] = [
     adapterVersion: "1",
     reviewedOn: "2026-09-21",
     reviewNote:
-      "Official release API returns v1.0 and v0.2 with explicit published_at dates and public release links. Task 2 must prove generic release-field normalization.",
+      "Official release API returns explicit published_at dates and public release links, covered by fixtures. Automation policy review remains pending.",
   },
   {
     slug: "nist-physical-ai",
@@ -151,7 +141,7 @@ export const embodiedPrioritySources: readonly EmbodiedPrioritySource[] = [
     adapterVersion: "1",
     reviewedOn: "2026-09-21",
     reviewNote:
-      "Official program page contains dated metadata and is not robots-disallowed. Validate page metadata without treating navigation as news.",
+      "Official program page is not robots-disallowed. Fixture date is explicit Created December 11, 2018, not its 2026 modification or news publication; policy review remains pending.",
   },
   {
     slug: "itu-robot-data-factory",
@@ -161,7 +151,7 @@ export const embodiedPrioritySources: readonly EmbodiedPrioritySource[] = [
     adapterVersion: "1",
     reviewedOn: "2026-09-21",
     reviewNote:
-      "Public work-program record is robots-accessible and dated. Extract record metadata only; private documents and standard texts stay excluded.",
+      "Public work-program record is robots-accessible. Fixture uses first registration, not standard approval. Policy review remains pending; private documents and standard texts stay excluded.",
   },
 ];
 

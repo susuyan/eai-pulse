@@ -46,6 +46,7 @@ type SourceInput = Pick<
       | "freshnessSloHours"
       | "adapterVersion"
       | "identityHosts"
+      | "html"
     >
   >;
 
@@ -243,13 +244,19 @@ export const embodiedSourceCatalog: EmbodiedCatalogSource[] = [
     category: "dataset-benchmark",
     topics: ["benchmark", "lifelong-learning", "manipulation"],
   }),
-  github({
+  governed({
     slug: "robocasa",
+    endpoint: "https://api.github.com/repos/robocasa/robocasa/releases?per_page=3",
+    adapter: "json-api",
+    acquisition: "api",
+    adapterVersion: "1",
+    robotsPolicy:
+      "Public release API fixture verified. Policy review remains pending; do not enable observation. GitHub Atom paths are robots-disallowed.",
     pipelineStages: ["acquisition-route", "quality-training-feedback"],
     identityHosts: ["robocasa.ai"],
     name: "RoboCasa",
     owner: "RoboCasa Project",
-    repository: "robocasa/robocasa",
+    homepageUrl: "https://github.com/robocasa/robocasa",
     tier: 1,
     role: "research",
     region: "GLOBAL",
@@ -626,8 +633,40 @@ export const embodiedSourceCatalog: EmbodiedCatalogSource[] = [
     category: "peer-evidence",
     topics: ["robot-foundation-model", "data-mixture", "evaluation"],
   }),
-  manual({
+  website({
     slug: "samr-standards",
+    endpoint: "https://www.samr.gov.cn/bzjss/",
+    adapterVersion: "1",
+    lifecycleStatus: "draft",
+    maintenanceStatus: "manual",
+    robotsPolicy:
+      "Fixture contract verified. Automation policy and owner-terms review remain pending; do not enable observation.",
+    html: {
+      records: ".contentLeft0102box",
+      title: {
+        selector: ".contentLeft0102 > a",
+      },
+      link: {
+        selector: ".contentLeft0102 > a",
+        attribute: "href",
+      },
+      detail: {
+        take: 3,
+        title: {
+          selector: ".zt_xilan_03",
+        },
+        date: {
+          selector: ".zt_xilan_04",
+          prefix: "发布时间：",
+          format: "ymd",
+          semantic: "published",
+        },
+        alternateDate: {
+          selector: "meta[name='PubDate']",
+          attribute: "content",
+        },
+      },
+    },
     name: "SAMR Standards",
     owner: "State Administration for Market Regulation",
     homepageUrl: "https://www.samr.gov.cn/bzjss/",
@@ -675,8 +714,29 @@ export const embodiedSourceCatalog: EmbodiedCatalogSource[] = [
       "Official site returned a JavaScript cloud-protection challenge; do not bypass it.",
     maintenanceStatus: "restricted",
   }),
-  manual({
+  website({
     slug: "beijing-humanoid-center",
+    endpoint: "https://www.x-humanoid.com/news.html",
+    adapterVersion: "1",
+    lifecycleStatus: "draft",
+    maintenanceStatus: "manual",
+    robotsPolicy:
+      "Fixture contract verified. Automation policy and owner-terms review remain pending; do not enable observation.",
+    html: {
+      records: ".item.col-md-4",
+      title: {
+        selector: ".title_body .multiline-ellipsis",
+      },
+      link: {
+        selector: ".title_body .multiline-ellipsis",
+        attribute: "href",
+      },
+      date: {
+        selector: ".item2 > .col-md-6:not(.text-right)",
+        format: "ymd",
+        semantic: "published",
+      },
+    },
     name: "Beijing Humanoid Robot Innovation Center",
     owner: "Beijing Humanoid Robot Innovation Center",
     homepageUrl: "https://x-humanoid.com/about.html",
@@ -862,8 +922,16 @@ export const embodiedSourceCatalog: EmbodiedCatalogSource[] = [
     pipelineStages: ["multimodal-capture", "quality-training-feedback"],
     identityHosts: ["bytedance.com", "seed.bytedance.com", "picoxr.com"],
   }),
-  manual({
+  governed({
     slug: "internrobotics",
+    endpoint: "https://api.github.com/repos/InternRobotics/InternUtopia/releases?per_page=3",
+    adapter: "json-api",
+    acquisition: "api",
+    adapterVersion: "1",
+    lifecycleStatus: "draft",
+    maintenanceStatus: "manual",
+    robotsPolicy:
+      "Public release API fixture verified. Policy review remains pending; do not enable observation. GitHub Atom paths are robots-disallowed.",
     name: "InternRobotics",
     owner: "Shanghai AI Laboratory",
     homepageUrl: "https://github.com/InternRobotics",
@@ -880,8 +948,16 @@ export const embodiedSourceCatalog: EmbodiedCatalogSource[] = [
     ],
     identityHosts: ["shlab.org.cn", "pjlab.org.cn", "internrobotics.shlab.org.cn"],
   }),
-  manual({
+  governed({
     slug: "horizon-holomotion",
+    endpoint: "https://api.github.com/repos/HorizonRobotics/HoloMotion/releases?per_page=3",
+    adapter: "json-api",
+    acquisition: "api",
+    adapterVersion: "1",
+    lifecycleStatus: "draft",
+    maintenanceStatus: "manual",
+    robotsPolicy:
+      "Public release API fixture verified. Policy review remains pending; do not enable observation. GitHub Atom paths are robots-disallowed.",
     name: "Horizon HoloMotion",
     owner: "Horizon Robotics",
     homepageUrl: "https://github.com/HorizonRobotics/HoloMotion",
@@ -918,8 +994,29 @@ export const embodiedSourceCatalog: EmbodiedCatalogSource[] = [
     pipelineStages: ["acquisition-route", "quality-training-feedback"],
     identityHosts: ["air.tsinghua.edu.cn"],
   }),
-  manual({
+  website({
     slug: "opendrivelab",
+    endpoint: "https://opendrivelab.com/",
+    adapterVersion: "1",
+    lifecycleStatus: "draft",
+    maintenanceStatus: "manual",
+    robotsPolicy:
+      "Fixture contract verified. Automation policy and owner-terms review remain pending; do not enable observation.",
+    html: {
+      records: "div:has(> span[data-slot='badge'])",
+      title: {
+        selector: "> div > span",
+      },
+      link: {
+        selector: "a[href^='/']:not([href='//'])",
+        attribute: "href",
+      },
+      date: {
+        selector: "> span[data-slot='badge']",
+        format: "ymd",
+        semantic: "published",
+      },
+    },
     name: "OpenDriveLab",
     owner: "OpenDriveLab",
     homepageUrl: "https://opendrivelab.com/",
@@ -972,8 +1069,36 @@ export const embodiedSourceCatalog: EmbodiedCatalogSource[] = [
     ],
     identityHosts: ["datatang.com", "datatang.ai", "datatang.net"],
   }),
-  manual({
+  website({
     slug: "pnp-robotics",
+    endpoint: "https://www.pnprobotics.com/",
+    adapterVersion: "1",
+    lifecycleStatus: "draft",
+    maintenanceStatus: "manual",
+    robotsPolicy:
+      "Fixture contract verified. Automation policy and owner-terms review remain pending; do not enable observation.",
+    html: {
+      records: ".m_news_info",
+      title: {
+        selector: ".news_title .article_title",
+      },
+      link: {
+        selector: ".news_title .article_title",
+        attribute: "href",
+      },
+      detail: {
+        take: 2,
+        title: {
+          selector: ".newsDetail > h1.title",
+        },
+        date: {
+          selector: ".newsInfoWrap .leftInfo > .newsInfo:first-child",
+          prefix: "发表时间：",
+          format: "ymd",
+          semantic: "published",
+        },
+      },
+    },
     name: "PNP Robotics",
     owner: "PNP Robotics",
     homepageUrl: "https://www.pnprobotics.com/",
@@ -1156,8 +1281,29 @@ export const embodiedSourceCatalog: EmbodiedCatalogSource[] = [
     ],
     identityHosts: ["docs.spirit-ai.com"],
   }),
-  manual({
+  website({
     slug: "figure-ai",
+    html: {
+      records: "a.article-list-item",
+      title: {
+        selector: ".article-list-item__heading",
+      },
+      link: {
+        attribute: "href",
+      },
+      date: {
+        selector: "time",
+        attribute: "datetime",
+        format: "iso",
+        semantic: "published",
+      },
+    },
+    endpoint: "https://www.figure.ai/news",
+    adapterVersion: "1",
+    lifecycleStatus: "draft",
+    maintenanceStatus: "manual",
+    robotsPolicy:
+      "Public news metadata fixture verified. Robots does not block news; owner-terms review remains pending before observation.",
     name: "Figure AI",
     owner: "Figure AI",
     homepageUrl: "https://www.figure.ai/helix",
@@ -1170,8 +1316,30 @@ export const embodiedSourceCatalog: EmbodiedCatalogSource[] = [
     pipelineStages: ["acquisition-route", "quality-training-feedback"],
     identityHosts: ["figure.ai"],
   }),
-  manual({
+  website({
     slug: "one-x",
+    endpoint: "https://www.1x.tech/ai",
+    adapterVersion: "1",
+    lifecycleStatus: "draft",
+    maintenanceStatus: "manual",
+    robotsPolicy:
+      "Fixture contract verified. Automation policy and owner-terms review remain pending; do not enable observation.",
+    html: {
+      records: "script#__NEXT_DATA__",
+      jsonPath: "props.pageProps.ai.*.blogLink",
+      title: {
+        path: "title",
+      },
+      link: {
+        path: "slug.current",
+        prefix: "/discover/",
+      },
+      date: {
+        path: "date",
+        format: "iso",
+        semantic: "published",
+      },
+    },
     name: "1X",
     owner: "1X Technologies",
     homepageUrl: "https://www.1x.tech/ai",
@@ -1243,8 +1411,16 @@ export const embodiedSourceCatalog: EmbodiedCatalogSource[] = [
     restrictionNote: "Official robotics page returned HTTP 403 on recheck; manual review only.",
     maintenanceStatus: "restricted",
   }),
-  manual({
+  governed({
     slug: "nvidia-isaac-groot",
+    endpoint: "https://api.github.com/repos/NVIDIA/Isaac-GR00T/releases?per_page=3",
+    adapter: "json-api",
+    acquisition: "api",
+    adapterVersion: "1",
+    lifecycleStatus: "draft",
+    maintenanceStatus: "manual",
+    robotsPolicy:
+      "Public release API fixture verified. Policy review remains pending; do not enable observation. GitHub Atom paths are robots-disallowed.",
     name: "NVIDIA Isaac GR00T",
     owner: "NVIDIA",
     homepageUrl: "https://github.com/NVIDIA/Isaac-GR00T",
@@ -1261,8 +1437,27 @@ export const embodiedSourceCatalog: EmbodiedCatalogSource[] = [
     ],
     identityHosts: ["nvidia.com", "developer.nvidia.com"],
   }),
-  manual({
+  website({
     slug: "nist-physical-ai",
+    endpoint: "https://www.nist.gov/programs-projects/physical-ai-and-data-generation-robotics",
+    adapterVersion: "1",
+    lifecycleStatus: "draft",
+    maintenanceStatus: "manual",
+    robotsPolicy:
+      "Fixture contract verified. Automation policy and owner-terms review remain pending; do not enable observation.",
+    html: {
+      records: "html",
+      title: {
+        selector: "meta[property='og:title']",
+        attribute: "content",
+      },
+      date: {
+        selector: ".text-italic.font-sans-2xs",
+        prefix: "Created ",
+        format: "month-name",
+        semantic: "created",
+      },
+    },
     name: "NIST Physical AI",
     owner: "National Institute of Standards and Technology",
     homepageUrl: "https://www.nist.gov/programs-projects/physical-ai-and-data-generation-robotics",
@@ -1301,8 +1496,25 @@ export const embodiedSourceCatalog: EmbodiedCatalogSource[] = [
       "Public committee metadata only; standard texts may require purchase and must not be scraped.",
     maintenanceStatus: "restricted",
   }),
-  manual({
+  website({
     slug: "itu-robot-data-factory",
+    endpoint: "https://www.itu.int/ITU-T/workprog/wp_item.aspx?isn=24285",
+    adapterVersion: "1",
+    lifecycleStatus: "draft",
+    maintenanceStatus: "manual",
+    robotsPolicy:
+      "Fixture contract verified. Automation policy and owner-terms review remain pending; do not enable observation.",
+    html: {
+      records: "table:has(#ctl00_ContentPlaceHolder1_rpt_main_ctl00_lbl_subject)",
+      title: {
+        selector: "#ctl00_ContentPlaceHolder1_rpt_main_ctl00_lbl_subject",
+      },
+      date: {
+        selector: "#ctl00_ContentPlaceHolder1_rpt_main_ctl00_lbl_first_registration_date",
+        format: "ymd",
+        semantic: "registered",
+      },
+    },
     name: "ITU Robot Data Factory",
     owner: "International Telecommunication Union",
     homepageUrl: "https://www.itu.int/ITU-T/workprog/wp_item.aspx?isn=24285",

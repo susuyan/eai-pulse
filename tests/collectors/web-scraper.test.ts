@@ -62,6 +62,196 @@ function makeSource(overrides?: Partial<SourceDescriptor>): SourceDescriptor {
 }
 
 describe("web-scraper adapter", () => {
+  it("rejects malformed discovered XML instead of extracting apparently complete items", async () => {
+    const page =
+      '<html><head><link rel="alternate" type="application/rss+xml" href="/feed.xml"></head><body><nav>Undated navigation</nav></body></html>';
+    const xml =
+      "<rss><channel><item><title>Broken feed</title><link>https://example.com/one</link><pubDate>Fri, 03 Jul 2026 08:00:00 GMT</pubDate></item></rss>";
+    const context = makeContext(page);
+    context.fetchText = async (url) => ({
+      body: url.endsWith("feed.xml") ? xml : page,
+      status: 200,
+      finalUrl: url,
+      headers: new Headers(),
+      attemptCount: 1,
+      responseBytes: 0,
+    });
+    await expect(adapter.collect(makeSource(), context)).rejects.toThrow(/XML/);
+  });
+  const configured = () =>
+    makeSource({
+      config: {
+        url: "https://example.com",
+        html: {
+          records: ".record",
+          title: { selector: ".headline" },
+          link: { selector: "a", attribute: "href" },
+          date: { selector: ".published", format: "ymd", semantic: "published" },
+        },
+      } as SourceDescriptor["config"],
+    });
+  const record =
+    '<div class="record"><div><a href="/one"><span class="headline">A real item</span></a></div><div><span class="published">2026.07.03</span></div></div>';
+
+  it("binds configured nested fields within each record and deduplicates canonical URLs", async () => {
+    const items = await adapter.collect(configured(), makeContext(record + record));
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      title: "A real item",
+      url: "https://example.com/one",
+      publishedAt: "2026-07-03T00:00:00.000Z",
+      rawMeta: { dateInferred: false, dateSemantic: "published", datePrecision: "day" },
+    });
+  });
+  it.each([
+    "",
+    "07-03",
+    "2026-02-30",
+    "not a date",
+  ])("fails closed on configured missing or invalid dates: %s", async (date) => {
+    await expect(
+      adapter.collect(configured(), makeContext(record.replace("2026.07.03", date))),
+    ).rejects.toThrow();
+  });
+  it("does not borrow a date from an adjacent record or navigation", async () => {
+    const html =
+      record.replace('<span class="published">2026.07.03</span>', "") +
+      '<nav><a href="/about">About us</a><time>2026-07-03</time></nav><div class="record"><span class="published">2026-07-03</span></div>';
+    await expect(adapter.collect(configured(), makeContext(html))).rejects.toThrow();
+  });
+  it("rejects configured external canonical links and final response host changes", async () => {
+    await expect(
+      adapter.collect(
+        configured(),
+        makeContext(record.replace("/one", "https://outside.example/one")),
+      ),
+    ).rejects.toThrow();
+    await expect(
+      adapter.collect(configured(), makeContext(record, 200, "https://outside.example/")),
+    ).rejects.toThrow();
+  });
+  it("parses only declared embedded JSON records and matches slug URLs to actual page links", async () => {
+    const source = makeSource({
+      config: {
+        url: "https://example.com",
+        html: {
+          records: "script[type='application/json']",
+          jsonPath: "props.posts.*",
+          title: { path: "title" },
+          link: { path: "slug.current", prefix: "/posts/" },
+          date: { path: "date", format: "iso", semantic: "published" },
+        },
+      } as SourceDescriptor["config"],
+    });
+    const html =
+      '<a href="/posts/first">Read</a><script type="application/json">{"props":{"posts":[{"title":"First","slug":{"current":"first"},"date":"2026-07-03T08:00:00Z"}]}}</script>';
+    expect((await adapter.collect(source, makeContext(html)))[0]).toMatchObject({
+      title: "First",
+      publishedAt: "2026-07-03T08:00:00.000Z",
+    });
+    await expect(
+      adapter.collect(
+        source,
+        makeContext(html.replace('href="/posts/first"', 'href="/posts/other"')),
+      ),
+    ).rejects.toThrow();
+    await expect(
+      adapter.collect(source, makeContext(html.replace('"props"', "broken"))),
+    ).rejects.toThrow();
+  });
+  it("caps same-origin detail requests, preserves date conflicts and leaves state untouched", async () => {
+    const source = makeSource({
+      config: {
+        url: "https://example.com",
+        html: {
+          records: ".record",
+          title: { selector: "a" },
+          link: { selector: "a", attribute: "href" },
+          detail: {
+            take: 2,
+            title: { selector: "h1" },
+            date: {
+              selector: ".date",
+              prefix: "Published: ",
+              format: "ymd",
+              semantic: "published",
+            },
+            alternateDate: { selector: "meta[name='date']", attribute: "content" },
+          },
+        },
+      } as SourceDescriptor["config"],
+      state: { etag: "old" },
+    });
+    const requests: string[] = [];
+    const listing = [1, 2, 3]
+      .map((i) => `<div class="record"><a href="/item/${i}">Item ${i}</a></div>`)
+      .join("");
+    const ctx: CollectContext = {
+      ...makeContext(""),
+      fetchText: async (url, _headers, policy) => {
+        requests.push(url);
+        expect(policy).toMatchObject({ allowedOrigin: "https://example.com" });
+        const body =
+          url === source.config.url
+            ? listing
+            : '<html><head><meta name="date" content="2026-07-04" /></head><body><h1>Real detail</h1><span class="date">Published: 2026-07-03 10:00</span></body></html>';
+        return {
+          body,
+          status: 200,
+          finalUrl: url,
+          headers: new Headers(),
+          attemptCount: 1,
+          responseBytes: body.length,
+        };
+      },
+    };
+    const items = await adapter.collect(source, ctx);
+    expect(items).toHaveLength(2);
+    expect(requests).toEqual([
+      "https://example.com",
+      "https://example.com/item/1",
+      "https://example.com/item/2",
+    ]);
+    expect(items[0]?.rawMeta).toMatchObject({
+      dateConflict: { selected: "Published: 2026-07-03 10:00", alternate: "2026-07-04" },
+    });
+    expect(source.state).toEqual({ etag: "old" });
+  });
+
+  it("fails the source if a later detail drifts after an earlier valid detail", async () => {
+    const source = makeSource({
+      config: {
+        url: "https://example.com",
+        html: {
+          records: ".record",
+          title: { selector: "a" },
+          link: { selector: "a", attribute: "href" },
+          detail: {
+            take: 2,
+            title: { selector: "h1" },
+            date: { selector: "time", format: "ymd", semantic: "published" },
+          },
+        },
+      },
+    });
+    const listing =
+      '<div class="record"><a href="/one">First</a></div><div class="record"><a href="/two">Second</a></div>';
+    const context = makeContext(listing);
+    context.fetchText = async (url) => ({
+      body:
+        url === source.config.url
+          ? listing
+          : url.endsWith("one")
+            ? "<h1>First</h1><time>2026-07-03</time>"
+            : "<h1>Second</h1>",
+      status: 200,
+      finalUrl: url,
+      headers: new Headers(),
+      attemptCount: 1,
+      responseBytes: 100,
+    });
+    await expect(adapter.collect(source, context)).rejects.toThrow(/detail/i);
+  });
   it("has kind web-scraper", () => {
     expect(adapter.kind).toBe("web-scraper");
   });

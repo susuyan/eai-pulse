@@ -1,4 +1,7 @@
+import { XMLValidator } from "fast-xml-parser";
+import { HtmlExtractionSchema } from "../domain/html-extraction.js";
 import type { CollectedSignal } from "../domain/types.js";
+import { collectConfiguredHtml } from "./configured-html.js";
 import type { SourceAdapter } from "./types.js";
 
 /**
@@ -19,12 +22,24 @@ const MAX_ITEMS = 30;
 export const webScraperAdapter: SourceAdapter = {
   kind: "web-scraper",
   async collect(source, context) {
-    const { body, status } = await context.fetchText(source.config.url);
+    const constraints = source.config.html
+      ? { allowedOrigin: new URL(source.config.url).origin }
+      : undefined;
+    const { body, status, finalUrl } = await context.fetchText(source.config.url, {}, constraints);
     if (status === 304) return [];
+    if (source.config.html && new URL(finalUrl).origin !== new URL(source.config.url).origin)
+      throw new Error("HTML response origin mismatch");
 
     if (!body || body.length < 100) {
       throw new Error("Web scraper: response body too small or empty");
     }
+    if (source.config.html)
+      return collectConfiguredHtml(
+        body,
+        source,
+        context,
+        HtmlExtractionSchema.parse(source.config.html),
+      );
 
     const results: CollectedSignal[] = [];
 
@@ -314,6 +329,7 @@ interface FeedItem {
 }
 
 function parseFeed(xml: string, source: SourceLike): CollectedSignal[] {
+  if (XMLValidator.validate(xml) !== true) throw new Error("Malformed discovered XML feed");
   const items: FeedItem[] = [];
   // Match <item> (RSS) or <entry> (Atom)
   const itemRegex = /<(?:item|entry)>([\s\S]*?)<\/(?:item|entry)>/gi;

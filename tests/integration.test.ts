@@ -218,7 +218,7 @@ describe("SQLite application", () => {
       ["pipeline/index.html", "数据管线 · Agent Pulse"],
       ["assets/index.html", "数据资产 · Agent Pulse"],
       ["peers/index.html", "行业同行 · Agent Pulse"],
-      ["timeline/index.html", "事件时间线 · Agent Pulse"],
+      ["timeline/index.html", "具身数据发展脉络 · Agent Pulse"],
       ["scout/index.html", "行动建议 · Agent Pulse"],
       ["changelog/index.html", "产品更新 · Agent Pulse"],
       ["sources/index.html", "来源地图 · Agent Pulse"],

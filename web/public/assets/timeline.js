@@ -262,31 +262,36 @@ export function setupTimeline(root) {
   });
 }
 
-export function setupEmbodiedTimeline(root) {
-  const search = root.querySelector("[data-embodied-timeline-search]");
-  const count = root.querySelector("[data-embodied-timeline-count]");
-  const events = [...root.querySelectorAll("[data-event]")];
-  if (!search) return;
-
-  const apply = () => {
-    const query = String(search.value || "")
-      .trim()
-      .toLocaleLowerCase();
-    let visible = 0;
-    events.forEach((event) => {
-      event.hidden = Boolean(query) && !String(event.dataset.search || "").includes(query);
-      if (!event.hidden) visible += 1;
+export function setupEmbodiedEvolutionTimeline(root) {
+  if (!root || root.dataset.evolutionReady === "true") return;
+  const filters = root.querySelector("[data-evolution-filters]");
+  const buttons = [...root.querySelectorAll("[data-evolution-stage-filter]")];
+  const cells = [...root.querySelectorAll("[data-evolution-stage]")];
+  if (!filters || !buttons.length) return;
+  root.dataset.evolutionReady = "true";
+  const select = (stage) => {
+    buttons.forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.evolutionStageFilter === stage));
     });
-    if (count) {
-      count.textContent =
-        document.documentElement.lang === "en" ? `${visible} events` : `${visible} 个事件`;
-    }
+    cells.forEach((cell) => {
+      cell.hidden = stage !== "all" && cell.dataset.evolutionStage !== stage;
+    });
+    root.dataset.evolutionFocus = stage;
   };
-
-  search.addEventListener("input", apply);
-  search.addEventListener("keydown", (event) => {
-    if (event.key !== "Escape") return;
-    search.value = "";
-    apply();
+  buttons.forEach((button, index) => {
+    button.addEventListener("click", () => select(button.dataset.evolutionStageFilter || "all"));
+    button.addEventListener("keydown", (event) => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      const step = event.key === "ArrowRight" ? 1 : -1;
+      buttons[(index + step + buttons.length) % buttons.length]?.focus();
+    });
   });
+  root.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    select("all");
+    buttons[0]?.focus();
+  });
+  select("all");
+  filters.hidden = false;
 }

@@ -1,6 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { embodiedLaunchEvents } from "../src/catalog/embodied-data/events.js";
+import { embodiedTrends, evolutionPhases } from "../src/catalog/embodied-data/evolution.js";
 import { legacySourceCatalog as sourceCatalog } from "../src/catalog/sources.js";
 import { githubReleasesAdapter } from "../src/collectors/github-releases.js";
 import { rssAdapter } from "../src/collectors/rss.js";
@@ -12,6 +14,7 @@ import type {
   PublicSource,
   StaticSiteModel,
 } from "../src/pipeline/static-site/dto.js";
+import { buildPublicEmbodiedNarrative } from "../src/pipeline/static-site/embodied-narrative.js";
 import {
   analyzeTechnologyCoverage,
   eventDevelopments,
@@ -32,6 +35,76 @@ import {
 import { renderStaticPages, renderTimeline } from "../src/pipeline/static-site/pages.js";
 
 describe("static-site intelligence consumption model", () => {
+  it("renders chronological phases, six evidence-bound impacts, and every Event in reverse order", () => {
+    const model = evolutionModel();
+    const page = renderTimeline(model, "zh-CN");
+    const phases = model.evolutionPhases;
+    const anchors = [...page.matchAll(/data-evolution-phase-link="([^"]+)"/g)].map((m) => m[1]);
+    expect(anchors).toEqual(phases.map((phase) => phase.slug));
+    expect(page.match(/data-evolution-phase="/g)).toHaveLength(6);
+    expect(page.match(/data-evolution-stage="/g)).toHaveLength(36);
+    for (const phase of phases) {
+      expect(page).toContain(`id="phase-${phase.slug}"`);
+      expect(page).toContain(phase.title);
+      expect(page).toContain(phase.thesis);
+      expect(page).toContain(phase.turningPoint);
+      for (const signal of phase.nextSignals) expect(page).toContain(signal);
+      for (const relation of [...phase.events, ...phase.counterEvents]) {
+        expect(page).toContain(`href="__PREFIX__events/${relation.slug}/"`);
+      }
+    }
+    expect(page).toContain("暂无公开证据");
+    expect(page).toContain("反证与未知");
+    const index = page.split("data-evolution-event-index")[1] ?? "";
+    const eventSlugs = [...index.matchAll(/data-evolution-event="([^"]+)"/g)].map((m) => m[1]);
+    expect(eventSlugs).toHaveLength(42);
+    expect(eventSlugs).toEqual(
+      [...model.embodiedEvents]
+        .sort((left, right) => Date.parse(right.happenedAt) - Date.parse(left.happenedAt))
+        .map((event) => event.slug),
+    );
+    expect(page).not.toMatch(/\/lines\/|六个领域趋势|模型价格|随机趋势|https?:\/\//);
+  });
+
+  it("bounds the latest-phase summary by the curation cutoff and actual Event date", () => {
+    const model = evolutionModel();
+    model.generatedAt = "2027-01-01T00:00:00Z";
+    const page = renderTimeline(model, "zh-CN");
+    const summary = page.match(/<section[^>]*data-evolution-summary[\s\S]*?<\/section>/)?.[0] ?? "";
+    expect(summary).toContain(model.evolutionPhases[5]?.title);
+    expect(summary).toContain(model.evolutionPhases[4]?.turningPoint);
+    expect(summary).toContain("2026-09-20");
+    expect(summary).toContain("最新事件日期");
+    expect(summary).not.toContain("2027-01-01");
+    expect(summary.match(/data-evolution-impact-summary="/g)).toHaveLength(6);
+  });
+
+  it("escapes narrative content and retains internal Event routes in both locales", () => {
+    const model = evolutionModel();
+    const phase = model.evolutionPhases[0];
+    if (!phase) throw new Error("Missing narrative fixture");
+    phase.title = '<img src=x onerror="alert(1)">';
+    phase.thesis = "<script>unsafe</script>";
+    phase.turningPoint = "A & B";
+    phase.nextSignals = ["<em>Watch</em>"];
+    phase.stageImpacts["demand-definition"].summary = '<iframe src="https://unsafe.test">';
+    phase.events[0] = {
+      slug: 'event" onclick="alert(1)',
+      title: "<svg>unsafe</svg>",
+      role: "supporting-evidence",
+    };
+    for (const locale of ["zh-CN", "en"] as const) {
+      const page = renderTimeline(model, locale);
+      expect(page).not.toMatch(/<img|<script|<iframe|<svg|<em>/);
+      expect(page).toContain("&lt;img");
+      expect(page).toContain("A &amp; B");
+      expect(page).toContain("&lt;em&gt;Watch&lt;/em&gt;");
+      expect(page).toContain("&lt;svg&gt;unsafe&lt;/svg&gt;");
+      expect(page).not.toContain('onclick="alert');
+    }
+    expect(renderTimeline(model, "en")).toContain("No public evidence");
+  });
+
   it("renders the exact embodied-data route and navigation contract", () => {
     const model = embodiedSiteModel();
     const pages = renderStaticPages(model);
@@ -604,6 +677,27 @@ function event(
     tracks: [],
     actors: [],
   };
+}
+
+function evolutionModel(): StaticSiteModel {
+  const model = embodiedSiteModel();
+  const template = model.embodiedEvents[0];
+  if (!template) throw new Error("Missing embodied Event fixture");
+  model.embodiedEvents = embodiedLaunchEvents.map((event) => ({
+    ...template,
+    slug: event.slug,
+    title: event.title,
+    happenedAt: event.date,
+    publishedAt: event.date,
+    dataProfile: event.dataProfile,
+    pipelineStages: event.dataProfile.pipelineStages,
+  }));
+  model.evolutionPhases = buildPublicEmbodiedNarrative(
+    model.embodiedEvents,
+    evolutionPhases,
+    embodiedTrends,
+  ).phases;
+  return model;
 }
 
 function embodiedSiteModel(): StaticSiteModel {

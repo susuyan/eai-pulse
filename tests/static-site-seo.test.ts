@@ -4,6 +4,25 @@ import { pageLayout, serializeJsonLd } from "../src/pipeline/static-site/render.
 import { embodiedSiteModel } from "./fixtures/embodied-site-model.js";
 
 describe("static site SEO serialization", () => {
+  it("identifies the evolution timeline in both locale metadata and canonical routes", () => {
+    const pages = renderStaticPages(embodiedSiteModel());
+    for (const [prefix, title] of [
+      ["", "具身数据发展脉络"],
+      ["en/", "Embodied Data Evolution"],
+    ]) {
+      const html =
+        pages.find((page) => page.path === `${prefix}timeline/index.html`)?.content ?? "";
+      expect(html).toContain(`<title>${title} · Agent Pulse</title>`);
+      expect(html).toContain(`rel="canonical" href="https://example.com/${prefix}timeline/"`);
+      expect(html).not.toContain("/lines/");
+      const schema = [
+        ...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g),
+      ].map((match) => JSON.parse(match[1] ?? "{}"));
+      expect(schema).toEqual(
+        expect.arrayContaining([expect.objectContaining({ "@type": "CollectionPage" })]),
+      );
+    }
+  });
   it("keeps JSON-LD parseable while neutralizing script boundaries", () => {
     const value = {
       "@context": "https://schema.org",

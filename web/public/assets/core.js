@@ -19,10 +19,10 @@ setupBackToTop();
 setupPipelineFocus();
 const timeline = document.querySelector("[data-timeline]");
 if (timeline) import("./timeline.js").then(({ setupTimeline }) => setupTimeline(timeline));
-const embodiedTimeline = document.querySelector("[data-embodied-timeline]");
-if (embodiedTimeline) {
-  import("./timeline.js").then(({ setupEmbodiedTimeline }) =>
-    setupEmbodiedTimeline(embodiedTimeline),
+const embodiedEvolution = document.querySelector("[data-embodied-evolution]");
+if (embodiedEvolution) {
+  import("./timeline.js").then(({ setupEmbodiedEvolutionTimeline }) =>
+    setupEmbodiedEvolutionTimeline(embodiedEvolution),
   );
 }
 setupCardFilters();

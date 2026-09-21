@@ -5,10 +5,11 @@ import { renderAssetsPage } from "./pages/assets.js";
 import { renderEventPage } from "./pages/event.js";
 import { renderEmbodiedHome } from "./pages/home.js";
 import { renderPeersPage } from "./pages/peers.js";
-import { renderEmbodiedTimeline, renderPipelinePage } from "./pages/pipeline.js";
+import { renderPipelinePage } from "./pages/pipeline.js";
 import { renderScoutPage } from "./pages/scout.js";
 import { localize, pageHero } from "./pages/shared.js";
 import { renderSourcesPage } from "./pages/sources.js";
+import { renderEmbodiedEvolutionTimeline } from "./pages/timeline.js";
 import type { PageKey } from "./render.js";
 import { escapeHtml, pageLayout } from "./render.js";
 
@@ -24,8 +25,8 @@ export function renderStaticPages(model: StaticSiteModel): StaticPage[] {
 }
 
 export function renderTimeline(model: StaticSiteModel, locale: Locale): string {
-  if (model.embodiedEvents) return renderEmbodiedTimeline(model, locale);
-  return renderEmbodiedTimeline(
+  if (model.embodiedEvents) return renderEmbodiedEvolutionTimeline(model, locale);
+  return renderEmbodiedEvolutionTimeline(
     {
       ...model,
       embodiedEvents: (model.events ?? []).map((event) => ({
@@ -128,9 +129,9 @@ function renderPagesForLocale(model: StaticSiteModel, locale: Locale): StaticPag
       `${lp}timeline/index.html`,
       1,
       "timeline",
-      `${localize(locale, "事件时间线", "Event Timeline")} · Agent Pulse`,
+      `${localize(locale, "具身数据发展脉络", "Embodied Data Evolution")} · Agent Pulse`,
       description(locale, "timeline"),
-      renderEmbodiedTimeline(model, locale),
+      renderEmbodiedEvolutionTimeline(model, locale),
       locale,
     ),
     renderPage(
@@ -363,8 +364,8 @@ function description(locale: Locale, page: string): string {
       "Turn verified events into small embodied-data production experiments.",
     ],
     timeline: [
-      "按发生时间浏览具身数据生产事件。",
-      "Browse embodied-data production events by date.",
+      "沿时间阶段与六段生产管线查看具身数据演进、关键转折、证据边界和全部事件。",
+      "Trace embodied-data evolution across time and six production stages, with turning points, evidence limits, and every Event.",
     ],
     changelog: [
       "查看 Agent Pulse 的产品变化与公开边界。",

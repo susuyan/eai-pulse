@@ -2,6 +2,8 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { embodiedLaunchEvents } from "../src/catalog/embodied-data/events.js";
+import { embodiedTrends, evolutionPhases } from "../src/catalog/embodied-data/evolution.js";
 import { loadConfig } from "../src/config/env.js";
 import { createDatabase } from "../src/db/database.js";
 import { migrateToLatest } from "../src/db/migrate.js";
@@ -16,6 +18,7 @@ import {
   projectPublicEmbodiedEvent,
   projectPublicPeer,
 } from "../src/pipeline/static-site/embodied-intelligence.js";
+import { buildPublicEmbodiedNarrative } from "../src/pipeline/static-site/embodied-narrative.js";
 import { summarizeSourceCoverageGaps } from "../src/pipeline/static-site/intelligence.js";
 import { embodiedSiteModel } from "./fixtures/embodied-site-model.js";
 
@@ -86,6 +89,68 @@ const event: PublicEvent = {
 };
 
 describe("embodied public DTOs", () => {
+  it("projects narrative links without copying Event evidence or private fields", () => {
+    const events = embodiedLaunchEvents.map((seed) => ({
+      ...projectPublicEmbodiedEvent(
+        {
+          ...event,
+          slug: seed.slug,
+          title: seed.title,
+          happenedAt: seed.date,
+          publishedAt: seed.date,
+        },
+        seed.dataProfile,
+        { tracks: [], datasets: [], standards: [], collectionMethods: [], peers: [] },
+      ),
+      id: "private-event-id",
+      raw_payload: "private-payload",
+      privateNote: "private-note",
+    }));
+    const result = buildPublicEmbodiedNarrative(events, evolutionPhases, embodiedTrends);
+    expect(result.phases.length).toBeGreaterThan(0);
+    expect(result.trends.length).toBeGreaterThan(0);
+    expect(Object.keys(result).sort()).toEqual(["phases", "trends"]);
+    for (const phase of result.phases) {
+      expect(Object.keys(phase).sort()).toEqual([
+        "counterEvents",
+        "end",
+        "events",
+        "nextSignals",
+        "slug",
+        "stageImpacts",
+        "start",
+        "thesis",
+        "title",
+        "turningPoint",
+      ]);
+      for (const impact of Object.values(phase.stageImpacts)) {
+        expect(Object.keys(impact).sort()).toEqual(["events", "evidenceState", "summary"]);
+        for (const relation of impact.events)
+          expect(Object.keys(relation).sort()).toEqual(["role", "slug", "title"]);
+      }
+    }
+    for (const trend of result.trends) {
+      expect(Object.keys(trend).sort()).toEqual([
+        "counterEvents",
+        "events",
+        "nextWatch",
+        "pipelineStages",
+        "slug",
+        "thesis",
+        "title",
+        "whyNow",
+      ]);
+    }
+    for (const record of [...result.phases, ...result.trends]) {
+      for (const relation of [...record.events, ...record.counterEvents]) {
+        expect(Object.keys(relation).sort()).toEqual(["role", "slug", "title"]);
+      }
+    }
+    expect(JSON.stringify(result)).not.toMatch(
+      /private-|raw_payload|privateNote|https?:\/\/|\/Users\//,
+    );
+  });
+
   it("preserves manual map decisions and exports a usable substitute card", async () => {
     const root = await mkdtemp(join(tmpdir(), "agent-pulse-manual-map-"));
     const base = loadConfig({ NODE_ENV: "test", DATABASE_URL: "sqlite::memory:" });

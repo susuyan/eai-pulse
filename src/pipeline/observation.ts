@@ -36,6 +36,7 @@ export async function observationEligibility(
       .leftJoin("jobs", "jobs.id", "source_checks.job_id")
       .selectAll("source_checks")
       .select([
+        "jobs.id as joinedJobId",
         "jobs.type as jobType",
         "jobs.status as jobStatus",
         "jobs.finished_at as jobFinishedAt",
@@ -209,6 +210,7 @@ export async function autoEnableObservation(
 }
 
 type ObservationCheck = SourceCheckRow & {
+  joinedJobId: string | null;
   jobType: string | null;
   jobStatus: string | null;
   jobFinishedAt: string | null;
@@ -286,7 +288,7 @@ function observationRejection(
       return "policy_review_missing";
     return priorityWindowRejection(
       source,
-      checks.filter((check) => check.job_id !== null || check.contract_fingerprint !== null),
+      checks.filter((check) => check.joinedJobId !== null || check.contract_fingerprint !== null),
       now,
       checkIds,
       checksByJob,

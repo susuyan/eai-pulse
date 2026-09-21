@@ -1,7 +1,6 @@
 import type { Kysely } from "kysely";
 import { z } from "zod";
 import { embodiedPrioritySourceSlugs } from "../catalog/embodied-data/priority-sources.js";
-import { embodiedSourceCatalog } from "../catalog/embodied-data/sources.js";
 import type { DatabaseSchema } from "../db/types.js";
 import { sourceAuditPolicy } from "../domain/source-audit-policy.js";
 import { observationEligibility } from "./observation.js";
@@ -13,7 +12,7 @@ const count = z.number().int().nonnegative();
 const resultSchema = z
   .object({
     slug: z.enum(embodiedPrioritySourceSlugs as [string, ...string[]]),
-    lifecycle: z.enum(["draft", "shadow", "active", "degraded", "quarantined", "retired"]),
+    lifecycle: z.enum(["draft", "shadow"]),
     policy: z.enum(["pending", "restricted", "allowed_metadata"]),
     status: z.enum(["not_checked", "healthy", "degraded", "failed", "skipped"]),
     itemCount: count,
@@ -24,6 +23,16 @@ const resultSchema = z
       .nullable(),
     startedAt: timestamp.nullable(),
     finishedAt: timestamp.nullable(),
+    shadowTransition: z
+      .object({
+        from: z.literal("draft"),
+        to: z.literal("shadow"),
+        at: timestamp,
+        qualifyingChecks: z.literal(3),
+      })
+      .strict()
+      .nullable()
+      .default(null),
     evidenceWindow: z
       .object({
         requiredChecks: z.literal(3),
@@ -66,16 +75,32 @@ const reportSchema = z
       });
     const generated = Date.parse(report.generatedAt);
     if (
+      generated > Date.now() ||
+      report.newlyShadow !== report.results.filter((row) => row.shadowTransition !== null).length ||
       (report.window.status === "complete") !== (report.window.completedSpacedRuns === 3) ||
       (report.completedAt === null) !== (report.window.completedSpacedRuns === 0) ||
       (report.completedAt !== null && Date.parse(report.completedAt) > generated) ||
-      report.results.some((row) =>
-        row.status === "not_checked"
-          ? row.startedAt !== null || row.finishedAt !== null
-          : row.startedAt === null ||
-            row.finishedAt === null ||
-            Date.parse(row.startedAt) > Date.parse(row.finishedAt) ||
-            Date.parse(row.finishedAt) > generated,
+      report.results.some(
+        (row) =>
+          (row.evidenceWindow.eligible &&
+            (row.policy !== "allowed_metadata" ||
+              row.status !== "healthy" ||
+              row.itemCount === 0 ||
+              row.contractFingerprint === null ||
+              row.evidenceWindow.qualifyingChecks !== 3 ||
+              report.window.status !== "complete")) ||
+          (row.shadowTransition !== null &&
+            (row.lifecycle !== "shadow" ||
+              report.completedAt === null ||
+              report.window.status !== "complete" ||
+              Date.parse(row.shadowTransition.at) < Date.parse(report.completedAt ?? "") ||
+              Date.parse(row.shadowTransition.at) > generated)) ||
+          (row.status === "not_checked"
+            ? row.startedAt !== null || row.finishedAt !== null
+            : row.startedAt === null ||
+              row.finishedAt === null ||
+              Date.parse(row.startedAt) > Date.parse(row.finishedAt) ||
+              Date.parse(row.finishedAt) > generated),
       )
     )
       context.addIssue({ code: "custom", message: "Inconsistent priority report evidence" });
@@ -104,11 +129,17 @@ export function priorityReportFreshness(
 }
 
 export async function buildPrioritySourceHealthReport(db: Kysely<DatabaseSchema>) {
-  const [sources, checks, eligibility, auditEvidence] = await Promise.all([
+  const [sources, checks, eligibility, auditEvidence, transitions] = await Promise.all([
     db.selectFrom("sources").selectAll().where("slug", "in", embodiedPrioritySourceSlugs).execute(),
     db.selectFrom("source_checks").selectAll().orderBy("finished_at", "desc").execute(),
     observationEligibility(db),
     exportPriorityAuditEvidence(db),
+    db
+      .selectFrom("jobs")
+      .selectAll()
+      .where("type", "=", "observation_mode")
+      .where("status", "=", "succeeded")
+      .execute(),
   ]);
   const completed = auditEvidence.records
     .filter(
@@ -132,18 +163,74 @@ export async function buildPrioritySourceHealthReport(db: Kysely<DatabaseSchema>
     newerStart = Date.parse(record.startedAt);
     if (completedSpacedRuns === 3) break;
   }
-  // Compare persisted state to the fixture-validated catalog baseline, including its existing shadow.
-  const newlyShadow = sources.filter(
-    (source) =>
-      source.lifecycle_status === "shadow" &&
-      embodiedSourceCatalog.find((entry) => entry.slug === source.slug)?.lifecycleStatus ===
-        "draft",
-  ).length;
+  const generatedAt = new Date().toISOString();
+  const completedAt = completed[0]?.finishedAt ?? null;
   const results = embodiedPrioritySourceSlugs.map((slug) => {
     const source = sources.find((row) => row.slug === slug);
     if (!source) throw new Error(`Priority source missing: ${slug}`);
     const check = checks.find((row) => row.source_id === source.id);
     const observation = eligibility.find((row) => row.sourceId === source.id);
+    const transition =
+      completedAt && completedSpacedRuns === 3 && source.lifecycle_status === "shadow"
+        ? transitions.find((job) => {
+            if (
+              job.source_id !== source.id ||
+              !job.finished_at ||
+              Date.parse(job.started_at) < Date.parse(completedAt) ||
+              Date.parse(job.finished_at) < Date.parse(job.started_at) ||
+              Date.parse(job.finished_at) > Date.parse(generatedAt)
+            )
+              return false;
+            try {
+              const details = JSON.parse(job.details_json);
+              if (
+                details.from !== "draft" ||
+                details.to !== "shadow" ||
+                details.action !== "verify" ||
+                details.observationEnabled !== true ||
+                !Array.isArray(details.checkIds) ||
+                details.checkIds.length !== 3 ||
+                new Set(details.checkIds).size !== 3
+              )
+                return false;
+              const evidence = checks
+                .filter((row) => row.source_id === source.id && details.checkIds.includes(row.id))
+                .sort((a, b) => Date.parse(a.started_at) - Date.parse(b.started_at));
+              return (
+                evidence.length === 3 &&
+                evidence.every(
+                  (row, index) =>
+                    row.status === "healthy" &&
+                    row.policy_status === "allowed_metadata" &&
+                    row.contract_fingerprint !== null &&
+                    row.item_count > 0 &&
+                    row.quality_score >= 60 &&
+                    row.freshness_hours !== null &&
+                    row.freshness_hours <= 2160 &&
+                    Date.parse(row.finished_at) <= Date.parse(job.started_at) &&
+                    (index === 0 ||
+                      Date.parse(row.started_at) -
+                        Date.parse(evidence[index - 1]?.finished_at ?? "") >=
+                        6 * 3_600_000) &&
+                    auditEvidence.records.some(
+                      (record) =>
+                        record.auditComplete &&
+                        !record.incomplete &&
+                        record.checks.some(
+                          (member) =>
+                            member.sourceSlug === slug &&
+                            member.startedAt === row.started_at &&
+                            member.finishedAt === row.finished_at &&
+                            member.contractFingerprint === row.contract_fingerprint,
+                        ),
+                    ),
+                )
+              );
+            } catch {
+              return false;
+            }
+          })
+        : undefined;
     return {
       slug,
       lifecycle: source.lifecycle_status,
@@ -154,22 +241,25 @@ export async function buildPrioritySourceHealthReport(db: Kysely<DatabaseSchema>
       contractFingerprint: check?.contract_fingerprint ?? null,
       startedAt: check?.started_at ?? null,
       finishedAt: check?.finished_at ?? null,
+      shadowTransition: transition
+        ? { from: "draft", to: "shadow", at: transition.finished_at, qualifyingChecks: 3 }
+        : null,
       evidenceWindow: {
         requiredChecks: 3,
         minimumSpacingHours: 6,
         qualifyingChecks: observation?.checkIds.length ?? 0,
-        eligible: observation?.eligible ?? false,
+        eligible: (observation?.eligible ?? false) && completedSpacedRuns === 3,
         observationEnabled: observation?.observationEnabled ?? false,
       },
     };
   });
   return validatePrioritySourceHealthReport({
     schemaVersion: 1,
-    generatedAt: new Date().toISOString(),
-    completedAt: completed[0]?.finishedAt ?? null,
+    generatedAt,
+    completedAt,
     freshnessHours: 24,
     total: 12,
-    newlyShadow,
+    newlyShadow: results.filter((row) => row.shadowTransition !== null).length,
     window: {
       status: completedSpacedRuns === 3 ? "complete" : "incomplete",
       completedSpacedRuns,

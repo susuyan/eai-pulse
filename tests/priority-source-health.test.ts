@@ -68,6 +68,15 @@ describe("priority source audit boundaries", () => {
       minimumSpacingHours: 6,
     });
     expect(report.newlyShadow).toBe(0);
+    expect(priorityReportFreshness({ ...report, newlyShadow: 12 })).toBe("invalid");
+    expect(
+      priorityReportFreshness({
+        ...report,
+        results: report.results.map((row, index) =>
+          index === 0 ? { ...row, evidenceWindow: { ...row.evidenceWindow, eligible: true } } : row,
+        ),
+      }),
+    ).toBe("invalid");
     expect(report.results.every((row) => row.status === "skipped")).toBe(true);
     expect(report.results.every((row) => row.evidenceWindow.qualifyingChecks === 0)).toBe(true);
     const completed = Date.parse(report.completedAt ?? "");
@@ -144,5 +153,15 @@ describe("priority source audit boundaries", () => {
     expect(() =>
       validatePrioritySourceHealthReport({ ...report, results: report.results.slice(1) }),
     ).toThrow();
+  });
+
+  it("does not count a current shadow lifecycle without a transition in the reporting period", async () => {
+    const { db } = await setup();
+    await db
+      .updateTable("sources")
+      .set({ lifecycle_status: "shadow" })
+      .where("slug", "=", "samr-standards")
+      .execute();
+    expect((await buildPrioritySourceHealthReport(db)).newlyShadow).toBe(0);
   });
 });

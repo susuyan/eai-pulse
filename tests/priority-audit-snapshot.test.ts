@@ -93,6 +93,8 @@ describe("governed priority audit snapshot", () => {
     "duplicate",
     "private",
     "hash",
+    "target-order",
+    "check-order",
   ])("rejects %s evidence before restoring any jobs", async (mode) => {
     const { directory, file, snapshot } = await artifact();
     const evidence = snapshot.priorityAuditEvidence[0];
@@ -100,7 +102,9 @@ describe("governed priority audit snapshot", () => {
     if (mode === "duplicate") evidence.checks.push(evidence.checks[0]);
     if (mode === "private") evidence.sample = "PRIVATE_SENTINEL";
     if (mode === "hash") evidence.contentHash = "0".repeat(64);
-    if (mode === "duplicate") {
+    if (mode === "target-order") evidence.targetSlugs.reverse();
+    if (mode === "check-order") evidence.checks.reverse();
+    if (["duplicate", "target-order", "check-order"].includes(mode)) {
       const { contentHash: _previous, ...payload } = evidence;
       evidence.contentHash = sha256(JSON.stringify(payload));
     }
@@ -126,6 +130,24 @@ describe("governed priority audit snapshot", () => {
       .where("id", "=", job.id)
       .execute();
     await expect(writeRepositorySnapshot(db, directory, file)).rejects.toThrow();
+  });
+
+  it("rejects noncanonical record ordering before restore can reorder accepted history", async () => {
+    const { directory, file, snapshot } = await artifact();
+    const original = snapshot.priorityAuditEvidence[0];
+    const earlier = structuredClone(original);
+    earlier.startedAt = new Date(Date.parse(original.startedAt) - 1000).toISOString();
+    earlier.runHash = sha256(
+      JSON.stringify({ startedAt: earlier.startedAt, targetSlugs: earlier.targetSlugs }),
+    );
+    const { contentHash: _previous, ...payload } = earlier;
+    earlier.contentHash = sha256(JSON.stringify(payload));
+    snapshot.priorityAuditEvidence = [original, earlier].sort((a, b) =>
+      b.runHash.localeCompare(a.runHash),
+    );
+    await writeFile(file, JSON.stringify(snapshot));
+    const target = await setup();
+    await expect(restoreRepositorySnapshot(target.db, directory, file)).rejects.toThrow();
   });
 
   it("rejects a conflicting existing audit without changing its checks", async () => {

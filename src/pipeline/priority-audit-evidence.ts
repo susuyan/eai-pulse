@@ -80,17 +80,24 @@ function runHash(startedAt: string, targetSlugs: string[]) {
 
 export function validatePriorityAuditEvidence(value: unknown): PriorityAuditEvidence[] {
   const records = z.array(evidenceSchema).parse(value);
+  const canonicalRecords = [...records].sort((a, b) => a.runHash.localeCompare(b.runHash));
+  if (records.some((record, index) => record.runHash !== canonicalRecords[index]?.runHash))
+    throw new Error("Noncanonical priority audit evidence order");
   const seen = new Set<string>();
   for (const record of records) {
     const { contentHash, ...payload } = record;
     const targets = new Set(record.targetSlugs);
     const members = new Set(record.checks.map((check) => check.sourceSlug));
+    const targetOrder = [...targets].sort();
+    const memberOrder = [...members].sort((a, b) => a.localeCompare(b));
     const start = Date.parse(record.startedAt);
     const finish = record.finishedAt === null ? null : Date.parse(record.finishedAt);
     if (
       seen.has(record.runHash) ||
       record.runHash !== runHash(record.startedAt, record.targetSlugs) ||
       contentHash !== sha256(JSON.stringify(payloadSchema.parse(payload))) ||
+      record.targetSlugs.some((target, index) => target !== targetOrder[index]) ||
+      record.checks.some((check, index) => check.sourceSlug !== memberOrder[index]) ||
       targets.size !== record.targetSlugs.length ||
       members.size !== record.checks.length ||
       !record.targetSlugs.some((target) => embodiedPrioritySourceSlugs.includes(target)) ||

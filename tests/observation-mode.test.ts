@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { sql } from "kysely";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { embodiedPrioritySourceSlugs } from "../src/catalog/embodied-data/priority-sources.js";
 import { runObserveSources } from "../src/cli/observe-sources.js";
 import * as fetcherModule from "../src/collectors/fetcher.js";
 import { loadConfig } from "../src/config/env.js";
@@ -18,6 +19,10 @@ import {
   observationEligibility,
   setObservationMode,
 } from "../src/pipeline/observation.js";
+import {
+  buildPrioritySourceHealthReport,
+  validatePrioritySourceHealthReport,
+} from "../src/pipeline/priority-source-health.js";
 import { restoreRepositorySnapshot, writeRepositorySnapshot } from "../src/pipeline/snapshot.js";
 import { auditSources } from "../src/pipeline/source-audit.js";
 import { sourceOperationReadiness } from "../src/pipeline/source-operations.js";
@@ -171,17 +176,22 @@ const deterministicFetcher: NonNullable<
   finalUrl: url,
 });
 
-async function realPriorityAudits() {
+async function realPriorityAudits(cohort = false) {
   const context = await prioritySetup();
   await context.db.deleteFrom("source_checks").execute();
   await context.db.deleteFrom("jobs").where("type", "=", "source-audit").execute();
   const config = loadConfig({ NODE_ENV: "test", DATABASE_URL: "sqlite::memory:" });
+  const sources = await context.db
+    .selectFrom("sources")
+    .select("id")
+    .where("slug", "in", embodiedPrioritySourceSlugs)
+    .execute();
   for (const time of [...fixture.checks].reverse()) {
     vi.setSystemTime(new Date(time.startedAt));
     await auditSources(
       context.db,
       config,
-      { sourceId: context.source.id },
+      cohort ? { sourceIds: sources.map((row) => row.id) } : { sourceId: context.source.id },
       { fetcher: deterministicFetcher },
     );
   }
@@ -191,11 +201,82 @@ async function realPriorityAudits() {
 }
 
 describe("priority draft observation evidence", () => {
+  it("counts only evidenced verify transitions after the latest complete cohort audit", async () => {
+    const { db, source, config } = await realPriorityAudits(true);
+    expect((await buildPrioritySourceHealthReport(db)).newlyShadow).toBe(0);
+    await setObservationMode(db, source.id, true);
+    const report = await buildPrioritySourceHealthReport(db);
+    expect(report.newlyShadow).toBe(1);
+    expect(report.results.find((row) => row.slug === source.slug)?.shadowTransition).toEqual({
+      from: "draft",
+      to: "shadow",
+      at: fixture.now,
+      qualifyingChecks: 3,
+    });
+    expect(() => validatePrioritySourceHealthReport({ ...report, newlyShadow: 12 })).toThrow();
+    for (const patch of [
+      { policy: "pending" },
+      { policy: "restricted" },
+      { status: "skipped" },
+      { itemCount: 0 },
+      { lifecycle: "active" },
+      {
+        shadowTransition: {
+          from: "draft",
+          to: "shadow",
+          at: "1970-01-01T00:00:00.000Z",
+          qualifyingChecks: 3,
+        },
+      },
+      {
+        shadowTransition: {
+          from: "draft",
+          to: "shadow",
+          at: "2099-01-01T00:00:00.000Z",
+          qualifyingChecks: 3,
+        },
+      },
+      { shadowTransition: { from: "draft", to: "shadow", at: fixture.now, qualifyingChecks: 2 } },
+      {
+        evidenceWindow: {
+          ...report.results.find((row) => row.slug === source.slug)?.evidenceWindow,
+          qualifyingChecks: 0,
+        },
+      },
+    ]) {
+      expect(() =>
+        validatePrioritySourceHealthReport({
+          ...report,
+          results: report.results.map((row) =>
+            row.slug === source.slug ? { ...row, ...patch } : row,
+          ),
+        }),
+      ).toThrow();
+    }
+    vi.setSystemTime(new Date(Date.parse(fixture.now) + 1000));
+    const sources = await db
+      .selectFrom("sources")
+      .select("id")
+      .where("slug", "in", embodiedPrioritySourceSlugs)
+      .execute();
+    await auditSources(
+      db,
+      config,
+      { sourceIds: sources.map((row) => row.id) },
+      { fetcher: deterministicFetcher },
+    );
+    const later = await buildPrioritySourceHealthReport(db);
+    expect(later.newlyShadow).toBe(0);
+    expect(later.results.find((row) => row.slug === source.slug)?.lifecycle).toBe("shadow");
+  });
   it.each([
-    null,
-    "53b2bd337ea7bacd0fa1835f9bc8b72c5f8caae5b867cdefaf17e1950fe3793a",
-  ])("treats only legacy fingerprint-free orphans as non-evidence (%s)", async (fingerprint) => {
+    [null, null],
+    ["missing-legacy-job", null],
+    [null, "53b2bd337ea7bacd0fa1835f9bc8b72c5f8caae5b867cdefaf17e1950fe3793a"],
+    ["missing-legacy-job", "53b2bd337ea7bacd0fa1835f9bc8b72c5f8caae5b867cdefaf17e1950fe3793a"],
+  ])("treats only fingerprint-free job orphans as non-evidence (%s, %s)", async (jobId, fingerprint) => {
     const { db, source, eligibility } = await prioritySetup();
+    expect(await eligibility()).toMatchObject({ eligible: true });
     const check = await db
       .selectFrom("source_checks")
       .selectAll()
@@ -203,7 +284,7 @@ describe("priority draft observation evidence", () => {
       .executeTakeFirstOrThrow();
     await db
       .insertInto("source_checks")
-      .values({ ...check, id: "legacy-orphan", job_id: null, contract_fingerprint: fingerprint })
+      .values({ ...check, id: "legacy-orphan", job_id: jobId, contract_fingerprint: fingerprint })
       .execute();
     expect(await eligibility()).toMatchObject(
       fingerprint ? { eligible: false, reason: "invalid_check_time" } : { eligible: true },

@@ -172,6 +172,7 @@ describe("embodied public-site integrity", () => {
       schemaVersion?: number;
       generatedAt?: string;
       phases?: Array<{
+        slug?: string;
         actorId?: string;
         events?: Array<{ slug?: string; title?: string; role?: string }>;
         stageImpacts?: Record<
@@ -181,6 +182,7 @@ describe("embodied public-site integrity", () => {
         counterEvents?: Array<{ slug?: string; title?: string; role?: string }>;
       }>;
       trends?: Array<{
+        slug?: string;
         events?: Array<{ slug?: string; title?: string; role?: string }>;
         counterEvents?: Array<{ slug?: string; title?: string; role?: string }>;
       }>;
@@ -235,10 +237,68 @@ describe("embodied public-site integrity", () => {
     const llms = await readFile(llmsPath, "utf8");
     const publicProduct = await readFile(join(config.distDir, "data/product.json"), "utf8");
     const changelog = await readFile(join(config.distDir, "changelog/index.html"), "utf8");
+    const sitemap = await readFile(join(config.distDir, "sitemap.xml"), "utf8");
+    const narrativePages: string[] = [];
+    for (const prefix of ["", "en/"]) {
+      const home = await readFile(join(config.distDir, `${prefix}index.html`), "utf8");
+      const timeline = await readFile(join(config.distDir, `${prefix}timeline/index.html`), "utf8");
+      const localizedChangelog = await readFile(
+        join(config.distDir, `${prefix}changelog/index.html`),
+        "utf8",
+      );
+      narrativePages.push(home, timeline, localizedChangelog);
+      expect(timeline.match(/data-evolution-phase="/g)).toHaveLength(6);
+      expect(timeline.match(/data-evolution-stage="/g)).toHaveLength(36);
+      expect(timeline.match(/data-evolution-event="/g)).toHaveLength(42);
+      expect(home).toContain("data-home-evolution");
+      expect(home.match(/data-embodied-trend="/g)).toHaveLength(8);
+      for (const phase of evolution.phases ?? []) {
+        expect(timeline).toContain(`id="phase-${phase.slug}"`);
+      }
+      for (const phase of (evolution.phases ?? []).slice(-2)) {
+        expect(home).toContain(`timeline/#phase-${phase.slug}`);
+      }
+      for (const trend of evolution.trends ?? []) {
+        expect(home).toContain(`data-embodied-trend="${trend.slug}"`);
+      }
+      for (const event of events) {
+        expect(timeline).toContain(`data-evolution-event="${event.slug}"`);
+        expect(sitemap).toContain(`${prefix}events/${event.slug}/</loc>`);
+        const detail = await readFile(
+          join(config.distDir, `${prefix}events/${event.slug}/index.html`),
+          "utf8",
+        );
+        expect(detail).toContain('"@type":"Article"');
+      }
+      for (const [page, routeBase] of [
+        [home, `https://example.test/${prefix}`],
+        [timeline, `https://example.test/${prefix}timeline/`],
+      ] as const) {
+        for (const match of page.matchAll(/href="([^"#]*events\/[^"#]+)"/g)) {
+          const route = new URL(match[1] ?? "", routeBase).pathname;
+          const slug = route.match(/\/events\/([^/]+)\/$/)?.[1];
+          expect(events.some((event) => event.slug === slug)).toBe(true);
+          expect(route.startsWith(`/${prefix}events/`)).toBe(true);
+        }
+      }
+      expect(localizedChangelog).toContain('id="unreleased"');
+      for (const evidence of [
+        "2022-01-31",
+        "6 个连续阶段",
+        "42 个",
+        "8 个",
+        "Asia/Shanghai",
+        "no-public-evidence",
+        "无 JavaScript",
+      ]) {
+        expect(localizedChangelog).toContain(evidence);
+      }
+    }
+    expect(llms).toContain("data/evolution.json");
     const privateFieldPattern =
       /"(?:token|secret|password|cookie|authorization|api[_-]?key|raw[_-]?payload|payload_json|config_json|state_json|source_id|restriction_note)"\s*:/i;
     const legacyPattern =
-      /\/(?:lines|signals|actors|resources|product|industry-evolution)\/|data\/(?:timeline|tracks|signals|actors|resources|narratives|influencers)\.json|model pricing|模型价格|六个领域趋势|six strategic lines|tech-evolution|agi-progress|commercialization|investing|global-innovation|model-economics|GPT-5\.6/i;
+      /\/(?:lines|signals|actors|resources|product|industry-evolution)\/|data\/(?:timeline|tracks|signals|actors|resources|narratives|influencers)\.json|model pricing|模型价格|六个领域|six strategic lines|随机展示.*趋势|random.*trend|tech-evolution|agi-progress|commercialization|investing|global-innovation|model-economics|GPT-5\.6/i;
     for (const output of [
       sourcesPage,
       JSON.stringify(sources),
@@ -246,6 +306,10 @@ describe("embodied public-site integrity", () => {
       rss,
       changelog,
       publicProduct,
+      JSON.stringify(evolution),
+      ...narrativePages,
+      sitemap,
+      llms,
     ]) {
       expect(output).not.toMatch(legacyPattern);
       expect(output).not.toMatch(privateFieldPattern);

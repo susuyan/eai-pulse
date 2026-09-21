@@ -68,6 +68,7 @@ describe("static-site privacy boundary", () => {
     expect(files).toEqual([
       "assets.json",
       "events.json",
+      "evolution.json",
       "peers.json",
       "pipeline.json",
       "product.json",

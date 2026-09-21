@@ -441,5 +441,7 @@ export interface StaticSiteModel {
   standards: PublicStandard[];
   collectionMethods: PublicCollectionMethod[];
   peers: PublicPeer[];
+  evolutionPhases: PublicEvolutionPhase[];
+  embodiedTrends: PublicEmbodiedTrend[];
   sourceCoverageGaps: SourceCoverageGap[];
 }

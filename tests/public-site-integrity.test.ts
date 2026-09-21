@@ -142,6 +142,8 @@ describe("embodied public-site integrity", () => {
         standards: 4,
         collectionMethods: 6,
         peers: 15,
+        evolutionPhases: 6,
+        embodiedTrends: 8,
       },
       issues: [],
     });
@@ -160,9 +162,29 @@ describe("embodied public-site integrity", () => {
     const exportedEvents = JSON.parse(
       await readFile(join(config.distDir, "data/events.json"), "utf8"),
     ) as {
-      events?: Array<{ happenedAt?: string; evidence?: Array<{ url?: string }> }>;
+      generatedAt?: string;
+      events?: Array<{ slug?: string; happenedAt?: string; evidence?: Array<{ url?: string }> }>;
     };
     const events = exportedEvents.events ?? [];
+    const evolution = JSON.parse(
+      await readFile(join(config.distDir, "data/evolution.json"), "utf8"),
+    ) as {
+      schemaVersion?: number;
+      generatedAt?: string;
+      phases?: Array<{
+        actorId?: string;
+        events?: Array<{ slug?: string; title?: string; role?: string }>;
+        stageImpacts?: Record<
+          string,
+          { events?: Array<{ slug?: string; title?: string; role?: string }> }
+        >;
+        counterEvents?: Array<{ slug?: string; title?: string; role?: string }>;
+      }>;
+      trends?: Array<{
+        events?: Array<{ slug?: string; title?: string; role?: string }>;
+        counterEvents?: Array<{ slug?: string; title?: string; role?: string }>;
+      }>;
+    };
 
     expect(sources.length).toBeGreaterThanOrEqual(80);
     expect(sources.length).toBeLessThanOrEqual(100);
@@ -170,6 +192,26 @@ describe("embodied public-site integrity", () => {
       embodiedSourceCatalog.map((source) => source.slug).sort(),
     );
     expect(events).toHaveLength(embodiedLaunchEvents.length);
+    expect(evolution.schemaVersion).toBe(1);
+    expect(evolution.generatedAt).toBe(exportedEvents.generatedAt);
+    expect(evolution.phases).toHaveLength(6);
+    expect(evolution.trends).toHaveLength(8);
+    expect(JSON.stringify(evolution)).not.toMatch(
+      /raw_|private-|\/Users\/|payload_json|config_json|state_json|source_id/i,
+    );
+    for (const relation of [
+      ...(evolution.phases ?? []).flatMap((phase) => [
+        ...(phase.events ?? []),
+        ...Object.values(phase.stageImpacts ?? {}).flatMap((impact) => impact.events ?? []),
+        ...(phase.counterEvents ?? []),
+      ]),
+      ...(evolution.trends ?? []).flatMap((trend) => [
+        ...(trend.events ?? []),
+        ...(trend.counterEvents ?? []),
+      ]),
+    ]) {
+      expect(events.some((event) => event.slug === relation.slug)).toBe(true);
+    }
     expect(events.some((event) => (event.happenedAt ?? "") >= "2026-08-01T00:00:00.000Z")).toBe(
       true,
     );
@@ -210,6 +252,46 @@ describe("embodied public-site integrity", () => {
     }
     for (const event of events)
       expect(event.evidence?.every((evidence) => evidence.url?.startsWith("https://"))).toBe(true);
+    const corruptedEvolution = structuredClone(evolution);
+    corruptedEvolution.phases?.[0]?.stageImpacts?.["demand-definition"]?.events?.splice(0, 1, {
+      slug: "unknown-embodied-event",
+      title: "Unknown event",
+      role: "supporting-evidence",
+    });
+    await writeFile(
+      join(config.distDir, "data/evolution.json"),
+      `${JSON.stringify(corruptedEvolution)}\n`,
+      "utf8",
+    );
+    const corruptNarrative = await validatePublicSite(config.distDir, "2026-09-20T00:00:00.000Z");
+    expect(corruptNarrative.ok).toBe(false);
+    expect(corruptNarrative.issues).toContainEqual(
+      expect.objectContaining({
+        code: "unknown_evolution_event",
+        path: "data/evolution.json",
+      }),
+    );
+    const privateEvolution = structuredClone(evolution);
+    if (!privateEvolution.phases?.[0]) throw new Error("Evolution fixture is missing a phase");
+    privateEvolution.phases[0].actorId = "private-database-id";
+    await writeFile(
+      join(config.distDir, "data/evolution.json"),
+      `${JSON.stringify(privateEvolution)}\n`,
+      "utf8",
+    );
+    const privateNarrative = await validatePublicSite(config.distDir, "2026-09-20T00:00:00.000Z");
+    expect(privateNarrative.ok).toBe(false);
+    expect(privateNarrative.issues).toContainEqual(
+      expect.objectContaining({
+        code: "private_evolution_field",
+        path: "data/evolution.json",
+      }),
+    );
+    await writeFile(
+      join(config.distDir, "data/evolution.json"),
+      `${JSON.stringify(evolution)}\n`,
+      "utf8",
+    );
     await writeFile(llmsPath, `${llms}\nLegacy: /lines/ and model pricing`, "utf8");
     const leaked = await validatePublicSite(config.distDir, "2026-09-20T00:00:00.000Z");
     expect(leaked.ok).toBe(false);

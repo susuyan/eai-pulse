@@ -819,6 +819,8 @@ function embodiedSiteModel(): StaticSiteModel {
         ],
       },
     ],
+    evolutionPhases: [],
+    embodiedTrends: [],
     sourceCoverageGaps: [],
   } as StaticSiteModel;
 }

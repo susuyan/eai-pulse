@@ -2,6 +2,7 @@ import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { transform } from "esbuild";
 import type { Kysely } from "kysely";
+import { embodiedTrends, evolutionPhases } from "../catalog/embodied-data/evolution.js";
 import { influencerCatalog } from "../catalog/influencers.js";
 import { capabilities, productVersion, releases, roadmap } from "../catalog/product.js";
 import type { AppConfig } from "../config/env.js";
@@ -24,6 +25,7 @@ import type {
   StaticSiteModel,
 } from "./static-site/dto.js";
 import { buildEmbodiedPublicData } from "./static-site/embodied-intelligence.js";
+import { buildPublicEmbodiedNarrative } from "./static-site/embodied-narrative.js";
 import { githubDataAtBuildTime } from "./static-site/github.js";
 import { summarizeSourceCoverageGaps } from "./static-site/intelligence.js";
 import { renderLlmsTxt } from "./static-site/llms.js";
@@ -125,6 +127,11 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
     actors,
     eventTracks: eventRelations.tracks,
   });
+  const embodiedNarrative = buildPublicEmbodiedNarrative(
+    embodiedData.events,
+    evolutionPhases,
+    embodiedTrends,
+  );
   const enrichedEvents = events.map((event) => ({
     ...event,
     tracks: eventRelations.tracks.get(event.id) ?? [],
@@ -289,6 +296,12 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
       generatedAt,
       peers: embodiedData.peers,
     }),
+    writeJson(join(config.distDir, "data/evolution.json"), {
+      schemaVersion: 1,
+      generatedAt,
+      phases: embodiedNarrative.phases,
+      trends: embodiedNarrative.trends,
+    }),
     writeJson(join(config.distDir, "data/scout.json"), {
       schemaVersion: 1,
       generatedAt,
@@ -338,6 +351,8 @@ export async function exportStaticSite(db: Kysely<DatabaseSchema>, config: AppCo
     standards: embodiedData.standards,
     collectionMethods: embodiedData.collectionMethods,
     peers: embodiedData.peers,
+    evolutionPhases: embodiedNarrative.phases,
+    embodiedTrends: embodiedNarrative.trends,
     sourceCoverageGaps: summarizeSourceCoverageGaps(publicSources, embodiedData.pipelineStages),
   };
 

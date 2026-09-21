@@ -121,6 +121,7 @@ describe("SQLite application", () => {
     expect((await readdir(join(config.distDir, "data"))).sort()).toEqual([
       "assets.json",
       "events.json",
+      "evolution.json",
       "peers.json",
       "pipeline.json",
       "product.json",
@@ -141,6 +142,16 @@ describe("SQLite application", () => {
       pipelineStages: expect.any(Array),
       dataProfile: { evidenceStatus: expect.any(String) },
     });
+    const evolution = JSON.parse(
+      await readFile(join(config.distDir, "data/evolution.json"), "utf8"),
+    );
+    expect(evolution).toMatchObject({
+      schemaVersion: 1,
+      generatedAt: "2026-07-13T12:00:00.000Z",
+    });
+    expect(evolution.phases).toHaveLength(6);
+    expect(evolution.trends).toHaveLength(8);
+    expect(JSON.stringify(evolution)).not.toMatch(/raw_|private-|\/Users\//i);
     const publicPipeline = JSON.parse(
       await readFile(join(config.distDir, "data/pipeline.json"), "utf8"),
     );
@@ -251,6 +262,7 @@ describe("SQLite application", () => {
     expect(llms).toContain("analysis and forecasts remain separate fields");
     expect(llms).toContain("https://susuyan.github.io/eai-pulse/data/pipeline.json");
     expect(llms).toContain("https://susuyan.github.io/eai-pulse/data/assets.json");
+    expect(llms).toContain("https://susuyan.github.io/eai-pulse/data/evolution.json");
     expect(llms).not.toContain("https://susuyan.github.io/eai-pulse/data/timeline.json");
     expect(llms).not.toContain("https://susuyan.github.io/eai-pulse/data/signals.json");
     expect(home).toContain("https://github.com/susuyan/eai-pulse");
